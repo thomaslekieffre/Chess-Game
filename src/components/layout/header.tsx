@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import { Play, BookOpen, Trophy, Eye } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
+import { UserButton } from "@/components/auth/user-button";
 
 const playModes = [
   {
@@ -119,7 +120,9 @@ export function Header() {
 
         <div className="flex items-center gap-4">
           <ModeToggle />
-          {!isSignedIn && (
+          {isSignedIn ? (
+            <UserButton />
+          ) : (
             <Button asChild>
               <Link href="/sign-in">Se connecter</Link>
             </Button>
