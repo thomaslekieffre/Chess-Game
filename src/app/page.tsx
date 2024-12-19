@@ -63,7 +63,12 @@ export default function Home() {
               transition={{ delay: 0.3, type: "spring" }}
               className="relative"
             >
-              <ChessBoard animated className="opacity-100" />
+              <ChessBoard
+                autoPlay={true}
+                animated={true}
+                darkSquareColor="bg-blue-200 dark:bg-blue-800"
+                lightSquareColor="bg-white dark:bg-blue-900"
+              />{" "}
             </motion.div>
           </div>
         </div>

@@ -1,136 +1,135 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { ChessEngine } from "@/lib/chess/engine";
+import { ChessPiece, Position, PieceType } from "@/lib/chess/types";
 
 interface ChessBoardProps {
   animated?: boolean;
   className?: string;
+  onMove?: (from: Position, to: Position) => void;
+  autoPlay?: boolean;
+  darkSquareColor?: string;
+  lightSquareColor?: string;
 }
 
-type Piece = {
-  symbol: string;
-  color: "red" | "blue";
+const PIECE_SYMBOLS: Record<PieceType, { white: string; black: string }> = {
+  king: { white: "♔", black: "♚" },
+  queen: { white: "♕", black: "♛" },
+  rook: { white: "♖", black: "♜" },
+  bishop: { white: "♗", black: "♝" },
+  knight: { white: "♘", black: "♞" },
+  pawn: { white: "♙", black: "♟" },
 };
 
-const openingMoves = [
-  { from: [6, 4], to: [4, 4] }, // 1. e4
-  { from: [1, 4], to: [3, 4] }, // 1... e5
-  { from: [7, 6], to: [5, 5] }, // 2. Nf3
-  { from: [0, 6], to: [2, 5] }, // 2... Nc6
-  { from: [7, 5], to: [3, 1] }, // 3. Bb5
-  { from: [0, 5], to: [2, 4] }, // 3... Bc5
-];
+function PieceComponent({ piece }: { piece: ChessPiece }) {
+  return <span>{PIECE_SYMBOLS[piece.type][piece.color]}</span>;
+}
 
-export function ChessBoard({ animated = false, className }: ChessBoardProps) {
-  const [pieces, setPieces] = useState<(Piece | null)[][]>([]);
+export function ChessBoard({
+  animated = false,
+  className,
+  onMove,
+  autoPlay = false,
+  darkSquareColor = "bg-muted dark:bg-muted hover:bg-black/10 dark:hover:bg-muted/80",
+  lightSquareColor = "bg-white/80 dark:bg-muted/50 hover:bg-black/10 dark:hover:bg-muted/60",
+}: ChessBoardProps) {
+  const [engine] = useState(() => new ChessEngine());
+  const [board, setBoard] = useState<(ChessPiece | null)[][]>(
+    engine.getBoard()
+  );
+  const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
+  const [validMoves, setValidMoves] = useState<Position[]>([]);
 
   useEffect(() => {
-    const createPiece = (symbol: string, color: "red" | "blue"): Piece => ({
-      symbol,
-      color,
-    });
-
-    const initialBoard = [
-      [
-        createPiece("♜", "red"),
-        createPiece("♞", "red"),
-        createPiece("♝", "red"),
-        createPiece("♛", "red"),
-        createPiece("♚", "red"),
-        createPiece("♝", "red"),
-        createPiece("♞", "red"),
-        createPiece("♜", "red"),
-      ],
-      Array(8)
-        .fill(null)
-        .map(() => createPiece("♙", "red")),
-      Array(8).fill(null),
-      Array(8).fill(null),
-      Array(8).fill(null),
-      Array(8).fill(null),
-      Array(8)
-        .fill(null)
-        .map(() => createPiece("♙", "blue")),
-      [
-        createPiece("♖", "blue"),
-        createPiece("♘", "blue"),
-        createPiece("♗", "blue"),
-        createPiece("♕", "blue"),
-        createPiece("♔", "blue"),
-        createPiece("♗", "blue"),
-        createPiece("♘", "blue"),
-        createPiece("♖", "blue"),
-      ],
-    ];
-    setPieces(initialBoard);
-
-    if (animated) {
-      let moveIndex = 0;
+    if (autoPlay) {
       const interval = setInterval(() => {
-        if (moveIndex >= openingMoves.length) {
-          clearInterval(interval);
-          return;
+        const moves = getAllPossibleMoves(engine);
+        if (moves.length > 0) {
+          const randomMove = moves[Math.floor(Math.random() * moves.length)];
+          const success = engine.makeMove(randomMove.from, randomMove.to);
+          if (success) {
+            setBoard(engine.getBoard());
+          }
         }
-        makeMove(openingMoves[moveIndex]);
-        moveIndex++;
-      }, 1500);
+      }, 2000);
 
       return () => clearInterval(interval);
     }
-  }, [animated]);
+  }, [autoPlay, engine]);
 
-  const makeMove = (move: { from: number[]; to: number[] }) => {
-    setPieces((current) => {
-      const newBoard = current.map((row) => [...row]);
-      const [fromY, fromX] = move.from;
-      const [toY, toX] = move.to;
-
-      if (newBoard[fromY][fromX]) {
-        newBoard[toY][toX] = newBoard[fromY][fromX];
-        newBoard[fromY][fromX] = null;
+  const handleSquareClick = (x: number, y: number) => {
+    if (!selectedPiece) {
+      const moves = engine.getValidMoves({ x, y });
+      if (moves.length > 0) {
+        setSelectedPiece({ x, y });
+        setValidMoves(moves);
       }
+    } else {
+      const success = engine.makeMove(selectedPiece, { x, y });
+      if (success) {
+        setBoard(engine.getBoard());
+        onMove?.(selectedPiece, { x, y });
+      }
+      setSelectedPiece(null);
+      setValidMoves([]);
+    }
+  };
 
-      return newBoard;
-    });
+  const renderSquare = (piece: ChessPiece | null, x: number, y: number) => {
+    const isSelected = selectedPiece?.x === x && selectedPiece?.y === y;
+    const isValidMove = validMoves.some((move) => move.x === x && move.y === y);
+
+    return (
+      <motion.div
+        key={`${x}-${y}`}
+        className={cn(
+          "flex items-center justify-center text-4xl transition-colors relative",
+          (x + y) % 2 === 0 ? darkSquareColor : lightSquareColor,
+          isSelected && "ring-2 ring-primary",
+          isValidMove && "after:absolute after:inset-0 after:bg-primary/20"
+        )}
+        onClick={() => !autoPlay && handleSquareClick(x, y)}
+        whileHover={{ scale: autoPlay ? 1 : 1.05 }}
+        transition={{ type: "spring", stiffness: 300 }}
+      >
+        {piece && (
+          <motion.div
+            initial={animated ? { scale: 0 } : false}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <PieceComponent piece={piece} />
+          </motion.div>
+        )}
+      </motion.div>
+    );
   };
 
   return (
     <div className={cn("w-full max-w-3xl mx-auto", className)}>
       <div className="aspect-square w-full bg-background/50 dark:bg-card/50 backdrop-blur-sm p-6 rounded-xl">
         <div className="grid grid-cols-8 grid-rows-8 h-full w-full rounded-lg overflow-hidden border border-border">
-          {pieces.map((row, y) =>
-            row.map((piece, x) => (
-              <div
-                key={`${x}-${y}`}
-                className={cn(
-                  "flex items-center justify-center text-4xl transition-colors",
-                  (x + y) % 2 === 0
-                    ? "bg-muted dark:bg-muted hover:bg-black/10 dark:hover:bg-muted/80"
-                    : "bg-white/80 dark:bg-muted/50 hover:bg-black/10 dark:hover:bg-muted/60"
-                )}
-              >
-                {piece && (
-                  <motion.span
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.8, opacity: 0 }}
-                    className={cn(
-                      "transition-colors",
-                      piece.color === "red"
-                        ? "text-red-600 dark:text-red-500"
-                        : "text-blue-600 dark:text-blue-500"
-                    )}
-                  >
-                    {piece.symbol}
-                  </motion.span>
-                )}
-              </div>
-            ))
+          {board.map((row, y) =>
+            row.map((piece, x) => renderSquare(piece, x, y))
           )}
         </div>
       </div>
     </div>
   );
+}
+
+function getAllPossibleMoves(engine: ChessEngine) {
+  const moves: { from: Position; to: Position }[] = [];
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      const validMoves = engine.getValidMoves({ x, y });
+      validMoves.forEach((to) => {
+        moves.push({ from: { x, y }, to });
+      });
+    }
+  }
+  return moves;
 }
