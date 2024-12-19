@@ -1,12 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ChessBoard } from "@/components/chess/board";
 import { Play, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { AnimatedText } from "@/components/ui/animated-text";
 import { Features } from "@/components/features";
 import { Header } from "@/components/layout/header";
+import { DemoBoard } from "@/components/chess/demo-board";
 
 export default function Home() {
   return (
@@ -63,12 +63,7 @@ export default function Home() {
               transition={{ delay: 0.3, type: "spring" }}
               className="relative"
             >
-              <ChessBoard
-                autoPlay={true}
-                animated={true}
-                darkSquareColor="bg-blue-200 dark:bg-blue-800"
-                lightSquareColor="bg-white dark:bg-blue-900"
-              />{" "}
+              <DemoBoard />
             </motion.div>
           </div>
         </div>

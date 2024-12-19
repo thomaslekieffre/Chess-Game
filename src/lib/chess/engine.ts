@@ -91,7 +91,10 @@ export class ChessEngine {
   }
 
   // Méthodes privées pour les règles spécifiques
-  private getPotentialMoves(from: Position): Position[] {
+  private getPotentialMoves(
+    from: Position,
+    checkingKing: boolean = false
+  ): Position[] {
     const piece = this.state.board[from.y][from.x]!;
 
     switch (piece.type) {
@@ -106,7 +109,7 @@ export class ChessEngine {
       case "queen":
         return [...this.getRookMoves(from), ...this.getBishopMoves(from)];
       case "king":
-        return this.getKingMoves(from);
+        return checkingKing ? [] : this.getKingMoves(from);
       default:
         return [];
     }
@@ -261,7 +264,7 @@ export class ChessEngine {
         if (this.isValidPosition({ x, y })) {
           const targetPiece = this.state.board[y][x];
           if (!targetPiece || targetPiece.color !== piece.color) {
-            if (!this.isSquareAttacked({ x, y }, piece.color)) {
+            if (!this.isSquareAttacked({ x, y }, piece.color, true)) {
               moves.push({ x, y });
             }
           }
@@ -277,8 +280,8 @@ export class ChessEngine {
         if (
           !this.state.board[from.y][5] &&
           !this.state.board[from.y][6] &&
-          !this.isSquareAttacked({ x: 5, y: from.y }, piece.color) &&
-          !this.isSquareAttacked({ x: 6, y: from.y }, piece.color)
+          !this.isSquareAttacked({ x: 5, y: from.y }, piece.color, true) &&
+          !this.isSquareAttacked({ x: 6, y: from.y }, piece.color, true)
         ) {
           moves.push({ x: 6, y: from.y });
         }
@@ -291,8 +294,8 @@ export class ChessEngine {
           !this.state.board[from.y][1] &&
           !this.state.board[from.y][2] &&
           !this.state.board[from.y][3] &&
-          !this.isSquareAttacked({ x: 2, y: from.y }, piece.color) &&
-          !this.isSquareAttacked({ x: 3, y: from.y }, piece.color)
+          !this.isSquareAttacked({ x: 2, y: from.y }, piece.color, true) &&
+          !this.isSquareAttacked({ x: 3, y: from.y }, piece.color, true)
         ) {
           moves.push({ x: 2, y: from.y });
         }
@@ -302,12 +305,18 @@ export class ChessEngine {
     return moves;
   }
 
-  private isSquareAttacked(pos: Position, defendingColor: PieceColor): boolean {
+  private isSquareAttacked(
+    pos: Position,
+    defendingColor: PieceColor,
+    checkingKing: boolean = false
+  ): boolean {
     for (let y = 0; y < 8; y++) {
       for (let x = 0; x < 8; x++) {
         const piece = this.state.board[y][x];
         if (piece && piece.color !== defendingColor) {
-          const moves = this.getPotentialMoves({ x, y });
+          if (checkingKing && piece.type === "king") continue;
+
+          const moves = this.getPotentialMoves({ x, y }, checkingKing);
           if (moves.some((move) => move.x === pos.x && move.y === pos.y)) {
             return true;
           }
