@@ -5,13 +5,16 @@ import { ChessBoard } from "@/components/chess/board";
 import { useEffect, useState, useRef } from "react";
 import { GameMessages } from "./game-messages";
 import { useGameState } from "@/hooks/useGameState";
-import { PieceColor } from "@/lib/chess/types";
+import { PieceColor, Position } from "@/lib/chess/types";
 import { getOppositeColor } from "@/lib/chess/utils";
 import { PlayerCard } from "@/components/chess/player-card";
 import { GameControls } from "@/components/chess/game-controls";
 import { MovesHistory } from "@/components/chess/moves-history";
 import { GameChat } from "@/components/chess/game-chat";
 import { Button } from "@/components/ui/button";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:3001");
 
 export function GameContent() {
   const searchParams = useSearchParams();
@@ -85,6 +88,18 @@ export function GameContent() {
     };
   }, [currentTurn, isGameOver, setIsGameOver, setWinner]);
 
+  useEffect(() => {
+    socket.on("move", (data) => {
+      // Gérer le mouvement reçu
+      console.log("Mouvement reçu:", data);
+      // Mettez à jour l'état du jeu ici
+    });
+
+    return () => {
+      socket.off("move");
+    };
+  }, []);
+
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -106,6 +121,11 @@ export function GameContent() {
   const handleDeclineDraw = () => {
     engine.declineDraw();
     setDrawOffer(undefined);
+  };
+
+  const handleMove = (from: Position, to: Position) => {
+    socket.emit("move", { from, to });
+    // Gérer le mouvement localement
   };
 
   return (
@@ -162,7 +182,7 @@ export function GameContent() {
             <ChessBoard
               className="w-full max-w-[1000px]"
               onMove={(from, to) => {
-                engine.move(from, to);
+                handleMove(from, to);
                 const engineState = engine.getGameState();
                 setIsCheck(engineState.isCheck);
                 setIsCheckmate(engineState.isCheckmate);
