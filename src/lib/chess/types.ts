@@ -28,10 +28,26 @@ export interface Move {
 export interface GameState {
   board: (ChessPiece | null)[][];
   currentTurn: PieceColor;
-  moves: Move[];
-  enPassantTarget?: Position;
   isCheck: boolean;
   isCheckmate: boolean;
   isStalemate: boolean;
   isDraw: boolean;
+  drawReason?:
+    | "stalemate"
+    | "insufficient-material"
+    | "threefold-repetition"
+    | "fifty-moves"
+    | "mutual-agreement";
+  moves: Move[];
+  enPassantTarget?: Position;
+  moveCount: number;
+  positions: string[];
+  lastPawnMoveOrCapture: number;
+  drawOffer?: PieceColor;
+  timeLeft?: {
+    white: number;
+    black: number;
+  };
+  isGameOver: boolean;
+  winner: PieceColor | null;
 }

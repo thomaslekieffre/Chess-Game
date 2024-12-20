@@ -66,6 +66,12 @@ export class ChessEngine {
       isCheckmate: false,
       isStalemate: false,
       isDraw: false,
+      drawReason: undefined,
+      moveCount: 0,
+      positions: [],
+      lastPawnMoveOrCapture: 0,
+      isGameOver: false,
+      winner: null,
     };
   }
 
@@ -363,10 +369,39 @@ export class ChessEngine {
 
   private updateGameState(): void {
     const currentColor = this.state.currentTurn;
-    const opponentColor = currentColor === "white" ? "black" : "white";
 
-    // Vérifier l'échec
+    // Vérifier la défaite au temps
+    if (this.state.timeLeft && this.state.timeLeft[currentColor] <= 0) {
+      this.state.isGameOver = true;
+      this.state.winner = currentColor === "white" ? "black" : "white";
+      return;
+    }
+
+    // Vérifier le pat
+    let hasLegalMoves = false;
+    for (let y = 0; y < 8 && !hasLegalMoves; y++) {
+      for (let x = 0; x < 8 && !hasLegalMoves; x++) {
+        const piece = this.state.board[y][x];
+        if (piece?.color === currentColor) {
+          const moves = this.getValidMoves({ x, y });
+          if (moves.length > 0) {
+            hasLegalMoves = true;
+            break;
+          }
+        }
+      }
+    }
+
+    // Si pas de mouvements légaux et pas en échec = pat
+    if (!hasLegalMoves && !this.state.isCheck) {
+      this.state.isStalemate = true;
+      this.state.isDraw = true;
+      this.state.drawReason = "stalemate";
+    }
+
+    // Trouver le roi de l'adversaire
     let kingPos: Position | null = null;
+    const opponentColor = currentColor === "white" ? "black" : "white";
     for (let y = 0; y < 8; y++) {
       for (let x = 0; x < 8; x++) {
         const piece = this.state.board[y][x];
@@ -378,30 +413,63 @@ export class ChessEngine {
       if (kingPos) break;
     }
 
+    // Vérifier si le roi est en échec
     this.state.isCheck = kingPos
       ? this.isSquareAttacked(kingPos, opponentColor)
       : false;
+    this.state.isCheckmate = false;
 
-    // Vérifier l'échec et mat ou le pat
-    let hasLegalMoves = false;
-    outerLoop: for (let y = 0; y < 8; y++) {
-      for (let x = 0; x < 8; x++) {
-        const piece = this.state.board[y][x];
-        if (piece?.color === opponentColor) {
-          const moves = this.getValidMoves({ x, y });
-          if (moves.length > 0) {
-            hasLegalMoves = true;
-            break outerLoop;
+    // Vérifier l'échec et mat seulement si le roi est en échec
+    if (this.state.isCheck && kingPos) {
+      let canEscapeCheck = false;
+
+      for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 8; x++) {
+          const piece = this.state.board[y][x];
+          if (piece?.color === opponentColor) {
+            const from = { x, y };
+            const moves = this.getPotentialMoves(from);
+
+            for (const to of moves) {
+              if (!this.moveResultsInCheck(from, to)) {
+                canEscapeCheck = true;
+                break;
+              }
+            }
           }
+          if (canEscapeCheck) break;
         }
+        if (canEscapeCheck) break;
       }
+
+      this.state.isCheckmate = !canEscapeCheck;
     }
 
-    this.state.isCheckmate = this.state.isCheck && !hasLegalMoves;
-    this.state.isStalemate = !this.state.isCheck && !hasLegalMoves;
+    // Vérifier le matériel insuffisant
+    if (this.hasInsufficientMaterial()) {
+      this.state.isDraw = true;
+      this.state.drawReason = "insufficient-material";
+      return;
+    }
+
+    // Vérifier la règle des 50 coups
+    if (this.state.lastPawnMoveOrCapture >= 100) {
+      // 50 coups = 100 demi-coups
+      this.state.isDraw = true;
+      this.state.drawReason = "fifty-moves";
+      return;
+    }
+
+    // Vérifier la triple répétition
+    if (this.checkThreefoldRepetition()) {
+      this.state.isDraw = true;
+      this.state.drawReason = "threefold-repetition";
+      return;
+    }
 
     // Changer le tour
-    this.state.currentTurn = opponentColor;
+    this.state.currentTurn =
+      this.state.currentTurn === "white" ? "black" : "white";
   }
 
   private createMove(from: Position, to: Position): Move {
@@ -485,5 +553,157 @@ export class ChessEngine {
 
     // Ajouter le coup à l'historique
     this.state.moves.push(move);
+
+    // Mettre à jour le compteur de coups sans prise ni mouvement de pion
+    if (move.piece.type === "pawn" || move.captured) {
+      this.state.lastPawnMoveOrCapture = 0;
+    } else {
+      this.state.lastPawnMoveOrCapture++;
+    }
+
+    // Sauvegarder la position pour la triple répétition
+    this.state.positions.push(this.getBoardHash());
+  }
+
+  public getCurrentTurn(): PieceColor {
+    return this.state.currentTurn;
+  }
+
+  public isKingInCheck(): boolean {
+    return this.state.isCheck;
+  }
+
+  public getGameState(): GameState {
+    return {
+      ...this.state,
+      board: this.state.board.map((row) => [...row]),
+    };
+  }
+
+  public move(from: Position, to: Position): void {
+    // Utiliser makeMove qui contient toute la logique de validation
+    const success = this.makeMove(from, to);
+
+    // Si le mouvement n'est pas valide, ne rien faire
+    if (!success) return;
+  }
+
+  private checkStalemate(): boolean {
+    const currentColor = this.state.currentTurn;
+
+    // Vérifier si le joueur a des mouvements légaux
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
+        const piece = this.state.board[y][x];
+        if (piece?.color === currentColor) {
+          const moves = this.getValidMoves({ x, y });
+          if (moves.length > 0) {
+            return false;
+          }
+        }
+      }
+    }
+
+    // Si aucun mouvement légal n'est trouvé et le roi n'est pas en échec
+    return !this.state.isCheck;
+  }
+
+  private hasInsufficientMaterial(): boolean {
+    const pieces = {
+      white: { bishops: [] as Position[], knights: 0, others: 0 },
+      black: { bishops: [] as Position[], knights: 0, others: 0 },
+    };
+
+    // Compter les pièces
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
+        const piece = this.state.board[y][x];
+        if (piece && piece.type !== "king") {
+          if (piece.type === "bishop") {
+            pieces[piece.color].bishops.push({ x, y });
+          } else if (piece.type === "knight") {
+            pieces[piece.color].knights++;
+          } else {
+            pieces[piece.color].others++;
+          }
+        }
+      }
+    }
+
+    // Cas de matériel insuffisant
+    const isInsufficient =
+      // Roi contre roi
+      (pieces.white.bishops.length === 0 &&
+        pieces.white.knights === 0 &&
+        pieces.white.others === 0 &&
+        pieces.black.bishops.length === 0 &&
+        pieces.black.knights === 0 &&
+        pieces.black.others === 0) ||
+      // Roi et fou contre roi
+      (pieces.white.bishops.length <= 1 &&
+        pieces.white.knights === 0 &&
+        pieces.white.others === 0 &&
+        pieces.black.bishops.length === 0 &&
+        pieces.black.knights === 0 &&
+        pieces.black.others === 0) ||
+      (pieces.black.bishops.length <= 1 &&
+        pieces.black.knights === 0 &&
+        pieces.black.others === 0 &&
+        pieces.white.bishops.length === 0 &&
+        pieces.white.knights === 0 &&
+        pieces.white.others === 0) ||
+      // Roi et cavalier contre roi
+      (pieces.white.bishops.length === 0 &&
+        pieces.white.knights <= 1 &&
+        pieces.white.others === 0 &&
+        pieces.black.bishops.length === 0 &&
+        pieces.black.knights === 0 &&
+        pieces.black.others === 0) ||
+      (pieces.black.bishops.length === 0 &&
+        pieces.black.knights <= 1 &&
+        pieces.black.others === 0 &&
+        pieces.white.bishops.length === 0 &&
+        pieces.white.knights === 0 &&
+        pieces.white.others === 0);
+
+    return isInsufficient;
+  }
+
+  private getBoardHash(): string {
+    return this.state.board
+      .map((row) =>
+        row
+          .map((piece) =>
+            piece ? `${piece.type}${piece.color}${piece.hasMoved}` : "empty"
+          )
+          .join(",")
+      )
+      .join("|");
+  }
+
+  private checkThreefoldRepetition(): boolean {
+    const currentPosition = this.getBoardHash();
+    const occurrences = this.state.positions.filter(
+      (pos) => pos === currentPosition
+    ).length;
+    return occurrences >= 3;
+  }
+
+  public offerDraw(color: PieceColor): void {
+    if (color === this.state.currentTurn) {
+      this.state.drawOffer = color;
+    }
+  }
+
+  public acceptDraw(): void {
+    if (this.state.drawOffer) {
+      this.state.isDraw = true;
+      this.state.drawReason = "mutual-agreement";
+      this.state.drawOffer = undefined;
+    }
+  }
+
+  public declineDraw(): void {
+    this.state.drawOffer = undefined;
   }
 }

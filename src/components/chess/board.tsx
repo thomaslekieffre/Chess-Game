@@ -13,6 +13,7 @@ interface ChessBoardProps {
   autoPlay?: boolean;
   darkSquareColor?: string;
   lightSquareColor?: string;
+  onCheck?: (isCheck: boolean) => void;
 }
 
 const PIECE_SYMBOLS: Record<PieceType, { white: string; black: string }> = {
@@ -35,6 +36,7 @@ export function ChessBoard({
   autoPlay = false,
   darkSquareColor = "bg-muted dark:bg-muted hover:bg-black/10 dark:hover:bg-muted/80",
   lightSquareColor = "bg-white/80 dark:bg-muted/50 hover:bg-black/10 dark:hover:bg-muted/60",
+  onCheck,
 }: ChessBoardProps) {
   const [engine] = useState(() => new ChessEngine());
   const [board, setBoard] = useState<(ChessPiece | null)[][]>(
@@ -42,6 +44,30 @@ export function ChessBoard({
   );
   const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
+  const [kingInCheck, setKingInCheck] = useState<Position | null>(null);
+
+  const findKing = (color: "white" | "black"): Position | null => {
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
+        const piece = board[y][x];
+        if (piece?.type === "king" && piece.color === color) {
+          return { x, y };
+        }
+      }
+    }
+    return null;
+  };
+
+  const updateCheckStatus = () => {
+    const currentKingPos = findKing(engine.getCurrentTurn());
+    if (currentKingPos && engine.isKingInCheck()) {
+      setKingInCheck(currentKingPos);
+      onCheck?.(true);
+    } else {
+      setKingInCheck(null);
+      onCheck?.(false);
+    }
+  };
 
   useEffect(() => {
     if (autoPlay) {
@@ -71,6 +97,7 @@ export function ChessBoard({
       const success = engine.makeMove(selectedPiece, { x, y });
       if (success) {
         setBoard(engine.getBoard());
+        updateCheckStatus();
         onMove?.(selectedPiece, { x, y });
       }
       setSelectedPiece(null);
@@ -81,6 +108,7 @@ export function ChessBoard({
   const renderSquare = (piece: ChessPiece | null, x: number, y: number) => {
     const isSelected = selectedPiece?.x === x && selectedPiece?.y === y;
     const isValidMove = validMoves.some((move) => move.x === x && move.y === y);
+    const isKingInCheck = kingInCheck?.x === x && kingInCheck?.y === y;
 
     return (
       <motion.div
@@ -89,17 +117,21 @@ export function ChessBoard({
           "flex items-center justify-center text-4xl transition-colors relative",
           (x + y) % 2 === 0 ? darkSquareColor : lightSquareColor,
           isSelected && "ring-2 ring-primary",
-          isValidMove && "after:absolute after:inset-0 after:bg-primary/20"
+          isValidMove && "after:absolute after:inset-0 after:bg-primary/20",
+          isKingInCheck && "ring-4 ring-red-500 animate-pulse bg-red-500/20"
         )}
         onClick={() => !autoPlay && handleSquareClick(x, y)}
-        whileHover={{ scale: autoPlay ? 1 : 1.05 }}
-        transition={{ type: "spring", stiffness: 300 }}
       >
         {piece && (
           <motion.div
             initial={animated ? { scale: 0 } : false}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 300 }}
+            className={cn(
+              isKingInCheck &&
+                piece.type === "king" &&
+                "text-red-500 animate-bounce"
+            )}
           >
             <PieceComponent piece={piece} />
           </motion.div>
