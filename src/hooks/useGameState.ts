@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChessEngine } from "@/lib/chess/engine";
+import { ChessPiece } from "@/lib/chess/types";
 
 export function useGameState() {
   const [currentTurn, setCurrentTurn] = useState<"white" | "black">("white");
@@ -8,6 +9,9 @@ export function useGameState() {
   const [winner, setWinner] = useState<"white" | "black" | null>(null);
   const [isGameOver, setIsGameOver] = useState(false);
   const [engine] = useState(() => new ChessEngine());
+  const [board, setBoard] = useState<(ChessPiece | null)[][]>(
+    engine.getBoard()
+  );
   const [isDraw, setIsDraw] = useState(false);
   const [drawReason, setDrawReason] = useState<
     | "stalemate"
@@ -20,6 +24,8 @@ export function useGameState() {
 
   const updateGameState = () => {
     const engineState = engine.getGameState();
+
+    setBoard(engine.getBoard())
 
     setIsCheck(engineState.isCheck);
     setIsCheckmate(engineState.isCheckmate);
@@ -51,5 +57,7 @@ export function useGameState() {
     setDrawReason,
     isStalemate,
     setIsStalemate,
+    board,
+    setBoard,
   };
 }

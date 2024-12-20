@@ -14,6 +14,9 @@ interface ChessBoardProps {
   darkSquareColor?: string;
   lightSquareColor?: string;
   onCheck?: (isCheck: boolean) => void;
+  engine:ChessEngine;
+  board:(ChessPiece | null)[][]
+  setBoard:Function;
 }
 
 const PIECE_SYMBOLS: Record<PieceType, { white: string; black: string }> = {
@@ -37,11 +40,14 @@ export function ChessBoard({
   darkSquareColor = "bg-muted dark:bg-muted hover:bg-black/10 dark:hover:bg-muted/80",
   lightSquareColor = "bg-white/80 dark:bg-muted/50 hover:bg-black/10 dark:hover:bg-muted/60",
   onCheck,
+  engine,
+  board,
+  setBoard,
 }: ChessBoardProps) {
-  const [engine] = useState(() => new ChessEngine());
-  const [board, setBoard] = useState<(ChessPiece | null)[][]>(
-    engine.getBoard()
-  );
+  // const [engine] = useState(() => new ChessEngine());
+  // const [board, setBoard] = useState<(ChessPiece | null)[][]>(
+  //   engine.getBoard()
+  // );
   const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
   const [kingInCheck, setKingInCheck] = useState<Position | null>(null);

@@ -38,6 +38,9 @@ export function GameContent() {
     setDrawReason,
     isStalemate,
     setIsStalemate,
+    board,
+    setBoard,
+    updateGameState,
   } = useGameState();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [isResigned, setIsResigned] = useState(false);
@@ -94,7 +97,11 @@ export function GameContent() {
 
       // Appliquer le mouvement reçu
       const { from, to } = data;
+
+
       const success = engine.makeMove(from, to);
+      updateGameState()
+
 
       if (success) {
         const engineState = engine.getGameState();
@@ -209,6 +216,9 @@ export function GameContent() {
           <div className="flex flex-col items-center">
             <ChessBoard
               className="w-full max-w-[1000px]"
+              board={board}
+              setBoard={setBoard}
+              engine={engine}
               onMove={(from, to) => {
                 handleMove(from, to);
                 const engineState = engine.getGameState();
