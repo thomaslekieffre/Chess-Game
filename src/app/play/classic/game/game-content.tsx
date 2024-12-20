@@ -90,15 +90,43 @@ export function GameContent() {
 
   useEffect(() => {
     socket.on("move", (data) => {
-      // Gérer le mouvement reçu
       console.log("Mouvement reçu:", data);
-      // Mettez à jour l'état du jeu ici
+
+      // Appliquer le mouvement reçu
+      const { from, to } = data;
+      const success = engine.makeMove(from, to);
+
+      if (success) {
+        const engineState = engine.getGameState();
+        setIsCheck(engineState.isCheck);
+        setIsCheckmate(engineState.isCheckmate);
+        setIsStalemate(engineState.isStalemate);
+        setCurrentTurn(engineState.currentTurn);
+
+        if (engineState.isCheckmate || engineState.isStalemate) {
+          setIsGameOver(true);
+          if (engineState.isCheckmate) {
+            setWinner(getOppositeColor(currentTurn));
+          }
+        }
+      } else {
+        console.error("Le mouvement n'est pas valide.");
+      }
     });
 
     return () => {
       socket.off("move");
     };
-  }, []);
+  }, [
+    currentTurn,
+    engine,
+    setIsCheck,
+    setIsCheckmate,
+    setIsStalemate,
+    setCurrentTurn,
+    setIsGameOver,
+    setWinner,
+  ]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
