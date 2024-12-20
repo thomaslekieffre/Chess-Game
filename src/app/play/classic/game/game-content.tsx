@@ -2,13 +2,16 @@
 
 import { useSearchParams } from "next/navigation";
 import { ChessBoard } from "@/components/chess/board";
-import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
-import { GameStatus } from "./game-status";
 import { GameMessages } from "./game-messages";
 import { useGameState } from "@/hooks/useGameState";
 import { PieceColor } from "@/lib/chess/types";
 import { getOppositeColor } from "@/lib/chess/utils";
+import { PlayerCard } from "@/components/chess/player-card";
+import { GameControls } from "@/components/chess/game-controls";
+import { MovesHistory } from "@/components/chess/moves-history";
+import { GameChat } from "@/components/chess/game-chat";
+import { Button } from "@/components/ui/button";
 
 export function GameContent() {
   const searchParams = useSearchParams();
@@ -106,33 +109,58 @@ export function GameContent() {
   };
 
   return (
-    <main className="min-h-screen pt-20 bg-background">
-      <div className="container">
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-8 items-start">
-          <GameStatus
-            whiteTime={whiteTime}
-            blackTime={blackTime}
-            isCheckmate={isCheckmate}
-            isCheck={isCheck}
-            isStalemate={isStalemate}
-            currentTurn={currentTurn}
-            onResign={() => {
-              setIsGameOver(true);
-              setIsResigned(true);
-              setWinner(getOppositeColor(currentTurn));
-            }}
-            winner={winner}
-            isGameOver={isGameOver}
-            onOfferDraw={handleOfferDraw}
-            drawOffer={drawOffer}
-            onAcceptDraw={handleAcceptDraw}
-            onDeclineDraw={handleDeclineDraw}
-            playerColor={playerColor}
-          />
+    <main className="min-h-screen bg-background overflow-hidden">
+      <div className="container max-w-[1600px] mx-auto px-4 h-full">
+        {/* Header de la partie */}
+        <div className="py-6 mb-8 border-b">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">Partie Classique</h1>
+              <p className="text-muted-foreground">
+                {timeInMinutes} minutes par joueur
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <Button variant="outline" size="sm">
+                Copier le lien
+              </Button>
+              <Button variant="outline" size="sm">
+                Quitter la partie
+              </Button>
+            </div>
+          </div>
+        </div>
 
-          <div className="w-[800px]">
+        {/* Layout principal */}
+        <div className="grid grid-cols-[250px_1fr_250px] gap-4">
+          {/* Panneau gauche */}
+          <div className="space-y-4">
+            <PlayerCard
+              name="Joueur Noir"
+              rating={850}
+              time={formatTime(blackTime)}
+              color="black"
+              isCurrentTurn={currentTurn === "black"}
+            />
+            <GameControls
+              onResign={() => {
+                setIsGameOver(true);
+                setIsResigned(true);
+                setWinner(getOppositeColor(currentTurn));
+              }}
+              onOfferDraw={handleOfferDraw}
+              drawOffer={drawOffer}
+              onAcceptDraw={handleAcceptDraw}
+              onDeclineDraw={handleDeclineDraw}
+              playerColor={playerColor}
+              isGameOver={isGameOver}
+            />
+          </div>
+
+          {/* Zone centrale avec l'échiquier */}
+          <div className="flex flex-col items-center">
             <ChessBoard
-              className="w-full"
+              className="w-full max-w-[1000px]"
               onMove={(from, to) => {
                 engine.move(from, to);
                 const engineState = engine.getGameState();
@@ -151,15 +179,21 @@ export function GameContent() {
             />
           </div>
 
-          <Card className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <h3 className="font-semibold">Joueur Blanc</h3>
-                <p className="text-sm text-muted-foreground">922</p>
-              </div>
-              <div className="text-2xl font-mono">{formatTime(whiteTime)}</div>
-            </div>
-          </Card>
+          {/* Panneau droit */}
+          <div className="space-y-4">
+            <PlayerCard
+              name="Joueur Blanc"
+              rating={922}
+              time={formatTime(whiteTime)}
+              color="white"
+              isCurrentTurn={currentTurn === "white"}
+            />
+            <MovesHistory
+              moves={engine.getMoves()}
+              className="h-[calc(100vh-400px)]"
+            />
+            <GameChat className="h-[200px]" />
+          </div>
         </div>
       </div>
 

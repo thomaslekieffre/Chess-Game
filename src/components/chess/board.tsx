@@ -141,12 +141,39 @@ export function ChessBoard({
   };
 
   return (
-    <div className={cn("w-full max-w-3xl mx-auto", className)}>
-      <div className="aspect-square w-full bg-background/50 dark:bg-card/50 backdrop-blur-sm p-6 rounded-xl">
-        <div className="grid grid-cols-8 grid-rows-8 h-full w-full rounded-lg overflow-hidden border border-border">
-          {board.map((row, y) =>
-            row.map((piece, x) => renderSquare(piece, x, y))
-          )}
+    <div className={cn("w-full max-w-4xl mx-auto", className)}>
+      <div className="aspect-square w-full bg-background/50 dark:bg-card/50 backdrop-blur-sm p-8 rounded-xl">
+        <div className="relative h-full">
+          {/* Coordonnées verticales (8-1) */}
+          <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-around text-sm font-medium text-muted-foreground">
+            {["8", "7", "6", "5", "4", "3", "2", "1"].map((coord) => (
+              <div
+                key={coord}
+                className="flex items-center justify-center w-6 h-6"
+              >
+                {coord}
+              </div>
+            ))}
+          </div>
+
+          {/* Coordonnées horizontales (a-h) */}
+          <div className="absolute -bottom-8 left-0 right-0 flex justify-around text-sm font-medium text-muted-foreground">
+            {["a", "b", "c", "d", "e", "f", "g", "h"].map((coord) => (
+              <div
+                key={coord}
+                className="flex items-center justify-center w-6 h-6"
+              >
+                {coord}
+              </div>
+            ))}
+          </div>
+
+          {/* Échiquier */}
+          <div className="grid grid-cols-8 grid-rows-8 h-full w-full rounded-lg overflow-hidden border-2 border-border">
+            {board.map((row, y) =>
+              row.map((piece, x) => renderSquare(piece, x, y))
+            )}
+          </div>
         </div>
       </div>
     </div>

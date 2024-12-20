@@ -706,4 +706,8 @@ export class ChessEngine {
   public declineDraw(): void {
     this.state.drawOffer = undefined;
   }
+
+  getMoves(): Move[] {
+    return this.state.moves;
+  }
 }
