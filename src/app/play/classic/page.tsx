@@ -45,7 +45,7 @@ export default function ClassicModePage() {
         .insert({
           cadence:`${minutes}|${increment}`,
           game_mode:'classic',
-          status:'waiting',
+          status:'waiting_for_player',
           rated:false,
           players:{player1:{
             id:user.id,
@@ -57,7 +57,7 @@ export default function ClassicModePage() {
         })
         .then((x)=>{
           console.log('aaaaaaaaaaaaaaa',x)
-          return alert(x.error?.message)
+          return alert(JSON.stringify(x))
           if(x.error){
           }
           router.push(`/play/${x}`);
