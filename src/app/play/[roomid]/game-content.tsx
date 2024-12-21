@@ -98,10 +98,8 @@ export function GameContent() {
       // Appliquer le mouvement reçu
       const { from, to } = data;
 
-
       const success = engine.makeMove(from, to);
-      updateGameState()
-
+      updateGameState();
 
       if (success) {
         const engineState = engine.getGameState();
@@ -133,6 +131,7 @@ export function GameContent() {
     setCurrentTurn,
     setIsGameOver,
     setWinner,
+    updateGameState,
   ]);
 
   const formatTime = (seconds: number) => {
