@@ -14,10 +14,10 @@ interface ChessBoardProps {
   darkSquareColor?: string;
   lightSquareColor?: string;
   onCheck?: (isCheck: boolean) => void;
-  engine:ChessEngine;
-  board:(ChessPiece | null)[][]
-  setBoard:Function;
-  playerColor:PieceColor;
+  engine: ChessEngine;
+  board: (ChessPiece | null)[][];
+  setBoard: (board: (ChessPiece | null)[][]) => void;
+  playerColor: PieceColor;
 }
 
 const PIECE_SYMBOLS: Record<PieceType, { white: string; black: string }> = {
@@ -92,15 +92,15 @@ export function ChessBoard({
 
       return () => clearInterval(interval);
     }
-  }, [autoPlay, engine]);
+  }, [autoPlay, engine, board, setBoard, playerColor]);
 
   const handleSquareClick = (x: number, y: number) => {
     if (!selectedPiece) {
-      console.log('r')
-      if(board[y][x]?.color==playerColor){
-        console.log('g')
+      console.log("r");
+      if (board[y][x]?.color == playerColor) {
+        console.log("g");
         const moves = engine.getValidMoves({ x, y });
-        console.log(moves)
+        console.log(moves);
         if (moves.length > 0) {
           setSelectedPiece({ x, y });
           setValidMoves(moves);
@@ -157,9 +157,9 @@ export function ChessBoard({
     <div className={cn("w-full max-w-4xl mx-auto", className)}>
       <div className="aspect-square w-full bg-background/50 dark:bg-card/50 backdrop-blur-sm p-8 rounded-xl">
         <div className="relative h-full">
-          {/* Coordonnées verticales (8-1) */}
+          {/* Coordonnées verticales (1-8) */}
           <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-around text-sm font-medium text-muted-foreground">
-            {["8", "7", "6", "5", "4", "3", "2", "1"].map((coord) => (
+            {["1", "2", "3", "4", "5", "6", "7", "8"].map((coord) => (
               <div
                 key={coord}
                 className="flex items-center justify-center w-6 h-6"
@@ -184,7 +184,9 @@ export function ChessBoard({
           {/* Échiquier */}
           <div className="grid grid-cols-8 grid-rows-8 h-full w-full rounded-lg overflow-hidden border-2 border-border">
             {board.map((row, y) =>
-              row.map((piece, x) => renderSquare(piece, x, y))
+              row.map((piece, x) =>
+                renderSquare(piece, x, playerColor === "black" ? 7 - y : y)
+              )
             )}
           </div>
         </div>

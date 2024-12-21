@@ -42,9 +42,9 @@ export default function ClassicModePage() {
     increment: number
   ) => {
     if (isSignedIn) {
-      let currentDate = new Date();
-      let timestamp = currentDate.getTime();
-      console.log(timestamp)
+      const currentDate = new Date();
+      const timestamp = currentDate.getTime();
+      console.log(timestamp);
       console.log(user);
       await supabase
         .from("room")
@@ -57,13 +57,13 @@ export default function ClassicModePage() {
             player1: {
               id: user.id,
               color: "white",
-              time: minutes*60,
+              time: minutes * 60,
             },
             player2: {},
-            turn:'white',
+            turn: "white",
           },
-          game:'',
-          createdAt:timestamp,
+          game: "",
+          createdAt: timestamp,
         })
         .select("id")
         .then((x) => {

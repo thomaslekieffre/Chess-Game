@@ -7,7 +7,6 @@ import { convertToPGN } from "./lib/chess/pgn";
 const app = express();
 const server = http.createServer(app);
 
-// Configurer CORS
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -18,31 +17,28 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("Un joueur est connecté"+socket.id);
+  console.log("Un joueur est connecté" + socket.id);
 
-  socket.on('room_log', (data) => {
-    console.log('Utilisateur connecter a la room '+data.id)
-    socket.join(`game_${data.id}`)
-    socket.emit('connected-to-the-room',data)
-  })
+  socket.on("room_log", (data) => {
+    console.log("Utilisateur connecter a la room " + data.id);
+    socket.join(`game_${data.id}`);
+    socket.emit("connected-to-the-room", data);
+  });
 
   socket.on("move", async (data) => {
     await supabase
-          .from('room')
-          .update({ game:convertToPGN(data.moves) })
-          .eq('id', roomId)
-          .then(x=>{
-            console.log(x)
-            if(x.error){
-              alert('Erreur lors de la connexion a la partie')
-            }else{
-              setGameInfos(couleur,parseInt(roomJson.cadence.split('|')[0]))
-              console.log('edited')
-
-            }
-          })
-    io.to(`game_${data.roomId}`).emit(`move`, data)
-    // socket.broadcast.emit("move", data);
+      .from("room")
+      .update({ game: convertToPGN(data.moves) })
+      .eq("id", data.roomId)
+      .then((x) => {
+        console.log(x);
+        if (x.error) {
+          alert("Erreur lors de la connexion a la partie");
+        } else {
+          console.log("edited");
+        }
+      });
+    io.to(`game_${data.roomId}`).emit(`move`, data);
   });
 
   socket.on("disconnect", () => {
