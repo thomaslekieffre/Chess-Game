@@ -26,7 +26,7 @@ type PropsType = {
 export function GameContent(props:PropsType) {
   const {roomId} = props
   const { isSignedIn, user } = useUser();
-  // const timeInMinutes = parseInt(searchParams.get("time") || "3");
+  
   const [whiteTime, setWhiteTime] = useState(10*60);
   const [blackTime, setBlackTime] = useState(10*60);
   const [isGameStarted,setIsGameStarted] = useState(false)
@@ -40,7 +40,7 @@ export function GameContent(props:PropsType) {
   }
 
   const fetchRoomInfo = async () => {
-    console.log('bca')
+    
     const { data, error } = await supabase
       .from('room')  // Type the response as roomType
       .select('*')
@@ -206,7 +206,7 @@ export function GameContent(props:PropsType) {
       console.log("Mouvement reçu:", data);
 
       // Appliquer le mouvement reçu
-      const { from, to } = data;
+      const { from, to, moves } = data;
 
       const success = engine.makeMove(from, to);
       updateGameState();
@@ -268,8 +268,7 @@ export function GameContent(props:PropsType) {
   };
 
   const handleMove = (from: Position, to: Position) => {
-    socket.emit("move", { from, to });
-    // Gérer le mouvement localement
+    socket.emit("move", { from, to, roomId, moves:engine.getMoves() });
   };
 
   return (
@@ -304,13 +303,20 @@ export function GameContent(props:PropsType) {
             <div className="grid grid-cols-[250px_1fr_250px] gap-4">
               {/* Panneau gauche */}
               <div className="space-y-4">
-                <PlayerCard
+                {playerColor=='white'?(<PlayerCard
                   name="Joueur Noir"
                   rating={850}
                   time={formatTime(blackTime)}
                   color="black"
                   isCurrentTurn={currentTurn === "black"}
-                />
+                />):(<PlayerCard
+                  name="Joueur Blanc"
+                  rating={922}
+                  time={formatTime(whiteTime)}
+                  color="white"
+                  isCurrentTurn={currentTurn === "white"}
+                />)}
+                
                 <GameControls
                   onResign={() => {
                     setIsGameOver(true);
@@ -324,6 +330,21 @@ export function GameContent(props:PropsType) {
                   playerColor={playerColor}
                   isGameOver={isGameOver}
                 />
+
+                {playerColor=='white'?(<PlayerCard
+                  name="Joueur Blanc"
+                  rating={922}
+                  time={formatTime(whiteTime)}
+                  color="white"
+                  isCurrentTurn={currentTurn === "white"}
+                />):(<PlayerCard
+                  name="Joueur Noir"
+                  rating={850}
+                  time={formatTime(blackTime)}
+                  color="black"
+                  isCurrentTurn={currentTurn === "black"}
+                />)}
+                
               </div>
 
               {/* Zone centrale avec l'échiquier */}
@@ -354,13 +375,7 @@ export function GameContent(props:PropsType) {
 
               {/* Panneau droit */}
               <div className="space-y-4">
-                <PlayerCard
-                  name="Joueur Blanc"
-                  rating={922}
-                  time={formatTime(whiteTime)}
-                  color="white"
-                  isCurrentTurn={currentTurn === "white"}
-                />
+                
                 <MovesHistory
                   moves={engine.getMoves()}
                   className="h-[calc(100vh-400px)]"

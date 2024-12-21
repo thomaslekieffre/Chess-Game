@@ -1,6 +1,8 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
+import { supabase } from "./lib/supabase";
+import { convertToPGN } from "./lib/chess/pgn";
 
 const app = express();
 const server = http.createServer(app);
@@ -24,8 +26,23 @@ io.on("connection", (socket) => {
     socket.emit('connected-to-the-room',data)
   })
 
-  socket.on("move", (data) => {
-    socket.broadcast.emit("move", data);
+  socket.on("move", async (data) => {
+    await supabase
+          .from('room')
+          .update({ game:convertToPGN(data.moves) })
+          .eq('id', roomId)
+          .then(x=>{
+            console.log(x)
+            if(x.error){
+              alert('Erreur lors de la connexion a la partie')
+            }else{
+              setGameInfos(couleur,parseInt(roomJson.cadence.split('|')[0]))
+              console.log('edited')
+
+            }
+          })
+    io.to(`game_${data.roomId}`).emit(`move`, data)
+    // socket.broadcast.emit("move", data);
   });
 
   socket.on("disconnect", () => {
