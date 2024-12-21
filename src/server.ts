@@ -4,6 +4,13 @@ import { Server } from "socket.io";
 import { supabase } from "./lib/supabase";
 import { convertToPGN } from "./lib/chess/pgn";
 
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({
+  path: path.join(process.cwd(), ".env.local"), // ou ".env"
+});
+
 const app = express();
 const server = http.createServer(app);
 
