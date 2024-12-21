@@ -16,7 +16,13 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("Un joueur est connecté");
+  console.log("Un joueur est connecté"+socket.id);
+
+  socket.on('room_log', (data) => {
+    console.log('Utilisateur connecter a la room '+data.id)
+    socket.join(`game_${data.id}`)
+    socket.emit('connected-to-the-room',data)
+  })
 
   socket.on("move", (data) => {
     socket.broadcast.emit("move", data);

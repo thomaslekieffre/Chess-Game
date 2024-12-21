@@ -42,6 +42,9 @@ export default function ClassicModePage() {
     increment: number
   ) => {
     if (isSignedIn) {
+      let currentDate = new Date();
+      let timestamp = currentDate.getTime();
+      console.log(timestamp)
       console.log(user);
       await supabase
         .from("room")
@@ -54,18 +57,20 @@ export default function ClassicModePage() {
             player1: {
               id: user.id,
               color: "white",
-              time: minutes,
+              time: minutes*60,
             },
             player2: {},
+            turn:'white',
           },
+          game:'',
+          createdAt:timestamp,
         })
         .select("id")
         .then((x) => {
-          console.log("Réponse de Supabase:", x);
+          // console.log("Réponse de Supabase:", x);
           if (x.error) {
             alert("Erreur lors de la création de la room");
           } else {
-            alert(`Room créée avec l'ID: ${x.data[0].id}`);
             router.push(`/play/${x.data[0].id}`);
           }
         });

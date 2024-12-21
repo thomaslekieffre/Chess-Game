@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ChessEngine } from "@/lib/chess/engine";
-import { ChessPiece, Position, PieceType } from "@/lib/chess/types";
+import { ChessPiece, Position, PieceType, PieceColor } from "@/lib/chess/types";
 
 interface ChessBoardProps {
   animated?: boolean;
@@ -17,6 +17,7 @@ interface ChessBoardProps {
   engine:ChessEngine;
   board:(ChessPiece | null)[][]
   setBoard:Function;
+  playerColor:PieceColor;
 }
 
 const PIECE_SYMBOLS: Record<PieceType, { white: string; black: string }> = {
@@ -43,6 +44,7 @@ export function ChessBoard({
   engine,
   board,
   setBoard,
+  playerColor,
 }: ChessBoardProps) {
   // const [engine] = useState(() => new ChessEngine());
   // const [board, setBoard] = useState<(ChessPiece | null)[][]>(
@@ -94,10 +96,15 @@ export function ChessBoard({
 
   const handleSquareClick = (x: number, y: number) => {
     if (!selectedPiece) {
-      const moves = engine.getValidMoves({ x, y });
-      if (moves.length > 0) {
-        setSelectedPiece({ x, y });
-        setValidMoves(moves);
+      console.log('r')
+      if(board[y][x]?.color==playerColor){
+        console.log('g')
+        const moves = engine.getValidMoves({ x, y });
+        console.log(moves)
+        if (moves.length > 0) {
+          setSelectedPiece({ x, y });
+          setValidMoves(moves);
+        }
       }
     } else {
       const success = engine.makeMove(selectedPiece, { x, y });

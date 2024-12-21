@@ -51,3 +51,25 @@ export interface GameState {
   isGameOver: boolean;
   winner: PieceColor | null;
 }
+
+type playerType = {
+  id:string;
+  color:PieceColor;
+  temp:string;
+}
+
+export type roomType = {
+  id:string;
+  cadence:string;
+  game_mode:string;
+  status:string;
+  rated:Boolean;
+  players:{
+    player1:playerType;
+    player2:playerType;
+    lastmove:string;
+  }
+  game:string;
+  createdAt:string;
+  turn:string;
+}
