@@ -118,6 +118,28 @@ export function ChessBoard({
     }
   };
 
+  const reverseBoard = (b:Array<Array<any>>) => {
+    let newBoard = []
+    console.log(b)
+    for (let i = b.length-1; i > -1; i--) {
+      const ele = b[i];
+      let newRow = []
+
+      if(ele){
+        for (let j = ele.length-1; j > -1; j--) {
+          const ele2 = ele[j]
+          newRow.push(ele2)
+        }
+        newBoard.push(newRow)
+      }else{
+        newBoard.push(ele)
+      }
+
+    }
+    console.log(newBoard)
+    return newBoard
+  }
+
   const renderSquare = (piece: ChessPiece | null, x: number, y: number) => {
     const isSelected = selectedPiece?.x === x && selectedPiece?.y === y;
     const isValidMove = validMoves.some((move) => move.x === x && move.y === y);
@@ -159,7 +181,7 @@ export function ChessBoard({
         <div className="relative h-full">
           {/* Coordonnées verticales (1-8) */}
           <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-around text-sm font-medium text-muted-foreground">
-            {["1", "2", "3", "4", "5", "6", "7", "8"].map((coord) => (
+            {(playerColor=='black'?["1", "2", "3", "4", "5", "6", "7", "8"]:["8", "7", "6", "5", "4", "3", "2", "1"]).map((coord) => (
               <div
                 key={coord}
                 className="flex items-center justify-center w-6 h-6"
@@ -183,7 +205,7 @@ export function ChessBoard({
 
           {/* Échiquier */}
           <div className="grid grid-cols-8 grid-rows-8 h-full w-full rounded-lg overflow-hidden border-2 border-border">
-            {board.map((row, y) =>
+            {(playerColor=='white'&&board&&board[0]!==undefined?board:reverseBoard(board)).map((row, y) =>
               row.map((piece, x) =>
                 renderSquare(piece, x, playerColor === "black" ? 7 - y : y)
               )

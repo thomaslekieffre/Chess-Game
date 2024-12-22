@@ -144,8 +144,10 @@ export function GameContent(props: PropsType) {
   ]);
 
   const joinGame = async (roomJson: roomType) => {
+    console.log('join gammeeee')
     console.log(isSignedIn);
     console.log(roomJson);
+    console.log(isSignedIn)
     if (isSignedIn && roomJson) {
       console.log("FF");
       if (
@@ -272,6 +274,7 @@ export function GameContent(props: PropsType) {
         <p>{roomId}</p>
         <p>{JSON.stringify(roomInfo)}</p>
         <p>joueur : {playerColor}</p>
+        <p>id : {user?.id}</p>
         <div className="container max-w-[1600px] mx-auto px-4 h-full">
           {/* Header de la partie */}
           <div className="py-6 mb-8 border-b">

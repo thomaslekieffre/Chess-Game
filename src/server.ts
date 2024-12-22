@@ -1,8 +1,10 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
-import { supabase } from "./lib/supabase";
+// import { supabase } from "./lib/supabase";
 import { convertToPGN } from "./lib/chess/pgn";
+
+// import {updateData} from './actions/supabase'
 
 import dotenv from "dotenv";
 import path from "path";
@@ -33,19 +35,30 @@ io.on("connection", (socket) => {
   });
 
   socket.on("move", async (data) => {
-    await supabase
-      .from("room")
-      .update({ game: convertToPGN(data.moves) })
-      .eq("id", data.roomId)
-      .then((x) => {
-        console.log(x);
-        if (x.error) {
-          alert("Erreur lors de la connexion a la partie");
-        } else {
-          console.log("edited");
-        }
-      });
+    // await supabase
+    //   .from("room")
+    //   .update({ game: convertToPGN(data.moves) })
+    //   .eq("id", data.roomId)
+    //   .then((x) => {
+    //     console.log(x);
+    //     if (x.error) {
+    //       alert("Erreur lors de la connexion a la partie");
+    //     } else {
+    //       console.log("edited");
+    //     }
+    //   });
     io.to(`game_${data.roomId}`).emit(`move`, data);
+    return
+    // updateData('room',{game:convertToPGN(data.moves)},'id',data.roomId,(x:any)=>{
+    //   console.log(x);
+    //   if (x.error) {
+    //     alert("Erreur lors de la connexion a la partie");
+    //   } else {
+    //     console.log("edited");
+    //     io.to(`game_${data.roomId}`).emit(`move`, data);
+    //   }
+      
+    // })
   });
 
   socket.on("disconnect", () => {
