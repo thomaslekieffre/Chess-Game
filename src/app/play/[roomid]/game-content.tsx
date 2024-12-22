@@ -27,7 +27,10 @@ export function GameContent(props: PropsType) {
 
   const [whiteTime, setWhiteTime] = useState(10 * 60);
   const [blackTime, setBlackTime] = useState(10 * 60);
-  const [isGameStarted] = useState(false);
+
+  const [isGameStarted,setIsGameStarted] = useState(false)
+  const [isPlaying,setIsPlaying] = useState(false)
+
   const [roomInfo, setRoomInfo] = useState<roomType>();
 
   const setGameInfos = async (color: PieceColor, temp: number) => {
@@ -90,6 +93,8 @@ export function GameContent(props: PropsType) {
   useEffect(() => {
     if (!roomInfo) {
       fetchRoomInfo();
+    }else if(isSignedIn&&!isPlaying){
+      socket.emit("room_log", roomInfo);
     }
 
     if (isGameOver) {
@@ -141,6 +146,7 @@ export function GameContent(props: PropsType) {
     isGameStarted,
     fetchRoomInfo,
     roomInfo,
+    isSignedIn
   ]);
 
   const joinGame = async (roomJson: roomType) => {
