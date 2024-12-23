@@ -31,6 +31,31 @@ export function GameContent(props: PropsType) {
   const [isGameStarted,setIsGameStarted] = useState(false)
   const [isPlaying,setIsPlaying] = useState(false)
 
+  const [whitePlayerInfo,setWhitePlayerInfo] = useState({
+    username:'White',
+    elo:'1200?',
+  })
+
+  const [blackPlayerInfo,setBlackPlayerInfo] = useState({
+    username:'Black',
+    elo:'1200?',
+  })
+
+  const updatePlayersData = (info:roomType) => {
+    if(info&&info.id){
+      if(info.players.player1.color=='white'){
+        setWhitePlayerInfo({elo:info.players.player1.elo,username:info.players.player1.username})
+      }else{
+        setBlackPlayerInfo({elo:info.players.player1.elo,username:info.players.player1.username})
+      }
+      if(info.players.player2&&info.players.player2.color=='white'){
+        setWhitePlayerInfo({elo:info.players.player2.elo,username:info.players.player2.username})
+      }else{
+        setBlackPlayerInfo({elo:info.players.player2.elo,username:info.players.player2.username})
+      }
+    }
+  }
+
   const [roomInfo, setRoomInfo] = useState<roomType>();
 
   const setGameInfos = async (color: PieceColor, temp: number) => {
@@ -55,6 +80,7 @@ export function GameContent(props: PropsType) {
 
 
       setRoomInfo(dataJson);
+      updatePlayersData(dataJson)
 
       socket.emit("room_log", dataJson);
       return dataJson;
@@ -152,11 +178,12 @@ export function GameContent(props: PropsType) {
     if(user?.id&&roomInfo){
       console.log('TRY')
       socket.emit("room_log", roomInfo);
+      updatePlayersData(roomInfo)
     }
 
     console.log('ABAB',user?.id,roomInfo)
 
-  },[user])
+  },[user,roomInfo?.id])
 
   const joinGame = async (roomJson: roomType) => {
     // console.log('join gammeeee')
@@ -180,6 +207,8 @@ export function GameContent(props: PropsType) {
           id: user.id,
           color: couleur,
           temp: `${parseInt(roomJson.cadence.split("|")[0]) * 60}`,
+          username:user.username?user.username:'ERREUR',
+          elo:'1200?',
         };
 
         await supabase
@@ -284,6 +313,7 @@ export function GameContent(props: PropsType) {
   };
 
   const handleMove = (from: Position, to: Position) => {
+    console.log(engine.getStrMove())
     socket.emit("move", { from, to, roomId, moves: engine.getMoves(),by:user?.id });
   };
 
@@ -322,16 +352,16 @@ export function GameContent(props: PropsType) {
               <div className="space-y-4">
                 {playerColor == "white" ? (
                   <PlayerCard
-                    name="Joueur Noir"
-                    rating={850}
+                    name={blackPlayerInfo.username}
+                    rating={blackPlayerInfo.elo}
                     time={formatTime(blackTime)}
                     color="black"
                     isCurrentTurn={currentTurn === "black"}
                   />
                 ) : (
                   <PlayerCard
-                    name="Joueur Blanc"
-                    rating={922}
+                    name={whitePlayerInfo.username}
+                    rating={whitePlayerInfo.elo}
                     time={formatTime(whiteTime)}
                     color="white"
                     isCurrentTurn={currentTurn === "white"}
@@ -354,16 +384,16 @@ export function GameContent(props: PropsType) {
 
                 {playerColor == "white" ? (
                   <PlayerCard
-                    name="Joueur Blanc"
-                    rating={922}
+                    name={whitePlayerInfo.username}
+                    rating={whitePlayerInfo.elo}
                     time={formatTime(whiteTime)}
                     color="white"
                     isCurrentTurn={currentTurn === "white"}
                   />
                 ) : (
                   <PlayerCard
-                    name="Joueur Noir"
-                    rating={850}
+                    name={blackPlayerInfo.username}
+                    rating={blackPlayerInfo.elo}
                     time={formatTime(blackTime)}
                     color="black"
                     isCurrentTurn={currentTurn === "black"}

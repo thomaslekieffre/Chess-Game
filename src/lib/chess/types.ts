@@ -1,3 +1,61 @@
+export const PROMOTIONS = {
+  'q': 'queen',
+  'r': 'rook',
+  'b': 'bishop',
+  'n': 'knight'
+}
+
+export const prom_short = ['q', 'r', 'b', 'n']
+export type PROMOTIONS_SHORT = typeof prom_short[number]
+
+export const colors = ['white', 'black'] as const
+export const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const
+export const ranks = ['1', '2', '3', '4', '5', '6', '7', '8'] as const
+export type MoveExeptType = ['O-O','O-O-O','a0']
+
+export type File = typeof files[number]
+export type Rank = typeof ranks[number]
+export type CasesList = `${File}${Rank}`
+export type Field = CasesList | MoveExeptType
+
+export type GameComment = { comment?: string, colorArrows?: string[], colorFields?: string[], clk?: string, eval?: string }
+export type Color = 'w' | 'b'
+
+export type ConfigurationTagsValues = "no" | "7r" | "known" | "all"
+export type PgnWriterConfiguration = {
+  tags?: ConfigurationTagsValues,
+  notation?: string
+}
+
+export type PgnMove = {
+  drawOffer?: boolean;
+  // moveNumber?: number,
+  // notation: { fig?: string | null, strike?: 'x' | null, col?: string, row?: string, check?: string, ep?: boolean
+  // promotion?: string | null, notation: string, disc?: string, drop?: boolean },
+  variations: PgnMove[],
+  nag: string[],
+  commentDiag?: GameComment,
+  commentMove?: string,
+  commentAfter?: string,
+  turn?: PieceColor
+  from: Field,
+  to: Field,
+  fen?: string,
+  index?: number,
+  prev?: number,
+  next?: number,
+  variationLevel?: number
+}
+
+export type SevenRoosterTagKeys = 'Event'|'Site'|'Round'|'White'|'Black'|'Result|Date'
+export type Tags = { string: string }
+
+export type PgnGame = {
+  tags?: Tags,
+  gameComment?: GameComment,
+  moves: PgnMove[]
+}
+
 export type Position = { x: number; y: number };
 export type PieceColor = "white" | "black";
 export type PieceType =
@@ -49,13 +107,17 @@ export interface GameState {
     black: number;
   };
   isGameOver: boolean;
+  drawnHasBeenOffered:boolean;
   winner: PieceColor | null;
+  strMove:PgnMove[];
 }
 
 type playerType = {
   id:string;
   color:PieceColor;
   temp:string;
+  username:string;
+  elo:string;
 }
 
 export type roomType = {
