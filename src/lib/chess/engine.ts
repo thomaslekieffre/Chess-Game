@@ -92,7 +92,12 @@ export class ChessEngine {
   }
 
   public makeMove(from: Position, to: Position): boolean {
+    console.log('aa')
     const validMoves = this.getValidMoves(from);
+
+    console.log(validMoves)
+    console.log(from,to)
+    console.log('bb')
 
     if (!validMoves.some((move) => move.x === to.x && move.y === to.y)) {
       return false;

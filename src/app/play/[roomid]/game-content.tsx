@@ -156,7 +156,7 @@ export function GameContent(props: PropsType) {
 
     console.log('ABAB',user?.id,roomInfo)
 
-  },[user])
+  },[user,roomInfo?.id])
 
   const joinGame = async (roomJson: roomType) => {
     // console.log('join gammeeee')
