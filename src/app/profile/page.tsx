@@ -76,8 +76,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Le reste du JSX reste identique
-
   return (
     <main className="min-h-screen pt-20 bg-background">
       <div className="container max-w-2xl">
