@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface PlayerCardProps {
   name: string;
-  rating: number;
+  rating: string;
   time: string;
   color: "white" | "black";
   isCurrentTurn: boolean;

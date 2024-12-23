@@ -95,33 +95,54 @@ export function ChessBoard({
   }, [autoPlay, engine, board, setBoard, playerColor]);
 
   const handleSquareClick = (x: number, y: number) => {
+    const tabBlanc = [0,1,2,3,4,5,6,7]
+    const tabNoir = [0,1,2,3,4,5,6,7]
+    tabNoir.reverse()
+    let newCord:Position = {x,y}
+
+    if(playerColor=='black'){
+      newCord.x = tabNoir[tabBlanc.indexOf(x)]
+    }
+    // console.log(playerColor)
+    console.log(newCord)
+
+
+    // return
+
     if (!selectedPiece) {
-      if (board[y][x]?.color == playerColor) {
-        const moves = engine.getValidMoves({ x, y });
+      if (board[newCord.y][newCord.x]?.color == playerColor) {
+        const moves = engine.getValidMoves(newCord);
         if (moves.length > 0) {
-          setSelectedPiece({ x, y });
-          setValidMoves(moves);
+          setSelectedPiece({x,y});
+          let newMoves = []
+          if(playerColor=='black'){
+            for(let move of moves){
+              newMoves.push({x:tabNoir[tabBlanc.indexOf(move.x)],y:move.y})
+            }
+          }else{
+            newMoves=moves
+          }
+          setValidMoves(newMoves);
         }
       }
     } else {
       // console.log(x,y)
-      let newCord:Position = {x,y}
-      if(playerColor=='white'){
-        const tabBlanc = [0,1,2,3,4,5,6,7]
-        const tabNoir = [0,1,2,3,4,5,6,7]
-        tabNoir.reverse()
-        // newCord.x = tabNoir[tabBlanc.indexOf(x)]
-        // newCord.y = tabNoir[tabBlanc.indexOf(y)]
-      }
-      // console.log(playerColor)
-      // console.log(newCord)
 
-      const success = engine.makeMove(selectedPiece, newCord);
+      // return
+
+      // console.log(selectedPiece)
+      let newSelectedPiece
+      if(playerColor=='white'){
+        newSelectedPiece = selectedPiece
+      }else{
+        newSelectedPiece = {x:tabNoir[tabBlanc.indexOf(selectedPiece.x)],y:selectedPiece.y}
+      }
+      const success = engine.makeMove(newSelectedPiece, newCord);
       console.log(success)
       if (success) {
         setBoard(engine.getBoard());
         updateCheckStatus();
-        onMove?.(selectedPiece, newCord);
+        onMove?.(newSelectedPiece, newCord);
       }
       setSelectedPiece(null);
       setValidMoves([]);
@@ -130,7 +151,7 @@ export function ChessBoard({
 
   const reverseBoard = (b:Array<Array<any>>) => {
     let newBoard = []
-    console.log(b)
+    // console.log(b)
     for (let i = b.length-1; i > -1; i--) {
       const ele = b[i];
       let newRow = []
@@ -146,7 +167,7 @@ export function ChessBoard({
       }
 
     }
-    console.log(newBoard)
+    // console.log(newBoard)
     return newBoard
   }
 
@@ -203,7 +224,7 @@ export function ChessBoard({
 
           {/* Coordonnées horizontales (a-h) */}
           <div className="absolute -bottom-8 left-0 right-0 flex justify-around text-sm font-medium text-muted-foreground">
-            {["a", "b", "c", "d", "e", "f", "g", "h"].map((coord) => (
+            {(playerColor=='white'?["a", "b", "c", "d", "e", "f", "g", "h"]:["h", "g", "f", "e", "d", "c", "b", "a"]).map((coord) => (
               <div
                 key={coord}
                 className="flex items-center justify-center w-6 h-6"

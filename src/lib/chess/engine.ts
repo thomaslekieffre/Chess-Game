@@ -1,7 +1,9 @@
+import { fromCoordToCase } from "./pgn/pgn2";
 import {
   ChessPiece,
   GameState,
   Move,
+  PgnMove,
   PieceColor,
   Position,
   // PieceType,
@@ -72,6 +74,8 @@ export class ChessEngine {
       lastPawnMoveOrCapture: 0,
       isGameOver: false,
       winner: null,
+      drawnHasBeenOffered:false,
+      strMove:[],
     };
   }
 
@@ -92,7 +96,12 @@ export class ChessEngine {
   }
 
   public makeMove(from: Position, to: Position): boolean {
+    console.log('aa')
     const validMoves = this.getValidMoves(from);
+
+    console.log(validMoves)
+    console.log(from,to)
+    console.log('bb')
 
     if (!validMoves.some((move) => move.x === to.x && move.y === to.y)) {
       return false;
@@ -565,6 +574,25 @@ export class ChessEngine {
 
     // Ajouter le coup à l'historique
     this.state.moves.push(move);
+    let fromVar = fromCoordToCase(move.from.x,move.from.y)
+    if(move.isCastling&&move.isCastling=='kingside'){
+      fromVar='O-O'
+    }
+    if(move.isCastling&&move.isCastling=='queenside'){
+      fromVar='O-O-O'
+    }
+
+
+    this.state.strMove.push({
+      drawOffer:this.state.drawnHasBeenOffered,
+      turn:this.state.currentTurn,
+      from:fromVar,
+      to:fromCoordToCase(move.to.x, move.to.y),
+      fen:'',
+      index:0,
+      nag:[],
+      variations:[],
+    })
 
     // Mettre à jour le compteur de coups sans prise ni mouvement de pion
     if (move.piece.type === "pawn" || move.captured) {
@@ -721,5 +749,9 @@ export class ChessEngine {
 
   getMoves(): Move[] {
     return this.state.moves;
+  }
+
+  getStrMove(): PgnMove[] {
+    return this.state.strMove
   }
 }

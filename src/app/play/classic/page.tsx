@@ -67,6 +67,8 @@ export default function ClassicModePage() {
               id: user.id,
               color: "white",
               time: minutes * 60,
+              username:user.username,
+              elo:'1200?'
             },
             player2: {},
             turn: "white",
