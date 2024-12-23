@@ -5,7 +5,7 @@ import { Timer, Zap, Gauge } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 // import { User, currentUser } from "@clerk/nextjs/server";
-// import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { supabase } from "@/lib/supabase";
 
@@ -36,17 +36,26 @@ const timeControls = [
 export default function ClassicModePage() {
   const { isSignedIn, user } = useUser();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleTimeControlSelect = async (
     minutes: number,
     increment: number
   ) => {
-    if (isSignedIn) {
+    if (isLoading) return;
+    setIsLoading(true);
+
+    try {
+      if (!isSignedIn) {
+        alert("Vous devez vous connecter avant de pouvoir créer une partie");
+        setIsLoading(false);
+        return;
+      }
+
       const currentDate = new Date();
       const timestamp = currentDate.getTime();
-      console.log(timestamp);
-      console.log(user);
-      await supabase
+
+      const response = await supabase
         .from("room")
         .insert({
           cadence: `${minutes}|${increment}`,
@@ -67,17 +76,19 @@ export default function ClassicModePage() {
           game: "",
           createdAt: timestamp,
         })
-        .select("id")
-        .then((x) => {
-          // console.log("Réponse de Supabase:", x);
-          if (x.error) {
-            alert("Erreur lors de la création de la room");
-          } else {
-            router.push(`/play/${x.data[0].id}`);
-          }
-        });
-    } else {
-      alert("Vous devez vous connecter avant de pouvoir crée un compte");
+        .select("id");
+
+      if (response.error) {
+        alert("Erreur lors de la création de la room");
+        setIsLoading(false);
+      } else {
+        await router.push(`/play/${response.data[0].id}`);
+      }
+    } catch (error) {
+      alert("Une erreur est survenue: " + error);
+      setIsLoading(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -106,9 +117,14 @@ export default function ClassicModePage() {
                 onClick={() =>
                   handleTimeControlSelect(control.time, control.incr)
                 }
+                disabled={isLoading}
               >
                 <div className="flex flex-col items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <div
+                    className={`w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary ${
+                      isLoading ? "opacity-50" : ""
+                    }`}
+                  >
                     {control.icon}
                   </div>
                   <div className="text-center">

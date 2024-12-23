@@ -1,3 +1,29 @@
+export function convertToPGN(
+  moves: {
+    from: { x: number; y: number };
+    to: { x: number; y: number };
+    piece?: { type: string; color: string };
+    captured?: boolean;
+  }[]
+): string {
+  const pieceSymbols: Record<string, string> = {
+    pawn: "",
+    rook: "R",
+    knight: "N",
+    bishop: "B",
+    queen: "Q",
+    king: "K",
+  };
+
+  let pgn = "";
+  moves.forEach((move, index) => {
+    const from = move.from;
+    const to = move.to;
+    const piece = move.piece;
+
+    // Convertir les coordonnées en notation échiquéenne
+    const fromSquare = String.fromCharCode(97 + from.x) + (8 - from.y);
+    const toSquare = String.fromCharCode(97 + to.x) + (8 - t
 import { PieceType } from "./types";
 
 export function convertToPGN(

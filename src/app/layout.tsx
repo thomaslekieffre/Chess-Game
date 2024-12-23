@@ -1,47 +1,33 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { ThemeProvider } from "@/providers/theme-provider";
+import { Header } from "@/components/layout/header";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "ChessGame",
-  description: "ChessGame is a chess game platform",
+  description: "Jouez aux échecs en ligne",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <ClerkProvider
-      appearance={{
-        baseTheme: dark,
-        elements: {
-          formButtonPrimary: "bg-primary hover:bg-primary/80",
-          card: "bg-background",
-          headerTitle: "text-foreground",
-          headerSubtitle: "text-muted-foreground",
-          socialButtonsBlockButton:
-            "text-foreground border-border bg-background hover:bg-muted",
-          formFieldLabel: "text-foreground",
-          formFieldInput: "bg-background text-foreground border-border",
-          dividerLine: "bg-border",
-          dividerText: "text-muted-foreground",
-          footerActionLink: "text-primary hover:text-primary/80",
-          footerActionText: "text-muted-foreground",
-        },
-      }}
-    >
+    <ClerkProvider>
       <html lang="fr" suppressHydrationWarning>
-        <body>
+        <body className={inter.className}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
+            <Header />
             {children}
           </ThemeProvider>
         </body>
