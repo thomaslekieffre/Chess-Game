@@ -96,16 +96,15 @@ export class ChessEngine {
 
     if (!validMoves.some((move) => move.x === to.x && move.y === to.y)) {
       return false;
-    }else{
+    } else {
       const move = this.createMove(from, to);
-      console.log('a')
+      console.log("a");
       this.applyMove(move);
-      console.log('b')
+      console.log("b");
       this.updateGameState();
-      console.log('c')
+      console.log("c");
       return true;
     }
-
   }
 
   // Méthodes privées pour les règles spécifiques
@@ -345,38 +344,32 @@ export class ChessEngine {
   }
 
   private moveResultsInCheck(from: Position, to: Position): boolean {
-    return false
-    // const piece = this.state.board[from.y][from.x]!;
-    // const originalBoard = this.state.board.map((row) => [...row]);
-    // console.log('MoveResultCheck')
+    const piece = this.state.board[from.y][from.x]!;
+    const copiedBoard = JSON.parse(JSON.stringify(this.state.board));
 
-    // // Simuler le mouvement
-    // this.state.board[to.y][to.x] = piece;
-    // this.state.board[from.y][from.x] = null;
+    // Simuler le mouvement sur la copie
+    copiedBoard[to.y][to.x] = piece;
+    copiedBoard[from.y][from.x] = null;
 
-    // // Trouver le roi
-    // let kingPos: Position | null = null;
-    // for (let y = 0; y < 8; y++) {
-    //   for (let x = 0; x < 8; x++) {
-    //     const p = this.state.board[y][x];
-    //     if (p?.type === "king" && p.color === piece.color) {
-    //       kingPos = { x, y };
-    //       break;
-    //     }
-    //   }
-    //   if (kingPos) break;
-    // }
+    // Trouver le roi
+    let kingPos: Position | null = null;
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
+        const p = copiedBoard[y][x];
+        if (p?.type === "king" && p.color === piece.color) {
+          kingPos = { x, y };
+          break;
+        }
+      }
+      if (kingPos) break;
+    }
 
-    // const isCheck = kingPos
-    //   ? this.isSquareAttacked(kingPos, piece.color)
-    //   : false;
+    // Vérifier si le roi est en échec
+    const isCheck = kingPos
+      ? this.isSquareAttacked(kingPos, piece.color)
+      : false;
 
-    // // Restaurer le plateau
-    // this.state.board = originalBoard;
-
-    // console.log(this.state.board)
-
-    // return isCheck;
+    return isCheck; // Retourner le résultat sans modifier l'état original
   }
 
   private isValidPosition(pos: Position): boolean {
@@ -532,7 +525,7 @@ export class ChessEngine {
     // Mettre à jour hasMoved
     piece.hasMoved = true;
 
-    console.log('aplly')
+    console.log("aplly");
     // Appliquer le mouvement principal
     this.state.board[to.y][to.x] = piece;
     this.state.board[from.y][from.x] = null;

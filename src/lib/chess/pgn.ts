@@ -1,54 +1,72 @@
-export function convertToPGN(moves: { from: { x: number; y: number }; to: { x: number; y: number }; captured?: boolean }[]): string {
-    const pieceSymbols: Record<string, string> = {
-        'pawn': '',
-        'rook': 'R',
-        'knight': 'N',
-        'bishop': 'B',
-        'queen': 'Q',
-        'king': 'K',
-    };
+export function convertToPGN(
+  moves: {
+    from: { x: number; y: number };
+    to: { x: number; y: number };
+    piece?: { type: string; color: string };
+    captured?: boolean;
+  }[]
+): string {
+  const pieceSymbols: Record<string, string> = {
+    pawn: "",
+    rook: "R",
+    knight: "N",
+    bishop: "B",
+    queen: "Q",
+    king: "K",
+  };
 
-    let pgn = '';
-    moves.forEach((move, index) => {
-        const from = move.from;
-        const to = move.to;
+  let pgn = "";
+  moves.forEach((move, index) => {
+    const from = move.from;
+    const to = move.to;
+    const piece = move.piece;
 
-        // Convertir les coordonnées en notation échiquéenne
-        const fromSquare = String.fromCharCode(97 + from.x) + (8 - from.y);
-        const toSquare = String.fromCharCode(97 + to.x) + (8 - to.y);
+    // Convertir les coordonnées en notation échiquéenne
+    const fromSquare = String.fromCharCode(97 + from.x) + (8 - from.y);
+    const toSquare = String.fromCharCode(97 + to.x) + (8 - to.y);
 
-        // Ajouter le coup à la notation PGN
-        const piece = pieceSymbols['pawn'] || ''; // Pour les pions, on ne met rien
-        const moveNotation = `${piece}${toSquare}`;
+    // Construire la notation du coup
+    let moveNotation = "";
 
-        // Ajouter un espace pour séparer les coups
-        pgn += (index % 2 === 0 ? `${Math.floor(index / 2) + 1}. ` : '') + moveNotation + ' ';
-    });
+    // Ajouter le symbole de la pièce
+    if (piece && piece.type !== "pawn") {
+      moveNotation += pieceSymbols[piece.type];
+    }
 
-    return pgn.trim();
-}
+    // Ajouter la case de départ si nécessaire (pour les ambiguïtés)
+    if (
+      piece &&
+      piece.type !== "pawn" &&
+      moves.some(
+        (otherMove) =>
+          otherMove !== move &&
+          otherMove.piece?.type === piece.type &&
+          otherMove.piece?.color === piece.color &&
+          otherMove.to.x === to.x &&
+          otherMove.to.y === to.y
+      )
+    ) {
+      moveNotation += fromSquare;
+    }
 
-export function convertPGNToMoves(pgn: string): { from: { x: number; y: number }; to: { x: number; y: number } }[] {
-    const moves: { from: { x: number; y: number }; to: { x: number; y: number } }[] = [];
-    const moveStrings = pgn.split(' ').filter(move => move.length > 0);
+    // Ajouter le 'x' pour les captures
+    if (move.captured) {
+      // Pour les pions, on ajoute la colonne de départ
+      if (!piece || piece.type === "pawn") {
+        moveNotation += String.fromCharCode(97 + from.x);
+      }
+      moveNotation += "x";
+    }
 
-    moveStrings.forEach(move => {
-        const toSquare = move.slice(-2); // Les deux derniers caractères représentent la case de destination
-        const fromSquare = move.length > 2 ? move.slice(0, -2) : ''; // Si le coup est un coup de pièce, on enlève la case de destination
+    // Ajouter la case d'arrivée
+    moveNotation += toSquare;
 
-        const toX = toSquare.charCodeAt(0) - 97; // Convertir 'a' à 'h' en 0 à 7
-        const toY = 8 - parseInt(toSquare[1]); // Convertir '1' à '8' en 7 à 0
+    // Ajouter le numéro du coup et l'espace
+    pgn +=
+      (index % 2 === 0 ? `${Math.floor(index / 2) + 1}. ` : "") +
+      moveNotation +
+      " ";
+  });
 
-        // Pour les mouvements de pièces, vous pouvez ajouter une logique pour déterminer la case de départ
-        // Ici, nous supposons que la case de départ est connue ou calculée d'une autre manière
-        const fromX = 0; // Remplacez par la logique pour déterminer la case de départ
-        const fromY = 0; // Remplacez par la logique pour déterminer la case de départ
-
-        moves.push({
-            from: { x: fromX, y: fromY },
-            to: { x: toX, y: toY }
-        });
-    });
-
-    return moves;
+  return pgn.trim();
 }
