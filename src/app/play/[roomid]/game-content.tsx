@@ -1,19 +1,19 @@
 "use client";
 
 import { ChessBoard } from "@/components/chess/board";
-import { useEffect, useState, useRef, useCallback } from "react";
-import { GameMessages } from "./game-messages";
-import { useGameState } from "@/hooks/useGameState";
-import { PieceColor, Position, roomType } from "@/lib/chess/types";
-import { getOppositeColor } from "@/lib/chess/utils";
-import { PlayerCard } from "@/components/chess/player-card";
+import { GameChat } from "@/components/chess/game-chat";
 import { GameControls } from "@/components/chess/game-controls";
 import { MovesHistory } from "@/components/chess/moves-history";
-import { GameChat } from "@/components/chess/game-chat";
+import { PlayerCard } from "@/components/chess/player-card";
 import { Button } from "@/components/ui/button";
-import { io } from "socket.io-client";
+import { useGameState } from "@/hooks/useGameState";
+import { PieceColor, playerType, Position, roomType } from "@/lib/chess/types";
+import { getOppositeColor } from "@/lib/chess/utils";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@clerk/nextjs";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { io } from "socket.io-client";
+import { GameMessages } from "./game-messages";
 
 const socket = io("http://localhost:3001");
 
@@ -28,33 +28,39 @@ export function GameContent(props: PropsType) {
   const [whiteTime, setWhiteTime] = useState(10 * 60);
   const [blackTime, setBlackTime] = useState(10 * 60);
 
-  const [isGameStarted,setIsGameStarted] = useState(false)
-  const [isPlaying,setIsPlaying] = useState(false)
+  const [isGameStarted, setIsGameStarted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  const [whitePlayerInfo,setWhitePlayerInfo] = useState({
-    username:'White',
-    elo:'1200?',
-  })
+  const [whitePlayerInfo, setWhitePlayerInfo] = useState({
+    username: "White",
+    elo: "1200?",
+  });
 
-  const [blackPlayerInfo,setBlackPlayerInfo] = useState({
-    username:'Black',
-    elo:'1200?',
-  })
+  const [blackPlayerInfo, setBlackPlayerInfo] = useState({
+    username: "Black",
+    elo: "1200?",
+  });
 
-  const updatePlayersData = (info:roomType) => {
-    if(info&&info.id){
-      if(info.players.player1.color=='white'){
-        setWhitePlayerInfo({elo:info.players.player1.elo,username:info.players.player1.username})
-      }else{
-        setBlackPlayerInfo({elo:info.players.player1.elo,username:info.players.player1.username})
-      }
-      if(info.players.player2&&info.players.player2.color=='white'){
-        setWhitePlayerInfo({elo:info.players.player2.elo,username:info.players.player2.username})
-      }else{
-        setBlackPlayerInfo({elo:info.players.player2.elo,username:info.players.player2.username})
-      }
+  const updatePlayersData = (info: roomType) => {
+    if (!info || !info.id) return;
+
+    const { player1, player2 } = info.players;
+
+    const updatePlayerInfo = (player: playerType) => {
+      const setPlayerInfo =
+        player.color === "white" ? setWhitePlayerInfo : setBlackPlayerInfo;
+
+      setPlayerInfo({
+        elo: player.elo,
+        username: player.username,
+      });
+    };
+
+    updatePlayerInfo(player1);
+    if (player2) {
+      updatePlayerInfo(player2);
     }
-  }
+  };
 
   const [roomInfo, setRoomInfo] = useState<roomType>();
 
@@ -78,9 +84,8 @@ export function GameContent(props: PropsType) {
     } else {
       const dataJson: roomType = data[0];
 
-
       setRoomInfo(dataJson);
-      updatePlayersData(dataJson)
+      updatePlayersData(dataJson);
 
       socket.emit("room_log", dataJson);
       return dataJson;
@@ -113,12 +118,12 @@ export function GameContent(props: PropsType) {
   const [drawOffer, setDrawOffer] = useState<PieceColor>();
   const [playerColor, setPlayerColor] = useState<PieceColor>("white");
   const [isTimeOut, setIsTimeOut] = useState(false);
-  const [isRoomLoaded,setIsRoomLoaded] = useState(false)
+  const [isRoomLoaded, setIsRoomLoaded] = useState(false);
 
   useEffect(() => {
     if (!roomInfo) {
       fetchRoomInfo();
-      setIsRoomLoaded(true)
+      setIsRoomLoaded(true);
     }
 
     if (isGameOver) {
@@ -170,20 +175,15 @@ export function GameContent(props: PropsType) {
     isGameStarted,
     fetchRoomInfo,
     roomInfo,
-    user
+    user,
   ]);
 
-  useEffect(()=>{
-
-    if(user?.id&&roomInfo){
-      console.log('TRY')
+  useEffect(() => {
+    if (user?.id && roomInfo) {
       socket.emit("room_log", roomInfo);
-      updatePlayersData(roomInfo)
+      updatePlayersData(roomInfo);
     }
-
-    console.log('ABAB',user?.id,roomInfo)
-
-  },[user,roomInfo?.id])
+  }, [user, roomInfo?.id]);
 
   const joinGame = async (roomJson: roomType) => {
     // console.log('join gammeeee')
@@ -192,7 +192,7 @@ export function GameContent(props: PropsType) {
     // console.log(isSignedIn);
     if (user?.id && roomJson) {
       if (
-        roomJson.status == "waiting_for_player" &&
+        roomJson.status === "waiting_for_player" &&
         user.id !== roomJson.players.player1.id
       ) {
         //Rejoin la partie en temp que player2
@@ -207,8 +207,8 @@ export function GameContent(props: PropsType) {
           id: user.id,
           color: couleur,
           temp: `${parseInt(roomJson.cadence.split("|")[0]) * 60}`,
-          username:user.username?user.username:'ERREUR',
-          elo:'1200?',
+          username: user.username ? user.username : "ERREUR",
+          elo: "1200?", // todo: fetch supabase?
         };
 
         await supabase
@@ -219,6 +219,7 @@ export function GameContent(props: PropsType) {
             if (x.error) {
               alert("Erreur lors de la connexion a la partie");
             } else {
+              console.log("cc couleur", couleur);
               setGameInfos(couleur, parseInt(roomJson.cadence.split("|")[0]));
               console.log("edited");
             }
@@ -227,6 +228,7 @@ export function GameContent(props: PropsType) {
         if (user.id == roomJson.players.player1.id) {
           // console.log(roomJson.players.player2);
           // console.log("df");
+
           setGameInfos(
             roomJson.players.player1.color,
             parseInt(roomJson.cadence.split("|")[0])
@@ -252,10 +254,10 @@ export function GameContent(props: PropsType) {
     });
 
     socket.on("move", (data) => {
-      if(data.by==user?.id){
-        return
+      if (data.by === user?.id) {
+        return;
       }
-      console.log("Mouvement reçu:", data,data.by,user?.id);
+      console.log("Mouvement reçu:", data, data.by, user?.id);
 
       // Appliquer le mouvement reçu
       const { from, to } = data;
@@ -263,10 +265,10 @@ export function GameContent(props: PropsType) {
       const success = engine.makeMove(from, to);
       updateGameState();
 
-      console.log(success)
+      console.log(success);
 
       if (success) {
-        console.log('SUUCCEEESSSSSSS')
+        console.log("SUUCCEEESSSSSSS");
         const engineState = engine.getGameState();
         setIsCheck(engineState.isCheck);
         setIsCheckmate(engineState.isCheckmate);
@@ -287,7 +289,19 @@ export function GameContent(props: PropsType) {
     return () => {
       socket.off("move");
     };
-  }, []);
+  }, [
+    currentTurn,
+    engine,
+    joinGame,
+    setCurrentTurn,
+    setIsCheck,
+    setIsCheckmate,
+    setIsGameOver,
+    setIsStalemate,
+    setWinner,
+    updateGameState,
+    user,
+  ]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -313,149 +327,153 @@ export function GameContent(props: PropsType) {
   };
 
   const handleMove = (from: Position, to: Position) => {
-    console.log(engine.getStrMove())
-    socket.emit("move", { from, to, roomId, moves: engine.getMoves(),by:user?.id });
+    console.log(engine.getStrMove());
+    socket.emit("move", {
+      from,
+      to,
+      roomId,
+      moves: engine.getMoves(),
+      by: user?.id,
+    });
   };
 
   return (
     <div>
-      {isRoomLoaded&&roomInfo?(<main className="min-h-screen bg-background overflow-hidden">
-        <div>
-          <p>{roomId}</p>
-          <p>{JSON.stringify(roomInfo)}</p>
-          <p>joueur : {playerColor}</p>
-          <p>id : {user?.id}</p>
-          <div className="container max-w-[1600px] mx-auto px-4 h-full">
-            {/* Header de la partie */}
-            <div className="py-6 mb-8 border-b">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold">Partie Classique</h1>
-                  <p className="text-muted-foreground">
-                    {/* {roomInfo.cadence.split('|')[0]} minutes par joueur {roomInfo.cadence.split('|')[1]>0?`avec ${roomInfo.cadence.split('|')[1]} seconde d'increment`:''}  */}
-                  </p>
-                </div>
-                <div className="flex gap-4">
-                  <Button variant="outline" size="sm">
-                    Copier le lien
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Quitter la partie
-                  </Button>
+      {isRoomLoaded && roomInfo ? (
+        <main className="min-h-screen bg-background overflow-hidden">
+          <div>
+            <p>{roomId}</p>
+            <p>{JSON.stringify(roomInfo)}</p>
+            <p>joueur : {playerColor}</p>
+            <p>id : {user?.id}</p>
+            <div className="container max-w-[1600px] mx-auto px-4 h-full">
+              {/* Header de la partie */}
+              <div className="py-6 mb-8 border-b">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-2xl font-bold">Partie Classique</h1>
+                    <p className="text-muted-foreground">
+                      {/* {roomInfo.cadence.split('|')[0]} minutes par joueur {roomInfo.cadence.split('|')[1]>0?`avec ${roomInfo.cadence.split('|')[1]} seconde d'increment`:''}  */}
+                    </p>
+                  </div>
+                  <div className="flex gap-4">
+                    <Button variant="outline" size="sm">
+                      Copier le lien
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Quitter la partie
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Layout principal */}
-            <div className="grid grid-cols-[250px_1fr_250px] gap-4">
-              {/* Panneau gauche */}
-              <div className="space-y-4">
-                {playerColor == "white" ? (
-                  <PlayerCard
-                    name={blackPlayerInfo.username}
-                    rating={blackPlayerInfo.elo}
-                    time={formatTime(blackTime)}
-                    color="black"
-                    isCurrentTurn={currentTurn === "black"}
-                  />
-                ) : (
-                  <PlayerCard
-                    name={whitePlayerInfo.username}
-                    rating={whitePlayerInfo.elo}
-                    time={formatTime(whiteTime)}
-                    color="white"
-                    isCurrentTurn={currentTurn === "white"}
-                  />
-                )}
+              {/* Layout principal */}
+              <div className="grid grid-cols-[250px_1fr_250px] gap-4">
+                {/* Panneau gauche */}
+                <div className="space-y-4">
+                  {playerColor == "white" ? (
+                    <PlayerCard
+                      name={blackPlayerInfo.username}
+                      rating={blackPlayerInfo.elo}
+                      time={formatTime(blackTime)}
+                      color="black"
+                      isCurrentTurn={currentTurn === "black"}
+                    />
+                  ) : (
+                    <PlayerCard
+                      name={whitePlayerInfo.username}
+                      rating={whitePlayerInfo.elo}
+                      time={formatTime(whiteTime)}
+                      color="white"
+                      isCurrentTurn={currentTurn === "white"}
+                    />
+                  )}
 
-                <GameControls
-                  onResign={() => {
-                    setIsGameOver(true);
-                    setIsResigned(true);
-                    setWinner(getOppositeColor(currentTurn));
-                  }}
-                  onOfferDraw={handleOfferDraw}
-                  drawOffer={drawOffer}
-                  onAcceptDraw={handleAcceptDraw}
-                  onDeclineDraw={handleDeclineDraw}
-                  playerColor={playerColor}
-                  isGameOver={isGameOver}
-                />
-
-                {playerColor == "white" ? (
-                  <PlayerCard
-                    name={whitePlayerInfo.username}
-                    rating={whitePlayerInfo.elo}
-                    time={formatTime(whiteTime)}
-                    color="white"
-                    isCurrentTurn={currentTurn === "white"}
-                  />
-                ) : (
-                  <PlayerCard
-                    name={blackPlayerInfo.username}
-                    rating={blackPlayerInfo.elo}
-                    time={formatTime(blackTime)}
-                    color="black"
-                    isCurrentTurn={currentTurn === "black"}
-                  />
-                )}
-              </div>
-
-              {/* Zone centrale avec l'échiquier */}
-              <div className="flex flex-col items-center">
-                <ChessBoard
-                  playerColor={playerColor}
-                  className="w-full max-w-[1000px]"
-                  board={board}
-                  setBoard={setBoard}
-                  engine={engine}
-                  onMove={(from, to) => {
-                    handleMove(from, to);
-                    const engineState = engine.getGameState();
-                    setIsCheck(engineState.isCheck);
-                    setIsCheckmate(engineState.isCheckmate);
-                    setIsStalemate(engineState.isStalemate);
-                    setCurrentTurn(engineState.currentTurn);
-
-                    if (engineState.isCheckmate || engineState.isStalemate) {
+                  <GameControls
+                    onResign={() => {
                       setIsGameOver(true);
-                      if (engineState.isCheckmate) {
-                        setWinner(getOppositeColor(currentTurn));
-                      }
-                    }
-                  }}
-                />
-              </div>
+                      setIsResigned(true);
+                      setWinner(getOppositeColor(currentTurn));
+                    }}
+                    onOfferDraw={handleOfferDraw}
+                    drawOffer={drawOffer}
+                    onAcceptDraw={handleAcceptDraw}
+                    onDeclineDraw={handleDeclineDraw}
+                    playerColor={playerColor}
+                    isGameOver={isGameOver}
+                  />
 
-              {/* Panneau droit */}
-              <div className="space-y-4">
-                <MovesHistory
-                  moves={engine.getMoves()}
-                  className="h-[calc(100vh-400px)]"
-                />
-                <GameChat className="h-[200px]" />
+                  {playerColor == "white" ? (
+                    <PlayerCard
+                      name={whitePlayerInfo.username}
+                      rating={whitePlayerInfo.elo}
+                      time={formatTime(whiteTime)}
+                      color="white"
+                      isCurrentTurn={currentTurn === "white"}
+                    />
+                  ) : (
+                    <PlayerCard
+                      name={blackPlayerInfo.username}
+                      rating={blackPlayerInfo.elo}
+                      time={formatTime(blackTime)}
+                      color="black"
+                      isCurrentTurn={currentTurn === "black"}
+                    />
+                  )}
+                </div>
+
+                {/* Zone centrale avec l'échiquier */}
+                <div className="flex flex-col items-center">
+                  <ChessBoard
+                    playerColor={playerColor}
+                    className="w-full max-w-[1000px]"
+                    board={board}
+                    setBoard={setBoard}
+                    engine={engine}
+                    onMove={(from, to) => {
+                      handleMove(from, to);
+                      const engineState = engine.getGameState();
+                      setIsCheck(engineState.isCheck);
+                      setIsCheckmate(engineState.isCheckmate);
+                      setIsStalemate(engineState.isStalemate);
+                      setCurrentTurn(engineState.currentTurn);
+
+                      if (engineState.isCheckmate || engineState.isStalemate) {
+                        setIsGameOver(true);
+                        if (engineState.isCheckmate) {
+                          setWinner(getOppositeColor(currentTurn));
+                        }
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Panneau droit */}
+                <div className="space-y-4">
+                  <MovesHistory
+                    moves={engine.getMoves()}
+                    className="h-[calc(100vh-400px)]"
+                  />
+                  <GameChat className="h-[200px]" />
+                </div>
               </div>
             </div>
-          </div>
 
-          <GameMessages
-            isCheck={isCheck}
-            isCheckmate={isCheckmate}
-            isStalemate={isStalemate}
-            isDraw={isDraw}
-            currentTurn={currentTurn}
-            winner={winner}
-            isResigned={isResigned}
-            isTimeOut={isTimeOut}
-          />
-        </div>
-      </main>):(
+            <GameMessages
+              isCheck={isCheck}
+              isCheckmate={isCheckmate}
+              isStalemate={isStalemate}
+              isDraw={isDraw}
+              currentTurn={currentTurn}
+              winner={winner}
+              isResigned={isResigned}
+              isTimeOut={isTimeOut}
+            />
+          </div>
+        </main>
+      ) : (
         <div>
-          {isRoomLoaded?(
-            <p>Sale introuvablle</p>
-          ):(
-            <p>Chargement...</p>
-          )}
+          {isRoomLoaded ? <p>Sale introuvablle</p> : <p>Chargement...</p>}
         </div>
       )}
     </div>
