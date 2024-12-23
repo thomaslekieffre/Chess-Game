@@ -77,23 +77,35 @@ export class ChessEngine {
 
   // Méthodes publiques
   public getValidMoves(from: Position): Position[] {
+    // console.log(this.state.board)
+    // console.log(from)
     const piece = this.state.board[from.y][from.x];
+    // console.log(piece)
+    // console.log(this.state.board)
+    // console.log(from)
+    // console.log(this.state.currentTurn)
     if (!piece || piece.color !== this.state.currentTurn) return [];
 
     const potentialMoves = this.getPotentialMoves(from);
+    // console.log(potentialMoves)
     return potentialMoves.filter((to) => !this.moveResultsInCheck(from, to));
   }
 
   public makeMove(from: Position, to: Position): boolean {
     const validMoves = this.getValidMoves(from);
+
     if (!validMoves.some((move) => move.x === to.x && move.y === to.y)) {
       return false;
+    }else{
+      const move = this.createMove(from, to);
+      console.log('a')
+      this.applyMove(move);
+      console.log('b')
+      this.updateGameState();
+      console.log('c')
+      return true;
     }
 
-    const move = this.createMove(from, to);
-    this.applyMove(move);
-    this.updateGameState();
-    return true;
   }
 
   // Méthodes privées pour les règles spécifiques
@@ -333,34 +345,38 @@ export class ChessEngine {
   }
 
   private moveResultsInCheck(from: Position, to: Position): boolean {
-    const piece = this.state.board[from.y][from.x]!;
-    const originalBoard = this.state.board.map((row) => [...row]);
+    return false
+    // const piece = this.state.board[from.y][from.x]!;
+    // const originalBoard = this.state.board.map((row) => [...row]);
+    // console.log('MoveResultCheck')
 
-    // Simuler le mouvement
-    this.state.board[to.y][to.x] = piece;
-    this.state.board[from.y][from.x] = null;
+    // // Simuler le mouvement
+    // this.state.board[to.y][to.x] = piece;
+    // this.state.board[from.y][from.x] = null;
 
-    // Trouver le roi
-    let kingPos: Position | null = null;
-    for (let y = 0; y < 8; y++) {
-      for (let x = 0; x < 8; x++) {
-        const p = this.state.board[y][x];
-        if (p?.type === "king" && p.color === piece.color) {
-          kingPos = { x, y };
-          break;
-        }
-      }
-      if (kingPos) break;
-    }
+    // // Trouver le roi
+    // let kingPos: Position | null = null;
+    // for (let y = 0; y < 8; y++) {
+    //   for (let x = 0; x < 8; x++) {
+    //     const p = this.state.board[y][x];
+    //     if (p?.type === "king" && p.color === piece.color) {
+    //       kingPos = { x, y };
+    //       break;
+    //     }
+    //   }
+    //   if (kingPos) break;
+    // }
 
-    const isCheck = kingPos
-      ? this.isSquareAttacked(kingPos, piece.color)
-      : false;
+    // const isCheck = kingPos
+    //   ? this.isSquareAttacked(kingPos, piece.color)
+    //   : false;
 
-    // Restaurer le plateau
-    this.state.board = originalBoard;
+    // // Restaurer le plateau
+    // this.state.board = originalBoard;
 
-    return isCheck;
+    // console.log(this.state.board)
+
+    // return isCheck;
   }
 
   private isValidPosition(pos: Position): boolean {
@@ -511,14 +527,17 @@ export class ChessEngine {
 
   private applyMove(move: Move): void {
     const { from, to, piece } = move;
+    // console.log('WARNING',from,to,piece,this.state.board,'WARNINGNGNNGNGNGNGGGG')
 
     // Mettre à jour hasMoved
     piece.hasMoved = true;
 
+    console.log('aplly')
     // Appliquer le mouvement principal
     this.state.board[to.y][to.x] = piece;
     this.state.board[from.y][from.x] = null;
 
+    // console.log('WARNING2',from,to,piece,this.state.board,'WARNINGNGNNGNGNGNGGGG2')
     // Gérer le roque
     if (move.isCastling) {
       const rookFromX = move.isCastling === "kingside" ? 7 : 0;

@@ -96,22 +96,32 @@ export function ChessBoard({
 
   const handleSquareClick = (x: number, y: number) => {
     if (!selectedPiece) {
-      console.log("r");
       if (board[y][x]?.color == playerColor) {
-        console.log("g");
         const moves = engine.getValidMoves({ x, y });
-        console.log(moves);
         if (moves.length > 0) {
           setSelectedPiece({ x, y });
           setValidMoves(moves);
         }
       }
     } else {
-      const success = engine.makeMove(selectedPiece, { x, y });
+      // console.log(x,y)
+      let newCord:Position = {x,y}
+      if(playerColor=='white'){
+        const tabBlanc = [0,1,2,3,4,5,6,7]
+        const tabNoir = [0,1,2,3,4,5,6,7]
+        tabNoir.reverse()
+        // newCord.x = tabNoir[tabBlanc.indexOf(x)]
+        // newCord.y = tabNoir[tabBlanc.indexOf(y)]
+      }
+      // console.log(playerColor)
+      // console.log(newCord)
+
+      const success = engine.makeMove(selectedPiece, newCord);
+      console.log(success)
       if (success) {
         setBoard(engine.getBoard());
         updateCheckStatus();
-        onMove?.(selectedPiece, { x, y });
+        onMove?.(selectedPiece, newCord);
       }
       setSelectedPiece(null);
       setValidMoves([]);

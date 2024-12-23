@@ -53,13 +53,11 @@ export function GameContent(props: PropsType) {
     } else {
       const dataJson: roomType = data[0];
 
-      console.log(dataJson);
 
       setRoomInfo(dataJson);
 
       socket.emit("room_log", dataJson);
       return dataJson;
-      console.log(roomInfo);
     }
   }, [roomId]);
 
@@ -89,12 +87,12 @@ export function GameContent(props: PropsType) {
   const [drawOffer, setDrawOffer] = useState<PieceColor>();
   const [playerColor, setPlayerColor] = useState<PieceColor>("white");
   const [isTimeOut, setIsTimeOut] = useState(false);
+  const [isRoomLoaded,setIsRoomLoaded] = useState(false)
 
   useEffect(() => {
     if (!roomInfo) {
       fetchRoomInfo();
-    }else if(isSignedIn&&!isPlaying){
-      socket.emit("room_log", roomInfo);
+      setIsRoomLoaded(true)
     }
 
     if (isGameOver) {
@@ -146,16 +144,26 @@ export function GameContent(props: PropsType) {
     isGameStarted,
     fetchRoomInfo,
     roomInfo,
-    isSignedIn
+    user
   ]);
 
+  useEffect(()=>{
+
+    if(user?.id&&roomInfo){
+      console.log('TRY')
+      socket.emit("room_log", roomInfo);
+    }
+
+    console.log('ABAB',user?.id,roomInfo)
+
+  },[user])
+
   const joinGame = async (roomJson: roomType) => {
-    console.log('join gammeeee')
-    console.log(isSignedIn);
-    console.log(roomJson);
-    console.log(isSignedIn)
-    if (isSignedIn && roomJson) {
-      console.log("FF");
+    // console.log('join gammeeee')
+    // console.log(isSignedIn);
+    // console.log(roomJson);
+    // console.log(isSignedIn);
+    if (user?.id && roomJson) {
       if (
         roomJson.status == "waiting_for_player" &&
         user.id !== roomJson.players.player1.id
@@ -179,7 +187,6 @@ export function GameContent(props: PropsType) {
           .update({ players: newPlayers, status: `in_progress` })
           .eq("id", roomId)
           .then((x) => {
-            console.log(x);
             if (x.error) {
               alert("Erreur lors de la connexion a la partie");
             } else {
@@ -189,34 +196,37 @@ export function GameContent(props: PropsType) {
           });
       } else if (roomJson.status == "in_progress") {
         if (user.id == roomJson.players.player1.id) {
-          console.log(roomJson.players.player2);
-          console.log("df");
+          // console.log(roomJson.players.player2);
+          // console.log("df");
           setGameInfos(
             roomJson.players.player1.color,
             parseInt(roomJson.cadence.split("|")[0])
           );
         } else if (user.id == roomJson.players.player2.id) {
-          console.log(roomJson.players.player2);
-          console.log("z");
+          // console.log(roomJson.players.player2);
+          // console.log("z");
           setGameInfos(
             roomJson.players.player2.color,
             parseInt(roomJson.cadence.split("|")[0])
           );
         }
-        console.log(user.id, roomJson.players);
+        // console.log(user.id, roomJson.players);
       }
     }
   };
 
   useEffect(() => {
     socket.on("connected-to-the-room", (data: roomType) => {
-      console.log(roomInfo);
+      // console.log(roomInfo);
       joinGame(data);
       console.log("joined");
     });
 
     socket.on("move", (data) => {
-      console.log("Mouvement reçu:", data);
+      if(data.by==user?.id){
+        return
+      }
+      console.log("Mouvement reçu:", data,data.by,user?.id);
 
       // Appliquer le mouvement reçu
       const { from, to } = data;
@@ -224,7 +234,10 @@ export function GameContent(props: PropsType) {
       const success = engine.makeMove(from, to);
       updateGameState();
 
+      console.log(success)
+
       if (success) {
+        console.log('SUUCCEEESSSSSSS')
         const engineState = engine.getGameState();
         setIsCheck(engineState.isCheck);
         setIsCheckmate(engineState.isCheckmate);
@@ -271,140 +284,150 @@ export function GameContent(props: PropsType) {
   };
 
   const handleMove = (from: Position, to: Position) => {
-    socket.emit("move", { from, to, roomId, moves: engine.getMoves() });
+    socket.emit("move", { from, to, roomId, moves: engine.getMoves(),by:user?.id });
   };
 
   return (
-    <main className="min-h-screen bg-background overflow-hidden">
-      <div>
-        <p>{roomId}</p>
-        <p>{JSON.stringify(roomInfo)}</p>
-        <p>joueur : {playerColor}</p>
-        <p>id : {user?.id}</p>
-        <div className="container max-w-[1600px] mx-auto px-4 h-full">
-          {/* Header de la partie */}
-          <div className="py-6 mb-8 border-b">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold">Partie Classique</h1>
-                <p className="text-muted-foreground">
-                  {/* {roomInfo.cadence.split('|')[0]} minutes par joueur {roomInfo.cadence.split('|')[1]>0?`avec ${roomInfo.cadence.split('|')[1]} seconde d'increment`:''}  */}
-                </p>
-              </div>
-              <div className="flex gap-4">
-                <Button variant="outline" size="sm">
-                  Copier le lien
-                </Button>
-                <Button variant="outline" size="sm">
-                  Quitter la partie
-                </Button>
+    <div>
+      {isRoomLoaded&&roomInfo?(<main className="min-h-screen bg-background overflow-hidden">
+        <div>
+          <p>{roomId}</p>
+          <p>{JSON.stringify(roomInfo)}</p>
+          <p>joueur : {playerColor}</p>
+          <p>id : {user?.id}</p>
+          <div className="container max-w-[1600px] mx-auto px-4 h-full">
+            {/* Header de la partie */}
+            <div className="py-6 mb-8 border-b">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold">Partie Classique</h1>
+                  <p className="text-muted-foreground">
+                    {/* {roomInfo.cadence.split('|')[0]} minutes par joueur {roomInfo.cadence.split('|')[1]>0?`avec ${roomInfo.cadence.split('|')[1]} seconde d'increment`:''}  */}
+                  </p>
+                </div>
+                <div className="flex gap-4">
+                  <Button variant="outline" size="sm">
+                    Copier le lien
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Quitter la partie
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Layout principal */}
-          <div className="grid grid-cols-[250px_1fr_250px] gap-4">
-            {/* Panneau gauche */}
-            <div className="space-y-4">
-              {playerColor == "white" ? (
-                <PlayerCard
-                  name="Joueur Noir"
-                  rating={850}
-                  time={formatTime(blackTime)}
-                  color="black"
-                  isCurrentTurn={currentTurn === "black"}
-                />
-              ) : (
-                <PlayerCard
-                  name="Joueur Blanc"
-                  rating={922}
-                  time={formatTime(whiteTime)}
-                  color="white"
-                  isCurrentTurn={currentTurn === "white"}
-                />
-              )}
+            {/* Layout principal */}
+            <div className="grid grid-cols-[250px_1fr_250px] gap-4">
+              {/* Panneau gauche */}
+              <div className="space-y-4">
+                {playerColor == "white" ? (
+                  <PlayerCard
+                    name="Joueur Noir"
+                    rating={850}
+                    time={formatTime(blackTime)}
+                    color="black"
+                    isCurrentTurn={currentTurn === "black"}
+                  />
+                ) : (
+                  <PlayerCard
+                    name="Joueur Blanc"
+                    rating={922}
+                    time={formatTime(whiteTime)}
+                    color="white"
+                    isCurrentTurn={currentTurn === "white"}
+                  />
+                )}
 
-              <GameControls
-                onResign={() => {
-                  setIsGameOver(true);
-                  setIsResigned(true);
-                  setWinner(getOppositeColor(currentTurn));
-                }}
-                onOfferDraw={handleOfferDraw}
-                drawOffer={drawOffer}
-                onAcceptDraw={handleAcceptDraw}
-                onDeclineDraw={handleDeclineDraw}
-                playerColor={playerColor}
-                isGameOver={isGameOver}
-              />
-
-              {playerColor == "white" ? (
-                <PlayerCard
-                  name="Joueur Blanc"
-                  rating={922}
-                  time={formatTime(whiteTime)}
-                  color="white"
-                  isCurrentTurn={currentTurn === "white"}
-                />
-              ) : (
-                <PlayerCard
-                  name="Joueur Noir"
-                  rating={850}
-                  time={formatTime(blackTime)}
-                  color="black"
-                  isCurrentTurn={currentTurn === "black"}
-                />
-              )}
-            </div>
-
-            {/* Zone centrale avec l'échiquier */}
-            <div className="flex flex-col items-center">
-              <ChessBoard
-                playerColor={playerColor}
-                className="w-full max-w-[1000px]"
-                board={board}
-                setBoard={setBoard}
-                engine={engine}
-                onMove={(from, to) => {
-                  handleMove(from, to);
-                  const engineState = engine.getGameState();
-                  setIsCheck(engineState.isCheck);
-                  setIsCheckmate(engineState.isCheckmate);
-                  setIsStalemate(engineState.isStalemate);
-                  setCurrentTurn(engineState.currentTurn);
-
-                  if (engineState.isCheckmate || engineState.isStalemate) {
+                <GameControls
+                  onResign={() => {
                     setIsGameOver(true);
-                    if (engineState.isCheckmate) {
-                      setWinner(getOppositeColor(currentTurn));
-                    }
-                  }
-                }}
-              />
-            </div>
+                    setIsResigned(true);
+                    setWinner(getOppositeColor(currentTurn));
+                  }}
+                  onOfferDraw={handleOfferDraw}
+                  drawOffer={drawOffer}
+                  onAcceptDraw={handleAcceptDraw}
+                  onDeclineDraw={handleDeclineDraw}
+                  playerColor={playerColor}
+                  isGameOver={isGameOver}
+                />
 
-            {/* Panneau droit */}
-            <div className="space-y-4">
-              <MovesHistory
-                moves={engine.getMoves()}
-                className="h-[calc(100vh-400px)]"
-              />
-              <GameChat className="h-[200px]" />
+                {playerColor == "white" ? (
+                  <PlayerCard
+                    name="Joueur Blanc"
+                    rating={922}
+                    time={formatTime(whiteTime)}
+                    color="white"
+                    isCurrentTurn={currentTurn === "white"}
+                  />
+                ) : (
+                  <PlayerCard
+                    name="Joueur Noir"
+                    rating={850}
+                    time={formatTime(blackTime)}
+                    color="black"
+                    isCurrentTurn={currentTurn === "black"}
+                  />
+                )}
+              </div>
+
+              {/* Zone centrale avec l'échiquier */}
+              <div className="flex flex-col items-center">
+                <ChessBoard
+                  playerColor={playerColor}
+                  className="w-full max-w-[1000px]"
+                  board={board}
+                  setBoard={setBoard}
+                  engine={engine}
+                  onMove={(from, to) => {
+                    handleMove(from, to);
+                    const engineState = engine.getGameState();
+                    setIsCheck(engineState.isCheck);
+                    setIsCheckmate(engineState.isCheckmate);
+                    setIsStalemate(engineState.isStalemate);
+                    setCurrentTurn(engineState.currentTurn);
+
+                    if (engineState.isCheckmate || engineState.isStalemate) {
+                      setIsGameOver(true);
+                      if (engineState.isCheckmate) {
+                        setWinner(getOppositeColor(currentTurn));
+                      }
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Panneau droit */}
+              <div className="space-y-4">
+                <MovesHistory
+                  moves={engine.getMoves()}
+                  className="h-[calc(100vh-400px)]"
+                />
+                <GameChat className="h-[200px]" />
+              </div>
             </div>
           </div>
-        </div>
 
-        <GameMessages
-          isCheck={isCheck}
-          isCheckmate={isCheckmate}
-          isStalemate={isStalemate}
-          isDraw={isDraw}
-          currentTurn={currentTurn}
-          winner={winner}
-          isResigned={isResigned}
-          isTimeOut={isTimeOut}
-        />
-      </div>
-    </main>
+          <GameMessages
+            isCheck={isCheck}
+            isCheckmate={isCheckmate}
+            isStalemate={isStalemate}
+            isDraw={isDraw}
+            currentTurn={currentTurn}
+            winner={winner}
+            isResigned={isResigned}
+            isTimeOut={isTimeOut}
+          />
+        </div>
+      </main>):(
+        <div>
+          {isRoomLoaded?(
+            <p>Sale introuvablle</p>
+          ):(
+            <p>Chargement...</p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

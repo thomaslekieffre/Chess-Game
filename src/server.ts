@@ -27,8 +27,9 @@ io.on("connection", (socket) => {
   console.log("Un joueur est connecté" + socket.id);
 
   socket.on("room_log", (data) => {
-    console.log("Utilisateur connecter a la room " + data.id);
+    console.log(data)
     socket.join(`game_${data.id}`);
+    console.log("Utilisateur connecter a la room " + data.id);
     socket.emit("connected-to-the-room", data);
   });
 
