@@ -1,15 +1,43 @@
 //@ts-nocheck
 
-import {Field, File, PgnGame, PgnReaderMove, PgnWriterConfiguration, Rank} from "../types";
+import {Field, File, PgnGame, PgnReaderMove, PgnWriterConfiguration, PieceType, PieceTypeAbreg, Rank, files, ranks} from "../types";
 
 export const fromCoordToCase = (x:number,y:number) => {
-    const tabLetter = ['a','b','c','d','e','f','g','h']
-    const tabNumber = ['8','7','6','5','4','3','2','1']
-
-    const xPos:File = tabLetter[x]
-    const yPos:Rank = tabNumber[y]
+    const xPos:File = fromXToRow(x)
+    const yPos:Rank = fromYToCol(y)
     const res:Field = `${xPos}${yPos}`
     return res
+}
+
+export const fromXToRow = (x:number) => {
+    // const tabLetter = ['a','b','c','d','e','f','g','h']
+    return files[x]
+}
+
+export const fromYToCol = (y:number) => {
+    // const tabNumber = ['8','7','6','5','4','3','2','1']
+    return ranks[y]
+}
+
+export const getFigByName = (name:PieceType):PieceTypeAbreg => {
+    let ObjConv = {
+        pawn:'P',
+        king:'K',
+        knight:'N',
+        queen:'Q',
+        rook:'R',
+        bishop:'B',
+    }
+    return ObjConv[name]
+}
+
+export const getPieceSymbol = (pieceType: PieceTypeAbreg): PieceTypeAbreg|'' => {
+    switch (pieceType) {
+        case "P":
+          return ""; // Piont nont pas de lettre
+        default:
+          return pieceType; // Autre pieces
+    }
 }
 
 export const writeGame = function(game:PgnGame, configuration:PgnWriterConfiguration = {}) {

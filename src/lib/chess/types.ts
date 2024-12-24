@@ -30,8 +30,8 @@ export type PgnWriterConfiguration = {
 export type PgnMove = {
   drawOffer?: boolean;
   // moveNumber?: number,
-  // notation: { fig?: string | null, strike?: 'x' | null, col?: string, row?: string, check?: string, ep?: boolean
-  // promotion?: string | null, notation: string, disc?: string, drop?: boolean },
+  notation: { fig?: string | null, strike?: 'x' | null, col?: string, row?: string, check?: string, ep?: boolean
+  promotion?: string | null, notation: string, disc?: string, drop?: boolean },
   variations: PgnMove[],
   nag: string[],
   commentDiag?: GameComment,
@@ -65,6 +65,14 @@ export type PieceType =
   | "bishop"
   | "queen"
   | "king";
+
+export type PieceTypeAbreg = 
+  | "P"
+  | "R"
+  | "N"
+  | "B"
+  | "Q"
+  | "K";
 
 export interface ChessPiece {
   type: PieceType;
