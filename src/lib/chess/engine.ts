@@ -107,7 +107,7 @@ export class ChessEngine {
 
     if (!validMoves.some((move) => move.x === to.x && move.y === to.y)) {
       return false;
-    }else{
+    } else {
       const move = this.createMove(from, to);
 
       let fromSquare = fromCoordToCase(move.from.x,move.from.y);
@@ -154,7 +154,6 @@ export class ChessEngine {
 
       return true;
     }
-
   }
 
   // Méthodes privées pour les règles spécifiques
@@ -803,7 +802,7 @@ export class ChessEngine {
     // Mettre à jour hasMoved
     piece.hasMoved = true;
 
-    console.log('aplly')
+    console.log("aplly");
     // Appliquer le mouvement principal
     this.state.board[to.y][to.x] = piece;
     this.state.board[from.y][from.x] = null;

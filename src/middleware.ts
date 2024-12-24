@@ -14,5 +14,5 @@ export async function supabaseMiddleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/webhooks/clerk).*)"],
 };
