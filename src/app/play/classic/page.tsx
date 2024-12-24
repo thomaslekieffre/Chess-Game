@@ -67,8 +67,8 @@ export default function ClassicModePage() {
               id: user.id,
               color: "white",
               time: minutes * 60,
-              username:user.username,
-              elo:'1200?'
+              username: user.username,
+              elo: "1200?",
             },
             player2: {},
             turn: "white",
@@ -82,12 +82,11 @@ export default function ClassicModePage() {
         alert("Erreur lors de la création de la room");
         setIsLoading(false);
       } else {
-        await router.push(`/play/${response.data[0].id}`);
+        router.push(`/play/${response.data[0].id}`);
+        // Ne pas réactiver isLoading car on quitte la page
       }
     } catch (error) {
       alert("Une erreur est survenue: " + error);
-      setIsLoading(false);
-    } finally {
       setIsLoading(false);
     }
   };
