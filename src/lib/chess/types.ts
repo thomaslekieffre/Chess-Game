@@ -120,7 +120,7 @@ export interface GameState {
   strMove:PgnMove[];
 }
 
-type playerType = {
+export type playerType = {
   id:string;
   color:PieceColor;
   temp:string;

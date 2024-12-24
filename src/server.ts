@@ -8,12 +8,10 @@ dotenv.config({
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
-import { supabase } from "./lib/supabase";
 import { convertToPGN } from "./lib/chess/pgn";
-import { parse } from '@mliebelt/pgn-parser'
+import { supabase } from "./lib/supabase";
 
 // import {PgnReader} from '@mliebelt/pgn-reader'
-import {writeGame} from './lib/chess/pgn/pgn2'
 
 // let game = new PgnReader({ pgn: '1. e4 *', ... }).getGame(0)
 // let resultPGN = writeGame({
@@ -166,7 +164,6 @@ import {writeGame} from './lib/chess/pgn/pgn2'
 //   "by": "user_2qWlkgBS0LIWoJQjNba1nyzFrKg"
 // })
 
-
 const app = express();
 const server = http.createServer(app);
 
@@ -180,15 +177,13 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("Un joueur est connecté" + socket.id);
+  console.log("Un joueur est connecté " + socket.id);
 
   socket.on("room_log", (data) => {
-    console.log(data)
-    if(data&&data.id){
-      socket.join(`game_${data.id}`);
-      console.log("Utilisateur connecter a la room " + data.id);
-      socket.emit("connected-to-the-room", data);
-    }
+    console.log(data);
+    socket.join(`game_${data.id}`);
+    console.log("Utilisateur connecter a la room " + data.id);
+    socket.emit("connected-to-the-room", data);
   });
 
   socket.on("move", async (data) => {
