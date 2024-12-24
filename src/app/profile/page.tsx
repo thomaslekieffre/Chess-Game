@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 
 export default function ProfilePage() {
   const { user } = useUser();
+  const { signOut } = useClerk();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
@@ -21,15 +22,15 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
-        console.log("Fetching data for user:", user.id);
+        console.log("Récupération des données pour l'utilisateur ID:", user.id);
         const { data, error } = await supabase
           .from("users")
           .select("*")
-          .eq("id", user.id)
+          .eq("clerk_id", user.id) // Utilisez id_clerk pour la correspondance
           .single();
 
         if (error) {
-          console.error("Erreur complète:", error);
+          console.error("Erreur lors de la récupération des données:", error);
         } else if (data) {
           console.log("Données récupérées:", data);
           setFormData({
@@ -39,6 +40,8 @@ export default function ProfilePage() {
             emoji: data.emoji || "👋",
           });
         }
+      } else {
+        console.log("Aucun utilisateur connecté.");
       }
     };
 
@@ -54,13 +57,15 @@ export default function ProfilePage() {
         throw new Error("Utilisateur non connecté");
       }
 
-      const response = await supabase.from("users").upsert({
-        id: user.id,
-        username: formData.username,
-        real_name: formData.realName,
-        country: formData.country,
-        emoji: formData.emoji,
-      });
+      const response = await supabase
+        .from("users")
+        .update({
+          username: formData.username,
+          real_name: formData.realName,
+          country: formData.country,
+          emoji: formData.emoji,
+        })
+        .eq("clerk_id", user.id);
 
       if (response.error) {
         console.error("Erreur de mise à jour:", response.error);
@@ -74,6 +79,10 @@ export default function ProfilePage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSignOut = () => {
+    signOut();
   };
 
   return (
@@ -132,6 +141,14 @@ export default function ProfilePage() {
             </Button>
           </form>
         </Card>
+
+        <Button
+          onClick={handleSignOut}
+          variant="destructive"
+          className="w-full mt-4"
+        >
+          Se déconnecter
+        </Button>
       </div>
     </main>
   );
