@@ -147,7 +147,7 @@ export class ChessEngine {
         to:toSquare,
         notation:{notation,col:fromYToCol(move.to.y),row:fromXToRow(move.to.x),fig},
         fen:'',
-        index:0,
+        index:this.state.strMove.length+1,
         nag:[],
         variations:[],
       })

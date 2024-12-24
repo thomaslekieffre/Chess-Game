@@ -328,6 +328,7 @@ export function GameContent(props: PropsType) {
 
   const handleMove = (from: Position, to: Position) => {
     console.log(engine.getStrMove());
+    console.log('STR MOVE ^^^^^^')
     socket.emit("move", {
       from,
       to,
@@ -451,7 +452,7 @@ export function GameContent(props: PropsType) {
                 {/* Panneau droit */}
                 <div className="space-y-4">
                   <MovesHistory
-                    moves={engine.getMoves()}
+                    moves={engine.getStrMove()}
                     className="h-[calc(100vh-400px)]"
                   />
                   <GameChat className="h-[200px]" />

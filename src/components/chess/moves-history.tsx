@@ -1,19 +1,13 @@
 import { cn } from "@/lib/utils";
 import { Card } from "../ui/card";
-import { Move } from "@/lib/chess/types";
+import { Move, PgnMove } from "@/lib/chess/types";
 
 interface MovesHistoryProps {
-  moves: Move[];
+  moves: PgnMove[];
   className?: string;
   maxMoves?: number;
 }
 
-function formatMove(move: Move): string {
-  const notation = `${move.from.x},${move.from.y} → ${move.to.x},${move.to.y}`;
-  if (move.captured) return `${notation} (capture)`;
-  if (move.isCastling) return move.isCastling === "kingside" ? "O-O" : "O-O-O";
-  return notation;
-}
 
 export function MovesHistory({
   moves,
@@ -36,7 +30,7 @@ export function MovesHistory({
               index % 2 === 0 ? "bg-muted" : "bg-background"
             )}
           >
-            {moves.length - maxMoves + index + 1}. {formatMove(move)}
+            {moves.length - maxMoves + index + 1}. {move.notation.notation}
           </div>
         ))}
       </div>
