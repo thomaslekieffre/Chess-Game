@@ -33,12 +33,7 @@ export default function PublicPiecesPage() {
         .from("custom_pieces")
         .select(
           `
-          id,
-          name,
-          piece_type,
-          created_by,
-          votes,
-          users (username)
+          *
         `
         )
         .eq("is_public", true)
@@ -57,8 +52,7 @@ export default function PublicPiecesPage() {
         setPieces(
           piecesData.map((piece) => ({
             ...piece,
-            creator_username:
-              piece.users.length > 0 ? piece.users[0].username : "Inconnu",
+            creator_username: piece.users?.username || "Inconnu",
             has_voted: userVotes.has(piece.id),
           }))
         );
@@ -66,8 +60,7 @@ export default function PublicPiecesPage() {
         setPieces(
           piecesData.map((piece) => ({
             ...piece,
-            creator_username:
-              piece.users.length > 0 ? piece.users[0].username : "Inconnu",
+            creator_username: piece.users?.username || "Inconnu",
             has_voted: false,
           }))
         );

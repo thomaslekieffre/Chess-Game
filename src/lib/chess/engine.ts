@@ -1,4 +1,10 @@
-import { fromCoordToCase, fromXToRow, fromYToCol, getFigByName, getPieceSymbol } from "./pgn/pgn2";
+import {
+  fromCoordToCase,
+  fromXToRow,
+  fromYToCol,
+  getFigByName,
+  getPieceSymbol,
+} from "./pgn/pgn2";
 import {
   CasesList,
   ChessPiece,
@@ -76,8 +82,8 @@ export class ChessEngine {
       lastPawnMoveOrCapture: 0,
       isGameOver: false,
       winner: null,
-      drawnHasBeenOffered:false,
-      strMove:[],
+      drawnHasBeenOffered: false,
+      strMove: [],
     };
   }
 
@@ -98,34 +104,34 @@ export class ChessEngine {
   }
 
   public makeMove(from: Position, to: Position): boolean {
-    console.log('aa')
+    console.log("aa");
     const validMoves = this.getValidMoves(from);
 
-    console.log(validMoves)
-    console.log(from,to)
-    console.log('bb')
+    console.log(validMoves);
+    console.log(from, to);
+    console.log("bb");
 
     if (!validMoves.some((move) => move.x === to.x && move.y === to.y)) {
       return false;
     } else {
       const move = this.createMove(from, to);
 
-      let fromSquare = fromCoordToCase(move.from.x,move.from.y);
-      let toSquare = fromCoordToCase(move.to.x,move.to.y);
+      let fromSquare = fromCoordToCase(move.from.x, move.from.y);
+      let toSquare = fromCoordToCase(move.to.x, move.to.y);
 
-      let target:PieceTypeAbreg|'' = ''
-      let targetSquare = JSON.parse(JSON.stringify(this.state.board[to.y][to.x]))
-      if(targetSquare) target = getFigByName(targetSquare.type)
+      let target: PieceTypeAbreg | "" = "";
+      let targetSquare = JSON.parse(
+        JSON.stringify(this.state.board[to.y][to.x])
+      );
+      if (targetSquare) target = getFigByName(targetSquare.type);
 
-      let piece = move.piece
+      let piece = move.piece;
 
       this.applyMove(move);
       this.updateGameState();
-      
 
       // Ajouter le coup à l'historique
 
-      
       let notation = this.generateChessNotation(
         fromSquare,
         toSquare,
@@ -135,22 +141,27 @@ export class ChessEngine {
         target,
         null, // TO MODIF WARNING
         this.state.isCheck,
-        this.state.isCheckmate,
-      )
+        this.state.isCheckmate
+      );
 
-      let fig = getFigByName(piece.type)
+      let fig = getFigByName(piece.type);
 
       this.state.strMove.push({
-        drawOffer:this.state.drawnHasBeenOffered,
-        turn:this.state.currentTurn,
-        from:fromSquare,
-        to:toSquare,
-        notation:{notation,col:fromYToCol(move.to.y),row:fromXToRow(move.to.x),fig},
-        fen:'',
-        index:this.state.strMove.length+1,
-        nag:[],
-        variations:[],
-      })
+        drawOffer: this.state.drawnHasBeenOffered,
+        turn: this.state.currentTurn,
+        from: fromSquare,
+        to: toSquare,
+        notation: {
+          notation,
+          col: fromYToCol(move.to.y),
+          row: fromXToRow(move.to.x),
+          fig,
+        },
+        fen: "",
+        index: 0,
+        nag: [],
+        variations: [],
+      });
 
       return true;
     }
@@ -396,7 +407,7 @@ export class ChessEngine {
     const piece = this.state.board[from.y][from.x];
     const copiedBoard = JSON.parse(JSON.stringify(this.state.board));
 
-    console.log(copiedBoard,this.state.board)
+    console.log(copiedBoard, this.state.board);
 
     // // Simuler le mouvement sur la copie
     // copiedBoard[to.y][to.x] = piece;
@@ -417,7 +428,6 @@ export class ChessEngine {
     //   if (kingPos) break;
     // }
 
-    
     // // Vérifier si le roi est en échec
     // const isCheck = kingPos
     // ? this.isSquareAttacked(kingPos, piece.color)
@@ -426,13 +436,17 @@ export class ChessEngine {
     // console.log(this.isSquareAttacked(kingPos, piece.color)&&isCheck)
 
     // return isCheck; // Retourner le résultat sans modifier l'état original
-    return false
+    return false;
   }
 
-  private moveResultsInCheckmate(from: Position, to: Position, currentColor:PieceColor): boolean {
-    let moveResultsInCheck = this.moveResultsInCheck(from,to)
-    console.log(moveResultsInCheck)
-    if(!moveResultsInCheck) return false
+  private moveResultsInCheckmate(
+    from: Position,
+    to: Position,
+    currentColor: PieceColor
+  ): boolean {
+    let moveResultsInCheck = this.moveResultsInCheck(from, to);
+    console.log(moveResultsInCheck);
+    if (!moveResultsInCheck) return false;
 
     let hasLegalMoves = false;
 
@@ -449,12 +463,12 @@ export class ChessEngine {
       }
     }
 
-    console.log(hasLegalMoves)
+    console.log(hasLegalMoves);
 
-    if(hasLegalMoves){
-      return false
-    }else{
-      return true
+    if (hasLegalMoves) {
+      return false;
+    } else {
+      return true;
     }
     // const piece = this.state.board[from.y][from.x]!;
     // const copiedBoard = JSON.parse(JSON.stringify(this.state.board));
@@ -535,7 +549,9 @@ export class ChessEngine {
     }
 
     // Vérifier si le roi est en échec
-    this.state.isCheck = kingPos ? this.isSquareAttacked(kingPos, opponentColor) : false;
+    this.state.isCheck = kingPos
+      ? this.isSquareAttacked(kingPos, opponentColor)
+      : false;
     this.state.isCheckmate = false;
 
     // Vérifier l'échec et mat seulement si le roi est en échec
@@ -628,7 +644,6 @@ export class ChessEngine {
     return move;
   }
 
-
   // Fonction pour vérifier si une pièce peut se déplacer vers une cible
   private canMove(
     from: { x: number; y: number },
@@ -639,19 +654,16 @@ export class ChessEngine {
     const piece = this.state.board[from.y][from.x];
     if (!piece) return false;
 
-    const pieceMoves = this.getPotentialMoves(from)
+    const pieceMoves = this.getPotentialMoves(from);
 
-    for(let move of pieceMoves){
-      if(
-        move.x == to.x&&
-        move.y==to.y
-      ){
-        return true
+    for (let move of pieceMoves) {
+      if (move.x == to.x && move.y == to.y) {
+        return true;
       }
     }
 
-    return false
-  
+    return false;
+
     // switch (getFigByName(piece.type)) {
     //   case "N": // Cavalier
     //   const KnightMoves = this.getKnightMoves
@@ -672,59 +684,58 @@ export class ChessEngine {
   }
 
   private checkAmbiguity(
-    from:Position,
-    to:Position,
+    from: Position,
+    to: Position,
     pieceType: PieceTypeAbreg
   ): boolean {
     // const fromRow = parseInt(from[1], 10) - 1;
     // const fromCol = from.charCodeAt(0) - 'a'.charCodeAt(0);
     // const toRow = parseInt(to[1], 10) - 1;
     // const toCol = to.charCodeAt(0) - 'a'.charCodeAt(0);
-  
+
     // Parcourir tout l'échiquier pour vérifier les autres pièces du même type
     for (let tmpY = 0; tmpY < this.state.board.length; tmpY++) {
       for (let tmpX = 0; tmpX < this.state.board[tmpY].length; tmpX++) {
         const otherPiece = this.state.board[tmpY][tmpX];
-        const otherPieceAbrg:PieceTypeAbreg|false = otherPiece?.type?getFigByName(otherPiece?.type):false
-  
+        const otherPieceAbrg: PieceTypeAbreg | false = otherPiece?.type
+          ? getFigByName(otherPiece?.type)
+          : false;
+
         // Vérifiez si une autre pièce du même type peut atteindre "to"
         if (
           otherPieceAbrg &&
           otherPieceAbrg === pieceType && // Même type de pièce
           (tmpY !== from.y || tmpX !== from.x) && // Pas la pièce d'origine
-          this.canMove({ y:tmpY, x:tmpX }, { y: to.y, x: to.x }) // Peut se déplacer vers la cible
+          this.canMove({ y: tmpY, x: tmpX }, { y: to.y, x: to.x }) // Peut se déplacer vers la cible
         ) {
           return true;
         }
       }
     }
-  
+
     return false;
   }
-  
-  
 
   private generateChessNotation(
     from: CasesList,
     to: CasesList,
-    fromPos:Position,
-    toPos:Position,
-    pieceType:PieceTypeAbreg,
-    target:PieceTypeAbreg | '' | null | undefined,
+    fromPos: Position,
+    toPos: Position,
+    pieceType: PieceTypeAbreg,
+    target: PieceTypeAbreg | "" | null | undefined,
     promotion: PieceTypeAbreg | null = null,
-    isCheck:boolean,
-    isCheckmate:boolean,
+    isCheck: boolean,
+    isCheckmate: boolean
   ): string {
-
     // const target = this.state.board[toRow][toCol];
 
     let notation = "";
-  
+
     // Déterminer le type de pièce
     // const pieceType = piece.toUpperCase();
     if (pieceType === "P") {
       // Notation pour un pion
-      if (target !== "" && target!==null && target!==undefined) {
+      if (target !== "" && target !== null && target !== undefined) {
         // Capture par un pion
         notation = `${from[0]}x${to}`;
       } else {
@@ -737,30 +748,30 @@ export class ChessEngine {
       // Notation pour les autres pièces
       const pieceSymbol = getPieceSymbol(pieceType); // "N" pour cavalier, "Q" pour reine, etc.
       notation = pieceSymbol;
-  
+
       // Ajouter désambiguïsation si nécessaire
       const isAmbiguous = this.checkAmbiguity(fromPos, toPos, pieceType);
       if (isAmbiguous) {
         notation += from[0]; // Exemple simplifié
       }
-  
+
       if (target !== "") {
         // Capture
         notation += `x`;
       }
       notation += to;
     }
-  
+
     // Vérifier les échecs ou mat
     if (isCheck) {
       notation += "+";
     } else if (isCheckmate) {
       notation += "#";
     }
-  
+
     return notation;
   }
-  
+
   // function getPieceSymbol(pieceType: string): string {
   //   switch (pieceType) {
   //     case "N":
@@ -777,17 +788,17 @@ export class ChessEngine {
   //       return ""; // Pions n'ont pas de lettre
   //   }
   // }
-  
+
   // function checkAmbiguity(board: string[][], from: string, to: string, pieceType: string): boolean {
   //   // Implémentez une vérification pour déterminer si une autre pièce du même type peut atteindre "to"
   //   return false; // Simplifié pour cet exemple
   // }
-  
+
   // function isCheck(board: string[][], position: string): boolean {
   //   // Implémentez une logique pour vérifier si le roi adverse est en échec
   //   return false;
   // }
-  
+
   // function isCheckmate(board: string[][], position: string): boolean {
   //   // Implémentez une logique pour vérifier si le roi adverse est en échec et mat
   //   return false;
@@ -797,7 +808,7 @@ export class ChessEngine {
     const { from, to, piece } = move;
     // console.log('WARNING',from,to,piece,this.state.board,'WARNINGNGNNGNGNGNGGGG')
 
-    this.state.moves.push(move);    
+    this.state.moves.push(move);
 
     // Mettre à jour hasMoved
     piece.hasMoved = true;
@@ -839,8 +850,6 @@ export class ChessEngine {
         y: (from.y + to.y) / 2,
       };
     }
-
-    
 
     // Mettre à jour le compteur de coups sans prise ni mouvement de pion
     if (move.piece.type === "pawn" || move.captured) {
@@ -1000,6 +1009,6 @@ export class ChessEngine {
   }
 
   getStrMove(): PgnMove[] {
-    return this.state.strMove
+    return this.state.strMove;
   }
 }
