@@ -6,26 +6,30 @@ import { useEffect, useState } from "react";
 interface CustomBoardProps {
   className?: string;
   selectedPiece: string;
-  onSquaresChange: (squares: boolean[][]) => void;
+  onSquaresChange?: (squares: boolean[][]) => void;
+  readOnly?: boolean;
+  initialSquares?: boolean[][];
 }
 
 export function CustomBoard({
   className,
   selectedPiece,
   onSquaresChange,
+  readOnly = false,
+  initialSquares,
 }: CustomBoardProps) {
   const [selectedSquares, setSelectedSquares] = useState<boolean[][]>(
-    Array(8)
-      .fill(null)
-      .map(() => Array(8).fill(false))
+    initialSquares || Array(8).fill(Array(8).fill(false))
   );
 
-  const handleSquareClick = (x: number, y: number) => {
-    const newSelectedSquares = selectedSquares.map((row, i) =>
+  const toggleSquare = (x: number, y: number) => {
+    if (readOnly) return;
+
+    const newSquares = selectedSquares.map((row, i) =>
       row.map((square, j) => (i === y && j === x ? !square : square))
     );
-    setSelectedSquares(newSelectedSquares);
-    onSquaresChange(newSelectedSquares);
+    setSelectedSquares(newSquares);
+    onSquaresChange?.(newSquares);
   };
 
   const getPieceSymbol = () => {
@@ -60,7 +64,7 @@ export function CustomBoard({
                     isSelected && "bg-blue-200 dark:bg-blue-900",
                     "hover:bg-blue-100 dark:hover:bg-blue-800/50"
                   )}
-                  onClick={() => !isCenter && handleSquareClick(x, y)}
+                  onClick={() => !isCenter && toggleSquare(x, y)}
                 >
                   {isCenter && (
                     <div className="absolute inset-0 flex items-center justify-center text-4xl">
