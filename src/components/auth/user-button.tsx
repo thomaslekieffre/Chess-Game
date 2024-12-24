@@ -18,7 +18,7 @@ export function UserButton() {
         className="flex items-center cursor-pointer hover:opacity-80 transition-opacity"
       >
         <img
-          src={user?.imageUrl} // Assurez-vous que l'URL de l'image de profil est correcte
+          src={user?.imageUrl}
           alt="User Profile"
           className="w-8 h-8 rounded-full"
         />
