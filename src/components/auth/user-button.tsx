@@ -1,15 +1,28 @@
 "use client";
 
-import { UserButton as ClerkUserButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 export function UserButton() {
+  const router = useRouter();
+  const { user } = useUser();
+
+  const handleManageAccount = () => {
+    router.push("/profile");
+  };
+
   return (
-    <ClerkUserButton
-      appearance={{
-        elements: {
-          userButtonBox: "hover:opacity-80 transition-opacity",
-        },
-      }}
-    />
+    <div className="relative">
+      <button
+        onClick={handleManageAccount}
+        className="flex items-center cursor-pointer hover:opacity-80 transition-opacity"
+      >
+        <img
+          src={user?.imageUrl} // Assurez-vous que l'URL de l'image de profil est correcte
+          alt="User Profile"
+          className="w-8 h-8 rounded-full"
+        />
+      </button>
+    </div>
   );
 }
