@@ -11,7 +11,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { motion } from "framer-motion";
-import { Play, BookOpen, Trophy, Eye } from "lucide-react";
+import { Play, BookOpen, Trophy, Eye, Plus, Library, Vote } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { UserButton } from "@/components/auth/user-button";
@@ -34,6 +34,27 @@ const playModes = [
     description: "Affrontez les meilleurs joueurs",
     icon: <Trophy className="w-4 h-4" />,
     href: "/play/ranked",
+  },
+];
+
+const createModes = [
+  {
+    title: "Créer une pièce",
+    description: "Concevez vos propres pièces d'échecs",
+    icon: <Plus className="w-4 h-4" />,
+    href: "/create",
+  },
+  {
+    title: "Mes pièces",
+    description: "Gérez vos créations personnelles",
+    icon: <Library className="w-4 h-4" />,
+    href: "/my-pieces",
+  },
+  {
+    title: "Pièces publiques",
+    description: "Votez pour les créations de la communauté",
+    icon: <Vote className="w-4 h-4" />,
+    href: "/public-pieces",
   },
 ];
 
@@ -64,6 +85,33 @@ export function Header() {
                 <NavigationMenuContent className="bg-background dark:bg-background/80">
                   <div className="grid w-[400px] gap-3 p-4">
                     {playModes.map((mode) => (
+                      <NavigationMenuLink
+                        key={mode.href}
+                        href={isSignedIn ? mode.href : "/sign-in"}
+                        className="flex items-center gap-4 p-2 hover:bg-muted rounded-md transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+                          {mode.icon}
+                        </div>
+                        <div>
+                          <div className="font-medium">{mode.title}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {mode.description}
+                          </div>
+                        </div>
+                      </NavigationMenuLink>
+                    ))}
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="text-lg hover:text-primary transition-colors">
+                  Créer
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="bg-background dark:bg-background/80">
+                  <div className="grid w-[400px] gap-3 p-4">
+                    {createModes.map((mode) => (
                       <NavigationMenuLink
                         key={mode.href}
                         href={isSignedIn ? mode.href : "/sign-in"}
