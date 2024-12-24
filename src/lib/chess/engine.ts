@@ -1,10 +1,12 @@
-import { fromCoordToCase } from "./pgn/pgn2";
+import { fromCoordToCase, fromXToRow, fromYToCol, getFigByName, getPieceSymbol } from "./pgn/pgn2";
 import {
+  CasesList,
   ChessPiece,
   GameState,
   Move,
   PgnMove,
   PieceColor,
+  PieceTypeAbreg,
   Position,
   // PieceType,
 } from "./types";
@@ -107,11 +109,49 @@ export class ChessEngine {
       return false;
     } else {
       const move = this.createMove(from, to);
-      console.log("a");
+
+      let fromSquare = fromCoordToCase(move.from.x,move.from.y);
+      let toSquare = fromCoordToCase(move.to.x,move.to.y);
+
+      let target:PieceTypeAbreg|'' = ''
+      let targetSquare = JSON.parse(JSON.stringify(this.state.board[to.y][to.x]))
+      if(targetSquare) target = getFigByName(targetSquare.type)
+
+      let piece = move.piece
+
       this.applyMove(move);
-      console.log("b");
       this.updateGameState();
-      console.log("c");
+      
+
+      // Ajouter le coup à l'historique
+
+      
+      let notation = this.generateChessNotation(
+        fromSquare,
+        toSquare,
+        from,
+        to,
+        getFigByName(piece.type),
+        target,
+        null, // TO MODIF WARNING
+        this.state.isCheck,
+        this.state.isCheckmate,
+      )
+
+      let fig = getFigByName(piece.type)
+
+      this.state.strMove.push({
+        drawOffer:this.state.drawnHasBeenOffered,
+        turn:this.state.currentTurn,
+        from:fromSquare,
+        to:toSquare,
+        notation:{notation,col:fromYToCol(move.to.y),row:fromXToRow(move.to.x),fig},
+        fen:'',
+        index:0,
+        nag:[],
+        variations:[],
+      })
+
       return true;
     }
   }
@@ -353,32 +393,95 @@ export class ChessEngine {
   }
 
   private moveResultsInCheck(from: Position, to: Position): boolean {
-    const piece = this.state.board[from.y][from.x]!;
+    const piece = this.state.board[from.y][from.x];
     const copiedBoard = JSON.parse(JSON.stringify(this.state.board));
 
-    // Simuler le mouvement sur la copie
-    copiedBoard[to.y][to.x] = piece;
-    copiedBoard[from.y][from.x] = null;
+    console.log(copiedBoard,this.state.board)
 
-    // Trouver le roi
-    let kingPos: Position | null = null;
-    for (let y = 0; y < 8; y++) {
-      for (let x = 0; x < 8; x++) {
-        const p = copiedBoard[y][x];
-        if (p?.type === "king" && p.color === piece.color) {
-          kingPos = { x, y };
-          break;
+    // // Simuler le mouvement sur la copie
+    // copiedBoard[to.y][to.x] = piece;
+    // copiedBoard[from.y][from.x] = null;
+
+    // console.log(copiedBoard,this.state.board)
+
+    // // Trouver le roi
+    // let kingPos: Position | null = null;
+    // for (let y = 0; y < 8; y++) {
+    //   for (let x = 0; x < 8; x++) {
+    //     const p = copiedBoard[y][x];
+    //     if (p?.type === "king" && p.color === piece.color) {
+    //       kingPos = { x, y };
+    //       break;
+    //     }
+    //   }
+    //   if (kingPos) break;
+    // }
+
+    
+    // // Vérifier si le roi est en échec
+    // const isCheck = kingPos
+    // ? this.isSquareAttacked(kingPos, piece.color)
+    // : false;
+
+    // console.log(this.isSquareAttacked(kingPos, piece.color)&&isCheck)
+
+    // return isCheck; // Retourner le résultat sans modifier l'état original
+    return false
+  }
+
+  private moveResultsInCheckmate(from: Position, to: Position, currentColor:PieceColor): boolean {
+    let moveResultsInCheck = this.moveResultsInCheck(from,to)
+    console.log(moveResultsInCheck)
+    if(!moveResultsInCheck) return false
+
+    let hasLegalMoves = false;
+
+    for (let y = 0; y < 8 && !hasLegalMoves; y++) {
+      for (let x = 0; x < 8 && !hasLegalMoves; x++) {
+        const piece = this.state.board[y][x];
+        if (piece?.color === currentColor) {
+          const moves = this.getValidMoves({ x, y });
+          if (moves.length > 0) {
+            hasLegalMoves = true;
+            break;
+          }
         }
       }
-      if (kingPos) break;
     }
 
-    // Vérifier si le roi est en échec
-    const isCheck = kingPos
-      ? this.isSquareAttacked(kingPos, piece.color)
-      : false;
+    console.log(hasLegalMoves)
 
-    return isCheck; // Retourner le résultat sans modifier l'état original
+    if(hasLegalMoves){
+      return false
+    }else{
+      return true
+    }
+    // const piece = this.state.board[from.y][from.x]!;
+    // const copiedBoard = JSON.parse(JSON.stringify(this.state.board));
+
+    // // Simuler le mouvement sur la copie
+    // copiedBoard[to.y][to.x] = piece;
+    // copiedBoard[from.y][from.x] = null;
+
+    // // Trouver le roi
+    // let kingPos: Position | null = null;
+    // for (let y = 0; y < 8; y++) {
+    //   for (let x = 0; x < 8; x++) {
+    //     const p = copiedBoard[y][x];
+    //     if (p?.type === "king" && p.color === piece.color) {
+    //       kingPos = { x, y };
+    //       break;
+    //     }
+    //   }
+    //   if (kingPos) break;
+    // }
+
+    // // Vérifier si le roi est en échec
+    // const isCheck = kingPos
+    //   ? this.isSquareAttacked(kingPos, piece.color)
+    //   : false;
+
+    // return isCheck; // Retourner le résultat sans modifier l'état original
   }
 
   private isValidPosition(pos: Position): boolean {
@@ -432,36 +535,34 @@ export class ChessEngine {
     }
 
     // Vérifier si le roi est en échec
-    this.state.isCheck = kingPos
-      ? this.isSquareAttacked(kingPos, opponentColor)
-      : false;
+    this.state.isCheck = kingPos ? this.isSquareAttacked(kingPos, opponentColor) : false;
     this.state.isCheckmate = false;
 
     // Vérifier l'échec et mat seulement si le roi est en échec
-    if (this.state.isCheck && kingPos) {
-      let canEscapeCheck = false;
+    // if (this.state.isCheck && kingPos) {
+    //   let canEscapeCheck = false;
 
-      for (let y = 0; y < 8; y++) {
-        for (let x = 0; x < 8; x++) {
-          const piece = this.state.board[y][x];
-          if (piece?.color === opponentColor) {
-            const from = { x, y };
-            const moves = this.getPotentialMoves(from);
+    //   for (let y = 0; y < 8; y++) {
+    //     for (let x = 0; x < 8; x++) {
+    //       const piece = this.state.board[y][x];
+    //       if (piece?.color === opponentColor) {
+    //         const from = { x, y };
+    //         const moves = this.getPotentialMoves(from);
 
-            for (const to of moves) {
-              if (!this.moveResultsInCheck(from, to)) {
-                canEscapeCheck = true;
-                break;
-              }
-            }
-          }
-          if (canEscapeCheck) break;
-        }
-        if (canEscapeCheck) break;
-      }
+    //         for (const to of moves) {
+    //           if (!this.moveResultsInCheck(from, to)) {
+    //             canEscapeCheck = true;
+    //             break;
+    //           }
+    //         }
+    //       }
+    //       if (canEscapeCheck) break;
+    //     }
+    //     if (canEscapeCheck) break;
+    //   }
 
-      this.state.isCheckmate = !canEscapeCheck;
-    }
+    //   this.state.isCheckmate = !canEscapeCheck;
+    // }
 
     // Vérifier le matériel insuffisant
     if (this.hasInsufficientMaterial()) {
@@ -527,9 +628,176 @@ export class ChessEngine {
     return move;
   }
 
+
+  // Fonction pour vérifier si une pièce peut se déplacer vers une cible
+  private canMove(
+    from: { x: number; y: number },
+    to: { x: number; y: number }
+  ): boolean {
+    // Implémentez les règles spécifiques pour chaque type de pièce
+    // Exemple simplifié : mouvement direct sans vérification d'obstacles
+    const piece = this.state.board[from.y][from.x];
+    if (!piece) return false;
+
+    const pieceMoves = this.getPotentialMoves(from)
+
+    for(let move of pieceMoves){
+      if(
+        move.x == to.x&&
+        move.y==to.y
+      ){
+        return true
+      }
+    }
+
+    return false
+  
+    // switch (getFigByName(piece.type)) {
+    //   case "N": // Cavalier
+    //   const KnightMoves = this.getKnightMoves
+    //     return isKnightMove(from, to);
+    //   case "B": // Fou
+    //     return isBishopMove(from, to, board);
+    //   case "R": // Tour
+    //     return isRookMove(from, to, board);
+    //   case "Q": // Reine
+    //     return isQueenMove(from, to, board);
+    //   case "K": // Roi
+    //     return isKingMove(from, to);
+    //   case "P": // Pion
+    //     return isPawnMove(from, to, board, piece);
+    //   default:
+    //     return false;
+    // }
+  }
+
+  private checkAmbiguity(
+    from:Position,
+    to:Position,
+    pieceType: PieceTypeAbreg
+  ): boolean {
+    // const fromRow = parseInt(from[1], 10) - 1;
+    // const fromCol = from.charCodeAt(0) - 'a'.charCodeAt(0);
+    // const toRow = parseInt(to[1], 10) - 1;
+    // const toCol = to.charCodeAt(0) - 'a'.charCodeAt(0);
+  
+    // Parcourir tout l'échiquier pour vérifier les autres pièces du même type
+    for (let tmpY = 0; tmpY < this.state.board.length; tmpY++) {
+      for (let tmpX = 0; tmpX < this.state.board[tmpY].length; tmpX++) {
+        const otherPiece = this.state.board[tmpY][tmpX];
+        const otherPieceAbrg:PieceTypeAbreg|false = otherPiece?.type?getFigByName(otherPiece?.type):false
+  
+        // Vérifiez si une autre pièce du même type peut atteindre "to"
+        if (
+          otherPieceAbrg &&
+          otherPieceAbrg === pieceType && // Même type de pièce
+          (tmpY !== from.y || tmpX !== from.x) && // Pas la pièce d'origine
+          this.canMove({ y:tmpY, x:tmpX }, { y: to.y, x: to.x }) // Peut se déplacer vers la cible
+        ) {
+          return true;
+        }
+      }
+    }
+  
+    return false;
+  }
+  
+  
+
+  private generateChessNotation(
+    from: CasesList,
+    to: CasesList,
+    fromPos:Position,
+    toPos:Position,
+    pieceType:PieceTypeAbreg,
+    target:PieceTypeAbreg | '' | null | undefined,
+    promotion: PieceTypeAbreg | null = null,
+    isCheck:boolean,
+    isCheckmate:boolean,
+  ): string {
+
+    // const target = this.state.board[toRow][toCol];
+
+    let notation = "";
+  
+    // Déterminer le type de pièce
+    // const pieceType = piece.toUpperCase();
+    if (pieceType === "P") {
+      // Notation pour un pion
+      if (target !== "" && target!==null && target!==undefined) {
+        // Capture par un pion
+        notation = `${from[0]}x${to}`;
+      } else {
+        notation = to;
+      }
+      if (promotion) {
+        notation += `=${promotion}`;
+      }
+    } else {
+      // Notation pour les autres pièces
+      const pieceSymbol = getPieceSymbol(pieceType); // "N" pour cavalier, "Q" pour reine, etc.
+      notation = pieceSymbol;
+  
+      // Ajouter désambiguïsation si nécessaire
+      const isAmbiguous = this.checkAmbiguity(fromPos, toPos, pieceType);
+      if (isAmbiguous) {
+        notation += from[0]; // Exemple simplifié
+      }
+  
+      if (target !== "") {
+        // Capture
+        notation += `x`;
+      }
+      notation += to;
+    }
+  
+    // Vérifier les échecs ou mat
+    if (isCheck) {
+      notation += "+";
+    } else if (isCheckmate) {
+      notation += "#";
+    }
+  
+    return notation;
+  }
+  
+  // function getPieceSymbol(pieceType: string): string {
+  //   switch (pieceType) {
+  //     case "N":
+  //       return "N"; // Cavalier
+  //     case "B":
+  //       return "B"; // Fou
+  //     case "R":
+  //       return "R"; // Tour
+  //     case "Q":
+  //       return "Q"; // Reine
+  //     case "K":
+  //       return "K"; // Roi
+  //     default:
+  //       return ""; // Pions n'ont pas de lettre
+  //   }
+  // }
+  
+  // function checkAmbiguity(board: string[][], from: string, to: string, pieceType: string): boolean {
+  //   // Implémentez une vérification pour déterminer si une autre pièce du même type peut atteindre "to"
+  //   return false; // Simplifié pour cet exemple
+  // }
+  
+  // function isCheck(board: string[][], position: string): boolean {
+  //   // Implémentez une logique pour vérifier si le roi adverse est en échec
+  //   return false;
+  // }
+  
+  // function isCheckmate(board: string[][], position: string): boolean {
+  //   // Implémentez une logique pour vérifier si le roi adverse est en échec et mat
+  //   return false;
+  // }
+
   private applyMove(move: Move): void {
     const { from, to, piece } = move;
     // console.log('WARNING',from,to,piece,this.state.board,'WARNINGNGNNGNGNGNGGGG')
+
+    this.state.moves.push(move);    
 
     // Mettre à jour hasMoved
     piece.hasMoved = true;
@@ -572,27 +840,7 @@ export class ChessEngine {
       };
     }
 
-    // Ajouter le coup à l'historique
-    this.state.moves.push(move);
-    let fromVar = fromCoordToCase(move.from.x,move.from.y)
-    if(move.isCastling&&move.isCastling=='kingside'){
-      fromVar='O-O'
-    }
-    if(move.isCastling&&move.isCastling=='queenside'){
-      fromVar='O-O-O'
-    }
-
-
-    this.state.strMove.push({
-      drawOffer:this.state.drawnHasBeenOffered,
-      turn:this.state.currentTurn,
-      from:fromVar,
-      to:fromCoordToCase(move.to.x, move.to.y),
-      fen:'',
-      index:0,
-      nag:[],
-      variations:[],
-    })
+    
 
     // Mettre à jour le compteur de coups sans prise ni mouvement de pion
     if (move.piece.type === "pawn" || move.captured) {
