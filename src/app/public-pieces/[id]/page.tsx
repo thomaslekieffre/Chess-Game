@@ -28,39 +28,48 @@ export default function PieceDetailsPage() {
 
   useEffect(() => {
     fetchPieceDetails();
-  }, []);
+  }, [user, id]); // Ajouter les dépendances user et id
 
   const fetchPieceDetails = async () => {
     try {
-      const { data: pieceData, error } = await supabase
-        .from("custom_pieces")
-        .select(
-          `
-          *,
-          users (username)
-        `
-        )
-        .eq("id", id) // Utilisation de id déballé
-        .single();
-
-      if (error) throw error;
+      if (!id) {
+        console.error("ID de pièce manquant");
+        return;
+      }
 
       let hasVoted = false;
+      const { data: pieceData, error: pieceError } = await supabase
+        .from("custom_pieces")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (pieceError) {
+        console.error("Erreur lors de la requête de la pièce:", pieceError);
+        return;
+      }
+
+      if (!pieceData) {
+        console.error("Aucune pièce trouvée avec cet ID");
+        return;
+      }
+
       if (user) {
-        const { data: voteData } = await supabase
+        const { data: voteData, error: voteError } = await supabase
           .from("piece_votes")
           .select("piece_id")
           .eq("user_id", user.id)
           .eq("piece_id", id)
           .single();
 
-        hasVoted = !!voteData;
+        if (!voteError || voteError.code === "PGRST116") {
+          hasVoted = !!voteData;
+        }
       }
 
       setPiece({
         ...pieceData,
-        creator_username:
-          pieceData.users.length > 0 ? pieceData.users[0].username : "Inconnu",
+        creator_username: pieceData.users?.[0]?.username || "Inconnu",
         has_voted: hasVoted,
       });
     } catch (error) {
