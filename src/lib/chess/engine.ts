@@ -419,21 +419,18 @@ export class ChessEngine {
     pos: Position,
     defendingColor: PieceColor,
     checkingKing: boolean = false,
-    board?:(ChessPiece|null)[][],
+    board=this.state.board,
   ): boolean {
-    console.log(board)
-    let tmpBoard = board?board:this.state.board
-    console.log(tmpBoard[5][6])
     for (let y = 0; y < 8; y++) {
       for (let x = 0; x < 8; x++) {
-        const piece = tmpBoard[y][x];
+        const piece = board[y][x];
         if (piece && piece.color !== defendingColor) {
           if (checkingKing && piece.type === "king") continue;
 
-          const moves = this.getPotentialMoves({x,y},checkingKing,tmpBoard);
+          const moves = this.getPotentialMoves({x,y},checkingKing,board);
           // console.log(piece,moves)
           if (moves.some((move) => move.x === pos.x && move.y === pos.y)) {
-            console.log(piece,moves,pos,tmpBoard)
+            console.log(piece,moves,pos,board)
             return true;
           }
         }
@@ -587,30 +584,30 @@ export class ChessEngine {
     this.state.isCheckmate = false;
 
     // Vérifier l'échec et mat seulement si le roi est en échec
-    // if (this.state.isCheck && kingPos) {
-    //   let canEscapeCheck = false;
+    if (this.state.isCheck && kingPos) {
+      let canEscapeCheck = false;
 
-    //   for (let y = 0; y < 8; y++) {
-    //     for (let x = 0; x < 8; x++) {
-    //       const piece = this.state.board[y][x];
-    //       if (piece?.color === opponentColor) {
-    //         const from = { x, y };
-    //         const moves = this.getPotentialMoves(from);
+      for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 8; x++) {
+          const piece = this.state.board[y][x];
+          if (piece?.color === opponentColor) {
+            const from = { x, y };
+            const moves = this.getPotentialMoves(from);
 
-    //         for (const to of moves) {
-    //           if (!this.moveResultsInCheck(from, to)) {
-    //             canEscapeCheck = true;
-    //             break;
-    //           }
-    //         }
-    //       }
-    //       if (canEscapeCheck) break;
-    //     }
-    //     if (canEscapeCheck) break;
-    //   }
+            for (const to of moves) {
+              if (!this.moveResultsInCheck(from, to)) {
+                canEscapeCheck = true;
+                break;
+              }
+            }
+          }
+          if (canEscapeCheck) break;
+        }
+        if (canEscapeCheck) break;
+      }
 
-    //   this.state.isCheckmate = !canEscapeCheck;
-    // }
+      this.state.isCheckmate = !canEscapeCheck;
+    }
 
     // Vérifier le matériel insuffisant
     if (this.hasInsufficientMaterial()) {
