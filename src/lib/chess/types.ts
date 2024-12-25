@@ -42,6 +42,7 @@ export type PgnMove = {
   to: Field,
   fen?: string,
   index?: number,
+  turnNumber:number,
   prev?: number,
   next?: number,
   variationLevel?: number
@@ -107,6 +108,7 @@ export interface GameState {
   moves: Move[];
   enPassantTarget?: Position;
   moveCount: number;
+  halfMoveCount:number;
   positions: string[];
   lastPawnMoveOrCapture: number;
   drawOffer?: PieceColor;

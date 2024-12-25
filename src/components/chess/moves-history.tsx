@@ -30,7 +30,7 @@ export function MovesHistory({
               index % 2 === 0 ? "bg-muted" : "bg-background"
             )}
           >
-            {moves.length - maxMoves + index + 1}. {move.notation.notation}
+            {move.turnNumber}. {move.notation.notation}
           </div>
         ))}
       </div>

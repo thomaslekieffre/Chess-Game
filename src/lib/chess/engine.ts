@@ -78,6 +78,7 @@ export class ChessEngine {
       isDraw: false,
       drawReason: undefined,
       moveCount: 0,
+      halfMoveCount:0,
       positions: [],
       lastPawnMoveOrCapture: 0,
       isGameOver: false,
@@ -103,6 +104,25 @@ export class ChessEngine {
     return potentialMoves.filter((to) => !this.moveResultsInCheck(from, to));
   }
 
+  private getCastlingRight():string {
+    let rights = []
+    let WhiteKing = this.state.board[7][4]
+    let QueenSideWhiteRook = this.state.board[0][7]
+    let KingSideWhiteRook = this.state.board[7][7]
+    let BlackKing = this.state.board[0][4]
+    let QueenSideBlackRook = this.state.board[0][0]
+    let KingSideBlackRook = this.state.board[7][0]
+    let WhiteKingSideCastle = (WhiteKing&&!WhiteKing.hasMoved&&KingSideWhiteRook&&!KingSideWhiteRook.hasMoved)
+    let WhiteQueenSideCastle = (WhiteKing&&!WhiteKing.hasMoved&&QueenSideWhiteRook&&!QueenSideWhiteRook.hasMoved)
+    let BlackKingSideCastle = (BlackKing&&!BlackKing.hasMoved&&KingSideBlackRook&&!KingSideBlackRook.hasMoved)
+    let BlackQueenSideCastle = (BlackKing&&!BlackKing.hasMoved&&QueenSideBlackRook&&!QueenSideBlackRook.hasMoved)
+    if(WhiteKingSideCastle) rights.push('K')
+    if(WhiteQueenSideCastle) rights.push('Q')
+    if(BlackKingSideCastle) rights.push('k')
+    if(BlackQueenSideCastle) rights.push('q')
+    return rights.length>0?rights.join(''):'-'
+  }
+
   public makeMove(from: Position, to: Position): boolean {
     console.log("aa");
     const validMoves = this.getValidMoves(from);
@@ -114,6 +134,9 @@ export class ChessEngine {
     if (!validMoves.some((move) => move.x === to.x && move.y === to.y)) {
       return false;
     } else {
+      const copyBoard = JSON.parse(
+        JSON.stringify(this.state.board)
+      )
       const move = this.createMove(from, to);
 
       let fromSquare = fromCoordToCase(move.from.x, move.from.y);
@@ -127,10 +150,18 @@ export class ChessEngine {
 
       let piece = move.piece;
 
+      const notationCurrentTurn:PieceColor = `${this.state.currentTurn}`
+      const castlingRight = this.getCastlingRight()
+      const enPassant = '-' // TODO
+
+
+
       this.applyMove(move);
       this.updateGameState();
 
       // Ajouter le coup à l'historique
+
+      const fen = this.generateFEN(copyBoard,notationCurrentTurn,castlingRight,enPassant,this.state.lastPawnMoveOrCapture,this.state.moveCount)
 
       let notation = this.generateChessNotation(
         fromSquare,
@@ -157,8 +188,9 @@ export class ChessEngine {
           row: fromXToRow(move.to.x),
           fig,
         },
-        fen: "",
-        index: 0,
+        fen,
+        index: this.state.strMove.length+1,
+        turnNumber:this.state.moveCount,
         nag: [],
         variations: [],
       });
@@ -403,6 +435,55 @@ export class ChessEngine {
     return false;
   }
 
+  private generateFEN(
+    board:(ChessPiece|null)[][],
+    activeColor: PieceColor, // Le joueur actif : "w" pour blanc, "b" pour noir
+    castlingRights: string, // Droits de roque : exemple "KQkq" ou "-"
+    enPassant: string, // Case en passant, ex: "e3", "-" s'il n'y en a pas
+    halfmoveClock: number, // Nombre de demi-coups depuis la dernière prise ou poussée de pion
+    fullmoveNumber: number // Nombre de tours complets (1 au début)
+  ): string {
+    // Étape 1: Générer la disposition des pièces
+    const rows: string[] = [];
+    for (let y = 0; y < 8; y++) {
+      let emptyCount = 0;
+      let feny = "";
+  
+      for (let x = 0; x < 8; x++) {
+        const piece = board[y][x];
+        const notationPiece = piece?.type?(piece.color==='black'?getFigByName(piece.type).toLocaleLowerCase():getFigByName(piece.type)):null
+        if (notationPiece === null) {
+          emptyCount++;
+        } else {
+          if (emptyCount > 0) {
+            feny += emptyCount.toString();
+            emptyCount = 0;
+          }
+          feny += notationPiece;
+        }
+      }
+  
+      if (emptyCount > 0) {
+        feny += emptyCount.toString();
+      }
+  
+      rows.push(feny);
+    }
+    const boardFEN = rows.join("/");
+  
+    // Étape 2: Ajouter les autres composants du FEN
+    const fen = [
+      boardFEN, // Disposition des pièces
+      activeColor=='white'?'w':'b', // Couleur active
+      castlingRights || "-", // Droits de roque
+      enPassant || "-", // Case en passant
+      halfmoveClock.toString(), // Compteur de demi-coups
+      fullmoveNumber.toString(), // Compteur de tours
+    ].join(" ");
+  
+    return fen;
+  }
+
   private moveResultsInCheck(from: Position, to: Position): boolean {
     const piece = this.state.board[from.y][from.x];
     const copiedBoard = JSON.parse(JSON.stringify(this.state.board));
@@ -605,6 +686,11 @@ export class ChessEngine {
     // Changer le tour
     this.state.currentTurn =
       this.state.currentTurn === "white" ? "black" : "white";
+
+    if(this.state.currentTurn=='black'){
+      this.state.moveCount++
+    }
+    this.state.halfMoveCount++
   }
 
   private createMove(from: Position, to: Position): Move {
