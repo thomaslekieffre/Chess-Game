@@ -100,7 +100,7 @@ export class ChessEngine {
     if (!piece || piece.color !== this.state.currentTurn) return [];
 
     const potentialMoves = this.getPotentialMoves(from);
-    // console.log(potentialMoves)
+    console.log(potentialMoves)
     return potentialMoves.filter((to) => !this.moveResultsInCheck(from, to));
   }
 
@@ -202,41 +202,42 @@ export class ChessEngine {
   // Méthodes privées pour les règles spécifiques
   private getPotentialMoves(
     from: Position,
-    checkingKing: boolean = false
+    checkingKing: boolean = false,
+    board=this.state.board,
   ): Position[] {
     const piece = this.state.board[from.y][from.x]!;
 
     switch (piece.type) {
       case "pawn":
-        return this.getPawnMoves(from);
+        return this.getPawnMoves(from,board);
       case "rook":
-        return this.getRookMoves(from);
+        return this.getRookMoves(from,board);
       case "knight":
-        return this.getKnightMoves(from);
+        return this.getKnightMoves(from,board);
       case "bishop":
-        return this.getBishopMoves(from);
+        return this.getBishopMoves(from,board);
       case "queen":
-        return [...this.getRookMoves(from), ...this.getBishopMoves(from)];
+        return [...this.getRookMoves(from,board), ...this.getBishopMoves(from,board)];
       case "king":
-        return checkingKing ? [] : this.getKingMoves(from);
+        return checkingKing ? [] : this.getKingMoves(from,board);
       default:
         return [];
     }
   }
 
-  private getPawnMoves(from: Position): Position[] {
+  private getPawnMoves(from: Position,board=this.state.board): Position[] {
     const moves: Position[] = [];
-    const piece = this.state.board[from.y][from.x]!;
+    const piece = board[from.y][from.x]!;
     const direction = piece.color === "white" ? -1 : 1;
 
     // Mouvement simple
-    if (!this.state.board[from.y + direction]?.[from.x]) {
+    if (!board[from.y + direction]?.[from.x]) {
       moves.push({ x: from.x, y: from.y + direction });
 
       // Double mouvement initial
       if (
         !piece.hasMoved &&
-        !this.state.board[from.y + 2 * direction]?.[from.x]
+        !board[from.y + 2 * direction]?.[from.x]
       ) {
         moves.push({ x: from.x, y: from.y + 2 * direction });
       }
@@ -250,7 +251,7 @@ export class ChessEngine {
 
     for (const capture of captures) {
       if (this.isValidPosition(capture)) {
-        const targetPiece = this.state.board[capture.y][capture.x];
+        const targetPiece = board[capture.y][capture.x];
         if (targetPiece && targetPiece.color !== piece.color) {
           moves.push(capture);
         }
@@ -268,7 +269,7 @@ export class ChessEngine {
     return moves;
   }
 
-  private getRookMoves(from: Position): Position[] {
+  private getRookMoves(from: Position,board=this.state.board): Position[] {
     const moves: Position[] = [];
     const directions = [
       { x: 0, y: 1 },
@@ -282,11 +283,11 @@ export class ChessEngine {
       let y = from.y + dir.y;
 
       while (this.isValidPosition({ x, y })) {
-        const targetPiece = this.state.board[y][x];
+        const targetPiece = board[y][x];
         if (!targetPiece) {
           moves.push({ x, y });
         } else {
-          if (targetPiece.color !== this.state.board[from.y][from.x]!.color) {
+          if (targetPiece.color !== board[from.y][from.x]!.color) {
             moves.push({ x, y });
           }
           break;
@@ -298,7 +299,7 @@ export class ChessEngine {
     return moves;
   }
 
-  private getKnightMoves(from: Position): Position[] {
+  private getKnightMoves(from: Position,board=this.state.board): Position[] {
     const moves: Position[] = [];
     const offsets = [
       { x: 2, y: 1 },
@@ -316,10 +317,10 @@ export class ChessEngine {
       const y = from.y + offset.y;
 
       if (this.isValidPosition({ x, y })) {
-        const targetPiece = this.state.board[y][x];
+        const targetPiece = board[y][x];
         if (
           !targetPiece ||
-          targetPiece.color !== this.state.board[from.y][from.x]!.color
+          targetPiece.color !== board[from.y][from.x]!.color
         ) {
           moves.push({ x, y });
         }
@@ -328,7 +329,7 @@ export class ChessEngine {
     return moves;
   }
 
-  private getBishopMoves(from: Position): Position[] {
+  private getBishopMoves(from: Position,board=this.state.board): Position[] {
     const moves: Position[] = [];
     const directions = [
       { x: 1, y: 1 },
@@ -342,11 +343,11 @@ export class ChessEngine {
       let y = from.y + dir.y;
 
       while (this.isValidPosition({ x, y })) {
-        const targetPiece = this.state.board[y][x];
+        const targetPiece = board[y][x];
         if (!targetPiece) {
           moves.push({ x, y });
         } else {
-          if (targetPiece.color !== this.state.board[from.y][from.x]!.color) {
+          if (targetPiece.color !== board[from.y][from.x]!.color) {
             moves.push({ x, y });
           }
           break;
@@ -358,9 +359,9 @@ export class ChessEngine {
     return moves;
   }
 
-  private getKingMoves(from: Position): Position[] {
+  private getKingMoves(from: Position,board=this.state.board): Position[] {
     const moves: Position[] = [];
-    const piece = this.state.board[from.y][from.x]!;
+    const piece = board[from.y][from.x]!;
 
     // Mouvements normaux
     for (let dy = -1; dy <= 1; dy++) {
@@ -371,7 +372,7 @@ export class ChessEngine {
         const y = from.y + dy;
 
         if (this.isValidPosition({ x, y })) {
-          const targetPiece = this.state.board[y][x];
+          const targetPiece = board[y][x];
           if (!targetPiece || targetPiece.color !== piece.color) {
             if (!this.isSquareAttacked({ x, y }, piece.color, true)) {
               moves.push({ x, y });
@@ -384,11 +385,11 @@ export class ChessEngine {
     // Roque
     if (!piece.hasMoved && !this.state.isCheck) {
       // Petit roque
-      const kingsideRook = this.state.board[from.y][7];
+      const kingsideRook = board[from.y][7];
       if (kingsideRook?.type === "rook" && !kingsideRook.hasMoved) {
         if (
-          !this.state.board[from.y][5] &&
-          !this.state.board[from.y][6] &&
+          !board[from.y][5] &&
+          !board[from.y][6] &&
           !this.isSquareAttacked({ x: 5, y: from.y }, piece.color, true) &&
           !this.isSquareAttacked({ x: 6, y: from.y }, piece.color, true)
         ) {
@@ -397,12 +398,12 @@ export class ChessEngine {
       }
 
       // Grand roque
-      const queensideRook = this.state.board[from.y][0];
+      const queensideRook = board[from.y][0];
       if (queensideRook?.type === "rook" && !queensideRook.hasMoved) {
         if (
-          !this.state.board[from.y][1] &&
-          !this.state.board[from.y][2] &&
-          !this.state.board[from.y][3] &&
+          !board[from.y][1] &&
+          !board[from.y][2] &&
+          !board[from.y][3] &&
           !this.isSquareAttacked({ x: 2, y: from.y }, piece.color, true) &&
           !this.isSquareAttacked({ x: 3, y: from.y }, piece.color, true)
         ) {
@@ -417,16 +418,22 @@ export class ChessEngine {
   private isSquareAttacked(
     pos: Position,
     defendingColor: PieceColor,
-    checkingKing: boolean = false
+    checkingKing: boolean = false,
+    board?:(ChessPiece|null)[][],
   ): boolean {
+    console.log(board)
+    let tmpBoard = board?board:this.state.board
+    console.log(tmpBoard[5][6])
     for (let y = 0; y < 8; y++) {
       for (let x = 0; x < 8; x++) {
-        const piece = this.state.board[y][x];
+        const piece = tmpBoard[y][x];
         if (piece && piece.color !== defendingColor) {
           if (checkingKing && piece.type === "king") continue;
 
-          const moves = this.getPotentialMoves({ x, y }, checkingKing);
+          const moves = this.getPotentialMoves({x,y},checkingKing,tmpBoard);
+          // console.log(piece,moves)
           if (moves.some((move) => move.x === pos.x && move.y === pos.y)) {
+            console.log(piece,moves,pos,tmpBoard)
             return true;
           }
         }
@@ -485,99 +492,43 @@ export class ChessEngine {
   }
 
   private moveResultsInCheck(from: Position, to: Position): boolean {
-    const piece = this.state.board[from.y][from.x];
     const copiedBoard = JSON.parse(JSON.stringify(this.state.board));
+    const piece:ChessPiece|null = copiedBoard[from.y][from.x];
 
-    console.log(copiedBoard, this.state.board);
+    if(!piece) return false
 
-    // // Simuler le mouvement sur la copie
-    // copiedBoard[to.y][to.x] = piece;
-    // copiedBoard[from.y][from.x] = null;
+    // console.log(copiedBoard, this.state.board);
 
-    // console.log(copiedBoard,this.state.board)
+    // Simuler le mouvement sur la copie
+    copiedBoard[to.y][to.x] = piece;
+    copiedBoard[from.y][from.x] = null;
 
-    // // Trouver le roi
-    // let kingPos: Position | null = null;
-    // for (let y = 0; y < 8; y++) {
-    //   for (let x = 0; x < 8; x++) {
-    //     const p = copiedBoard[y][x];
-    //     if (p?.type === "king" && p.color === piece.color) {
-    //       kingPos = { x, y };
-    //       break;
-    //     }
-    //   }
-    //   if (kingPos) break;
-    // }
-
-    // // Vérifier si le roi est en échec
-    // const isCheck = kingPos
-    // ? this.isSquareAttacked(kingPos, piece.color)
-    // : false;
-
-    // console.log(this.isSquareAttacked(kingPos, piece.color)&&isCheck)
-
-    // return isCheck; // Retourner le résultat sans modifier l'état original
-    return false;
-  }
-
-  private moveResultsInCheckmate(
-    from: Position,
-    to: Position,
-    currentColor: PieceColor
-  ): boolean {
-    let moveResultsInCheck = this.moveResultsInCheck(from, to);
-    console.log(moveResultsInCheck);
-    if (!moveResultsInCheck) return false;
-
-    let hasLegalMoves = false;
-
-    for (let y = 0; y < 8 && !hasLegalMoves; y++) {
-      for (let x = 0; x < 8 && !hasLegalMoves; x++) {
-        const piece = this.state.board[y][x];
-        if (piece?.color === currentColor) {
-          const moves = this.getValidMoves({ x, y });
-          if (moves.length > 0) {
-            hasLegalMoves = true;
-            break;
-          }
+    // Trouver le roi
+    let kingPos: Position | null = null;
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
+        const p = copiedBoard[y][x];
+        if (p?.type === "king" && p.color === piece.color) {
+          kingPos = { x, y };
+          break;
         }
       }
+      if (kingPos) break;
     }
 
-    console.log(hasLegalMoves);
+    console.log(kingPos)
 
-    if (hasLegalMoves) {
-      return false;
-    } else {
-      return true;
+    if(kingPos){
+      console.log(copiedBoard)
+      const isKingAttacked = this.isSquareAttacked(kingPos, piece.color,true,copiedBoard)
+      console.log(isKingAttacked,'isat')
+      return isKingAttacked
+    }else{
+      console.log('paspos')
+      return false
     }
-    // const piece = this.state.board[from.y][from.x]!;
-    // const copiedBoard = JSON.parse(JSON.stringify(this.state.board));
-
-    // // Simuler le mouvement sur la copie
-    // copiedBoard[to.y][to.x] = piece;
-    // copiedBoard[from.y][from.x] = null;
-
-    // // Trouver le roi
-    // let kingPos: Position | null = null;
-    // for (let y = 0; y < 8; y++) {
-    //   for (let x = 0; x < 8; x++) {
-    //     const p = copiedBoard[y][x];
-    //     if (p?.type === "king" && p.color === piece.color) {
-    //       kingPos = { x, y };
-    //       break;
-    //     }
-    //   }
-    //   if (kingPos) break;
-    // }
-
-    // // Vérifier si le roi est en échec
-    // const isCheck = kingPos
-    //   ? this.isSquareAttacked(kingPos, piece.color)
-    //   : false;
-
-    // return isCheck; // Retourner le résultat sans modifier l'état original
   }
+
 
   private isValidPosition(pos: Position): boolean {
     return pos.x >= 0 && pos.x < 8 && pos.y >= 0 && pos.y < 8;
