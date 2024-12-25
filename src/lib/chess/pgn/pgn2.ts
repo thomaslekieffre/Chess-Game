@@ -1,11 +1,18 @@
 //@ts-nocheck
 
-import {Field, File, PgnGame, PgnReaderMove, PgnWriterConfiguration, PieceType, PieceTypeAbreg, Rank, files, ranks} from "../types";
+import {CasesList, Field, File, PgnGame, PgnReaderMove, PgnWriterConfiguration, PieceType, PieceTypeAbreg, Position, Rank, files, ranks} from "../types";
 
 export const fromCoordToCase = (x:number,y:number) => {
     const xPos:File = fromXToRow(x)
     const yPos:Rank = fromYToCol(y)
     const res:Field = `${xPos}${yPos}`
+    return res
+}
+
+export const fromCaseToCoord = (pos:CasesList) => {
+    const x:number = files[pos[0]]
+    const y:number = ranks[pos[1]]
+    const res:Position = {x,y}
     return res
 }
 

@@ -54,9 +54,9 @@ export type PgnMove = {
   commentMove?: string,
   commentAfter?: string,
   turn?: PieceColor
-  from: Field,
-  to: Field,
-  fen?: string,
+  from: CasesList,
+  to: CasesList,
+  fen: FenString|string,
   index?: number,
   turnNumber:number,
   prev?: number,
@@ -160,7 +160,7 @@ export type roomType = {
     player2:playerType;
     lastmove:string;
   }
-  game:string;
+  game:PgnMove[];
   createdAt:string;
   turn:string;
 }

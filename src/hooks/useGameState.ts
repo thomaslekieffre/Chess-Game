@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { ChessEngine } from "@/lib/chess/engine";
-import { ChessPiece } from "@/lib/chess/types";
+import { ChessPiece, FenString, PgnMove } from "@/lib/chess/types";
 
 export function useGameState() {
-  const [engine] = useState(() => new ChessEngine());
+  const [engine] = useState(() => new ChessEngine("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
   const [currentTurn, setCurrentTurn] = useState<"white" | "black">(engine.getCurrentTurn());
   const [isCheck, setIsCheck] = useState(engine.isKingInCheck());
   const [isCheckmate, setIsCheckmate] = useState(engine.isKingInCheckmate());
@@ -12,6 +12,7 @@ export function useGameState() {
   const [board, setBoard] = useState<(ChessPiece | null)[][]>(
     engine.getBoard()
   );
+  const [movesList,setMovesList] = useState<PgnMove[]>([])
   const [isDraw, setIsDraw] = useState(false);
   const [drawReason, setDrawReason] = useState<
     | "stalemate"
@@ -22,10 +23,12 @@ export function useGameState() {
   >();
   const [isStalemate, setIsStalemate] = useState(false);
 
-  const updateGameState = () => {
+  const updateGameState = (nextToor?:boolean) => {
     const engineState = engine.getGameState();
 
     setBoard(engine.getBoard())
+
+    setMovesList(engine.getStrMove())
 
     setIsCheck(engineState.isCheck);
     setIsCheckmate(engineState.isCheckmate);
@@ -34,9 +37,16 @@ export function useGameState() {
       setWinner(currentTurn);
       setIsGameOver(true);
     } else {
-      setCurrentTurn((prev) => (prev === "white" ? "black" : "white"));
+      if(nextToor){
+        setCurrentTurn((prev) => (prev === "white" ? "black" : "white"));
+      }
     }
   };
+
+  const setGameByMovesArray = async (moves:PgnMove[]) => {
+    engine.setGameUsingMoves(moves)
+    updateGameState(false)
+  }
 
   return {
     currentTurn,
@@ -59,5 +69,7 @@ export function useGameState() {
     setIsStalemate,
     board,
     setBoard,
+    movesList,
+    setGameByMovesArray,
   };
 }
