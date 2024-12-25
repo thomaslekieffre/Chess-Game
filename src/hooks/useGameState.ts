@@ -3,12 +3,12 @@ import { ChessEngine } from "@/lib/chess/engine";
 import { ChessPiece } from "@/lib/chess/types";
 
 export function useGameState() {
-  const [currentTurn, setCurrentTurn] = useState<"white" | "black">("white");
-  const [isCheck, setIsCheck] = useState(false);
-  const [isCheckmate, setIsCheckmate] = useState(false);
-  const [winner, setWinner] = useState<"white" | "black" | null>(null);
-  const [isGameOver, setIsGameOver] = useState(false);
   const [engine] = useState(() => new ChessEngine());
+  const [currentTurn, setCurrentTurn] = useState<"white" | "black">(engine.getCurrentTurn());
+  const [isCheck, setIsCheck] = useState(engine.isKingInCheck());
+  const [isCheckmate, setIsCheckmate] = useState(engine.isKingInCheckmate());
+  const [winner, setWinner] = useState<"white" | "black" | null>(engine.getWinner());
+  const [isGameOver, setIsGameOver] = useState(engine.isGameOver());
   const [board, setBoard] = useState<(ChessPiece | null)[][]>(
     engine.getBoard()
   );

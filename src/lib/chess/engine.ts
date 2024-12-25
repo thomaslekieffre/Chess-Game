@@ -3,17 +3,24 @@ import {
   fromXToRow,
   fromYToCol,
   getFigByName,
+  getNameByFig,
   getPieceSymbol,
 } from "./pgn/pgn2";
 import {
   CasesList,
   ChessPiece,
+  FenActiveColor,
+  FenCastlingRights,
+  FenString,
   GameState,
   Move,
   PgnMove,
   PieceColor,
   PieceTypeAbreg,
   Position,
+  drawReason,
+  ranksOpo,
+  tabCastlingRights,
   // PieceType,
 } from "./types";
 
@@ -29,79 +36,179 @@ export class ChessEngine {
   }
 
   private getInitialState(): GameState {
-    const board = Array(8)
-      .fill(null)
-      .map(() => Array(8).fill(null));
+    // const board = Array(8)
+    //   .fill(null)
+    //   .map(() => Array(8).fill(null));
 
-    // Placement des pièces
-    const setupPieces = () => {
-      // Pièces blanches
-      board[7][0] = { type: "rook", color: "white", hasMoved: false };
-      board[7][1] = { type: "knight", color: "white", hasMoved: false };
-      board[7][2] = { type: "bishop", color: "white", hasMoved: false };
-      board[7][3] = { type: "queen", color: "white", hasMoved: false };
-      board[7][4] = { type: "king", color: "white", hasMoved: false };
-      board[7][5] = { type: "bishop", color: "white", hasMoved: false };
-      board[7][6] = { type: "knight", color: "white", hasMoved: false };
-      board[7][7] = { type: "rook", color: "white", hasMoved: false };
+    // // Placement des pièces
+    // const setupPieces = () => {
+    //   // Pièces blanches
+    //   board[7][0] = { type: "rook", color: "white", hasMoved: false };
+    //   board[7][1] = { type: "knight", color: "white", hasMoved: false };
+    //   board[7][2] = { type: "bishop", color: "white", hasMoved: false };
+    //   board[7][3] = { type: "queen", color: "white", hasMoved: false };
+    //   board[7][4] = { type: "king", color: "white", hasMoved: false };
+    //   board[7][5] = { type: "bishop", color: "white", hasMoved: false };
+    //   board[7][6] = { type: "knight", color: "white", hasMoved: false };
+    //   board[7][7] = { type: "rook", color: "white", hasMoved: false };
 
-      // Pions blancs
-      for (let i = 0; i < 8; i++) {
-        board[6][i] = { type: "pawn", color: "white", hasMoved: false };
+    //   // Pions blancs
+    //   for (let i = 0; i < 8; i++) {
+    //     board[6][i] = { type: "pawn", color: "white", hasMoved: false };
+    //   }
+
+    //   // Pièces noires
+    //   board[0][0] = { type: "rook", color: "black", hasMoved: false };
+    //   board[0][1] = { type: "knight", color: "black", hasMoved: false };
+    //   board[0][2] = { type: "bishop", color: "black", hasMoved: false };
+    //   board[0][3] = { type: "queen", color: "black", hasMoved: false };
+    //   board[0][4] = { type: "king", color: "black", hasMoved: false };
+    //   board[0][5] = { type: "bishop", color: "black", hasMoved: false };
+    //   board[0][6] = { type: "knight", color: "black", hasMoved: false };
+    //   board[0][7] = { type: "rook", color: "black", hasMoved: false };
+
+    //   // Pions noirs
+    //   for (let i = 0; i < 8; i++) {
+    //     board[1][i] = { type: "pawn", color: "black", hasMoved: false };
+    //   }
+    // };
+
+    const {
+      board,
+      activeColor,
+      castlingRights,
+      enPassant,
+      halfmoveClock,
+      fullmoveNumber,
+    } = this.importFEN('rnb1kbnr/pppp1ppp/8/4P3/7q/8/PPPPP1PP/RNBQKBNR w KQkq - 1 3');
+
+    const currentTurn = activeColor=='b'?'black':'white'
+
+    let isCheck = false
+    let isCheckmate = false
+    let isStalemate = false
+    let isDraw = false
+    let drawReason:drawReason|undefined = undefined
+
+    // Trouver le roi du joueur
+    let kingPos: Position | null = null;
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
+        const piece = board[y][x];
+        if (piece?.type === "king" && piece.color === currentTurn) {
+          kingPos = { x, y };
+          break;
+        }
+      }
+      if (kingPos) break;
+    }
+
+    // Vérifier si le roi est en échec
+    isCheck = kingPos
+      ? this.isSquareAttacked(kingPos, currentTurn,true ,board, enPassant)
+      : false;
+
+    // Vérifier l'échec et mat seulement si le roi est en échec
+    if (isCheck && kingPos) {
+      let canEscapeCheck = false;
+
+      for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 8; x++) {
+          const piece = board[y][x];
+          if (piece?.color === currentTurn) {
+            const from = { x, y };
+            const moves = this.getPotentialMoves(from,true,board,enPassant);
+
+            for (const to of moves) {
+              if (!this.moveResultsInCheck(from, to, board,enPassant)) {
+                canEscapeCheck = true;
+                break;
+              }
+            }
+          }
+          if (canEscapeCheck) break;
+        }
+        if (canEscapeCheck) break;
       }
 
-      // Pièces noires
-      board[0][0] = { type: "rook", color: "black", hasMoved: false };
-      board[0][1] = { type: "knight", color: "black", hasMoved: false };
-      board[0][2] = { type: "bishop", color: "black", hasMoved: false };
-      board[0][3] = { type: "queen", color: "black", hasMoved: false };
-      board[0][4] = { type: "king", color: "black", hasMoved: false };
-      board[0][5] = { type: "bishop", color: "black", hasMoved: false };
-      board[0][6] = { type: "knight", color: "black", hasMoved: false };
-      board[0][7] = { type: "rook", color: "black", hasMoved: false };
+      isCheckmate = !canEscapeCheck;
+    }
 
-      // Pions noirs
-      for (let i = 0; i < 8; i++) {
-        board[1][i] = { type: "pawn", color: "black", hasMoved: false };
+    // Vérifier le matériel insuffisant
+    if (this.hasInsufficientMaterial(board)) {
+      isDraw = true;
+      drawReason = "insufficient-material";
+    }
+
+    // Vérifier le pat
+    let hasLegalMoves = false;
+    for (let y = 0; y < 8 && !hasLegalMoves; y++) {
+      for (let x = 0; x < 8 && !hasLegalMoves; x++) {
+        const piece = board[y][x];
+        if (piece?.color === currentTurn) {
+          const moves = this.getValidMoves({ x, y },board,enPassant,currentTurn);
+          if (moves.length > 0) {
+            hasLegalMoves = true;
+            break;
+          }
+        }
       }
-    };
+    }
 
-    setupPieces();
+    // Si pas de mouvements légaux et pas en échec = pat
+    if (!hasLegalMoves && !isCheck) {
+      isStalemate = true;
+      isDraw = true;
+      drawReason = "stalemate";
+    }
+
+
+    // Vérifier la règle des 50 coups
+    if (halfmoveClock >= 100) {
+      // 50 coups = 100 demi-coups
+      isDraw = true;
+      drawReason = "fifty-moves";
+    }
+
+    let isGameOver = false
+    if(isCheckmate||isDraw) isGameOver = true
 
     return {
       board,
-      currentTurn: "white",
+      currentTurn,
       moves: [],
-      isCheck: false,
-      isCheckmate: false,
-      isStalemate: false,
-      isDraw: false,
-      drawReason: undefined,
-      moveCount: 0,
-      halfMoveCount:0,
+      isCheck,
+      isCheckmate,
+      isStalemate,
+      isDraw,
+      drawReason,
+      moveCount: fullmoveNumber,
+      halfMoveCount:fullmoveNumber*2,
       positions: [],
-      lastPawnMoveOrCapture: 0,
-      isGameOver: false,
-      winner: null,
+      lastPawnMoveOrCapture: halfmoveClock,
+      isGameOver,
+      winner: null, // TODO
       drawnHasBeenOffered: false,
       strMove: [],
+      enPassantTarget:enPassant,
+      castlingRights:castlingRights,
     };
   }
 
   // Méthodes publiques
-  public getValidMoves(from: Position): Position[] {
+  public getValidMoves(from: Position,board:(ChessPiece|null)[][]=this.state.board,enPassant=this.state.enPassantTarget,turn=this.state.currentTurn): Position[] {
     // console.log(this.state.board)
     // console.log(from)
-    const piece = this.state.board[from.y][from.x];
+    const piece = board[from.y][from.x];
     // console.log(piece)
     // console.log(this.state.board)
     // console.log(from)
     // console.log(this.state.currentTurn)
-    if (!piece || piece.color !== this.state.currentTurn) return [];
+    if (!piece || piece.color !== turn) return [];
 
-    const potentialMoves = this.getPotentialMoves(from);
+    const potentialMoves = this.getPotentialMoves(from,true,board,enPassant);
     console.log(potentialMoves)
-    return potentialMoves.filter((to) => !this.moveResultsInCheck(from, to));
+    return potentialMoves.filter((to) => !this.moveResultsInCheck(from, to,board,enPassant));
   }
 
   private getCastlingRight():string {
@@ -204,12 +311,13 @@ export class ChessEngine {
     from: Position,
     checkingKing: boolean = false,
     board=this.state.board,
+    enPassantTarget=this.state.enPassantTarget
   ): Position[] {
-    const piece = this.state.board[from.y][from.x]!;
+    const piece = board[from.y][from.x]!;
 
     switch (piece.type) {
       case "pawn":
-        return this.getPawnMoves(from,board);
+        return this.getPawnMoves(from,board,enPassantTarget);
       case "rook":
         return this.getRookMoves(from,board);
       case "knight":
@@ -225,7 +333,7 @@ export class ChessEngine {
     }
   }
 
-  private getPawnMoves(from: Position,board=this.state.board): Position[] {
+  private getPawnMoves(from: Position,board=this.state.board,enPassantTarget=this.state.enPassantTarget): Position[] {
     const moves: Position[] = [];
     const piece = board[from.y][from.x]!;
     const direction = piece.color === "white" ? -1 : 1;
@@ -257,9 +365,9 @@ export class ChessEngine {
         }
         // Prise en passant
         if (
-          this.state.enPassantTarget &&
-          capture.x === this.state.enPassantTarget.x &&
-          capture.y === this.state.enPassantTarget.y
+          enPassantTarget &&
+          capture.x === enPassantTarget.x &&
+          capture.y === enPassantTarget.y
         ) {
           moves.push(capture);
         }
@@ -419,7 +527,8 @@ export class ChessEngine {
     pos: Position,
     defendingColor: PieceColor,
     checkingKing: boolean = false,
-    board=this.state.board,
+    board:(ChessPiece|null)[][]=this.state.board,
+    enPassantTarget=this.state.enPassantTarget
   ): boolean {
     for (let y = 0; y < 8; y++) {
       for (let x = 0; x < 8; x++) {
@@ -427,7 +536,7 @@ export class ChessEngine {
         if (piece && piece.color !== defendingColor) {
           if (checkingKing && piece.type === "king") continue;
 
-          const moves = this.getPotentialMoves({x,y},checkingKing,board);
+          const moves = this.getPotentialMoves({x,y},checkingKing,board,enPassantTarget);
           // console.log(piece,moves)
           if (moves.some((move) => move.x === pos.x && move.y === pos.y)) {
             console.log(piece,moves,pos,board)
@@ -488,8 +597,8 @@ export class ChessEngine {
     return fen;
   }
 
-  private moveResultsInCheck(from: Position, to: Position): boolean {
-    const copiedBoard = JSON.parse(JSON.stringify(this.state.board));
+  private moveResultsInCheck(from: Position, to: Position,board:(ChessPiece|null)[][]=this.state.board,enPassant=this.state.enPassantTarget): boolean {
+    const copiedBoard = JSON.parse(JSON.stringify(board));
     const piece:ChessPiece|null = copiedBoard[from.y][from.x];
 
     if(!piece) return false
@@ -517,7 +626,7 @@ export class ChessEngine {
 
     if(kingPos){
       console.log(copiedBoard)
-      const isKingAttacked = this.isSquareAttacked(kingPos, piece.color,true,copiedBoard)
+      const isKingAttacked = this.isSquareAttacked(kingPos, piece.color,true,copiedBoard,enPassant)
       console.log(isKingAttacked,'isat')
       return isKingAttacked
     }else{
@@ -526,6 +635,81 @@ export class ChessEngine {
     }
   }
 
+  private importFEN(fen: FenString): {
+    board: (ChessPiece | null)[][];
+    activeColor: FenActiveColor;
+    castlingRights: FenCastlingRights;
+    enPassant: Position;
+    halfmoveClock: number;
+    fullmoveNumber: number;
+  } {
+    // Diviser le FEN en ses composants
+    const [piecePlacement, activeColor, castlingRights, enPassantCoord, halfmoveClock, fullmoveNumber] = fen.split(" ");
+
+    
+    // Valider les composants
+    if (!["w", "b"].includes(activeColor)) {
+      throw new Error(`Invalid active color: ${activeColor}`);
+    }
+  
+    if (!tabCastlingRights.includes(castlingRights as FenCastlingRights)) {
+      throw new Error(`Invalid castling rights: ${castlingRights}`);
+    }
+  
+    if (!/^([a-h][36]|-)$/.test(enPassantCoord)) {
+      throw new Error(`Invalid en passant target: ${enPassantCoord}`);
+    }
+  
+    if (isNaN(parseInt(halfmoveClock, 10))) {
+      throw new Error(`Invalid halfmove clock: ${halfmoveClock}`);
+    }
+  
+    if (isNaN(parseInt(fullmoveNumber, 10))) {
+      throw new Error(`Invalid fullmove number: ${fullmoveNumber}`);
+    }
+  
+    let enPassant:Position = {
+      x:enPassantCoord[0].charCodeAt(0) - "a".charCodeAt(0),
+      y: 7 - (parseInt(enPassantCoord[1]) - 1),
+    }
+
+    // Étape 1: Construire l'échiquier
+    const board: (ChessPiece | null)[][] = Array.from({ length: 8 }, () => Array(8).fill(null));
+    const rows = piecePlacement.split("/");
+  
+    rows.forEach((row, rowIndex) => {
+      let colIndex = 0;
+      for (const char of row) {
+        if (!isNaN(parseInt(char))) {
+          // Case vide (nombre)
+          colIndex += parseInt(char);
+        } else {
+          // Case occupée (pièce)
+          const color: PieceColor = char === char.toLowerCase() ? "black" : "white"; // Minuscule = noir, Majuscule = blanc
+          const type = getNameByFig(char.toLowerCase()); // Type de la pièce (p, r, n, b, q, k)
+          if (!type) {
+            throw new Error(`Invalid piece character: ${char}`);
+          }
+          board[rowIndex][colIndex] = {
+            color,
+            type,
+            hasMoved: false, // Par défaut, on suppose que toutes les pièces n'ont pas encore bougé
+          };
+          colIndex++;
+        }
+      }
+    });
+  
+    // Étape 2: Retourner toutes les informations extraites
+    return {
+      board,
+      activeColor: activeColor as FenActiveColor,
+      castlingRights: castlingRights as FenCastlingRights,
+      enPassant: enPassant,
+      halfmoveClock: parseInt(halfmoveClock, 10),
+      fullmoveNumber: parseInt(fullmoveNumber, 10),
+    };
+  }
 
   private isValidPosition(pos: Position): boolean {
     return pos.x >= 0 && pos.x < 8 && pos.y >= 0 && pos.y < 8;
@@ -939,7 +1123,7 @@ export class ChessEngine {
     return !this.state.isCheck;
   }
 
-  private hasInsufficientMaterial(): boolean {
+  private hasInsufficientMaterial(board:(ChessPiece|null)[][]=this.state.board): boolean {
     const pieces = {
       white: { bishops: [] as Position[], knights: 0, others: 0 },
       black: { bishops: [] as Position[], knights: 0, others: 0 },
@@ -948,7 +1132,7 @@ export class ChessEngine {
     // Compter les pièces
     for (let y = 0; y < 8; y++) {
       for (let x = 0; x < 8; x++) {
-        const piece = this.state.board[y][x];
+        const piece = board[y][x];
         if (piece && piece.type !== "king") {
           if (piece.type === "bishop") {
             pieces[piece.color].bishops.push({ x, y });
@@ -1038,11 +1222,22 @@ export class ChessEngine {
     this.state.drawOffer = undefined;
   }
 
-  getMoves(): Move[] {
+  public getMoves(): Move[] {
     return this.state.moves;
   }
 
-  getStrMove(): PgnMove[] {
+  public getStrMove(): PgnMove[] {
     return this.state.strMove;
   }
+
+  public isKingInCheckmate():boolean {
+    return this.state.isCheckmate
+  }
+  public getWinner():PieceColor|null {
+    return this.state.winner
+  }
+  public isGameOver():boolean {
+    return this.state.isGameOver
+  }
+
 }

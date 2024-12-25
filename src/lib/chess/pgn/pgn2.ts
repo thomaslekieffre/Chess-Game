@@ -31,6 +31,18 @@ export const getFigByName = (name:PieceType):PieceTypeAbreg => {
     return ObjConv[name]
 }
 
+export const getNameByFig = (fig:string):PieceType => {
+    let ObjConv = {
+        p:'pawn',
+        k:'king',
+        n:'knight',
+        q:'queen',
+        r:'rook',
+        b:'bishop',
+    }
+    return ObjConv[fig]
+}
+
 export const getPieceSymbol = (pieceType: PieceTypeAbreg): PieceTypeAbreg|'' => {
     switch (pieceType) {
         case "P":

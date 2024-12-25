@@ -8,9 +8,12 @@ export const PROMOTIONS = {
 export const prom_short = ['q', 'r', 'b', 'n']
 export type PROMOTIONS_SHORT = typeof prom_short[number]
 
+
+
 export const colors = ['white', 'black'] as const
 export const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const
 export const ranks = ['1', '2', '3', '4', '5', '6', '7', '8'] as const
+export const ranksOpo = ['8', '7', '6', '5', '4', '3', '2', '1'] as const
 export type MoveExeptType = ['O-O','O-O-O','a0']
 
 export type File = typeof files[number]
@@ -26,6 +29,19 @@ export type PgnWriterConfiguration = {
   tags?: ConfigurationTagsValues,
   notation?: string
 }
+
+export const fenAbrListe = ['p', 'k', 'q', 'n','b','r','P','K','Q','N','B','R'] as const
+export type fenAbrListeType = typeof fenAbrListe[number]
+export type FenEmptyChar = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8";
+export type FenRowChar = `${fenAbrListeType | FenEmptyChar}`;
+export type FenPiecePlacement = string; // Exemple: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+export type FenActiveColor = "w" | "b"; // Blanc ou noir
+export const tabCastlingRights = ['KQkq','KQk','KQ','KQq','Kkq','Kk','Kq','Qkq','Qk','Qq','K','Q','k','q','-'] as const; // Exemple: "KQkq", "KQ", "kq", ou "-"
+export type FenCastlingRights = 'KQkq'|'KQk'|'KQ'|'KQq'|'Kkq'|'Kk'|'Kq'|'Qkq'|'Qk'|'Qq'|'K'|'Q'|'k'|'q'|'-'
+export type FenEnPassant = "-" | `${"a" | "b" | "c" | "d" | "e" | "f" | "g" | "h"}${"3" | "6"}`; // Exemple: "e3", "d6", ou "-"
+export type FenHalfmoveClock = number; // Demi-coups depuis capture/pion
+export type FenFullmoveNumber = number; // Numéro de tour
+export type FenString = `${string} ${FenActiveColor} ${FenCastlingRights} ${FenEnPassant} ${FenHalfmoveClock} ${FenFullmoveNumber}`;
 
 export type PgnMove = {
   drawOffer?: boolean;
@@ -92,6 +108,13 @@ export interface Move {
   promotedTo?: PieceType;
 }
 
+export type drawReason=
+| "stalemate"
+| "insufficient-material"
+| "threefold-repetition"
+| "fifty-moves"
+| "mutual-agreement";
+
 export interface GameState {
   board: (ChessPiece | null)[][];
   currentTurn: PieceColor;
@@ -99,12 +122,7 @@ export interface GameState {
   isCheckmate: boolean;
   isStalemate: boolean;
   isDraw: boolean;
-  drawReason?:
-    | "stalemate"
-    | "insufficient-material"
-    | "threefold-repetition"
-    | "fifty-moves"
-    | "mutual-agreement";
+  drawReason?:drawReason;
   moves: Move[];
   enPassantTarget?: Position;
   moveCount: number;
@@ -120,6 +138,7 @@ export interface GameState {
   drawnHasBeenOffered:boolean;
   winner: PieceColor | null;
   strMove:PgnMove[];
+  castlingRights:FenCastlingRights;
 }
 
 export type playerType = {
