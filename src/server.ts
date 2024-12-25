@@ -189,15 +189,18 @@ io.on("connection", (socket) => {
   socket.on("move", async (data) => {
     await supabase
       .from("room")
-      .update({ game: convertToPGN(data.moves) })
+      // .update({ game: convertToPGN(data.moves) })
+      .update({game:data.moves})
       .eq("id", data.roomId)
       .then((x) => {
         // console.log(x);
         if (x.error) {
+          console.log(x.error,x.statusText)
           alert("Erreur lors de la connexion a la partie");
         } else {
+          console.log("edited");
+          console.log('aaaaaaa')
           io.to(`game_${data.roomId}`).emit(`move`, data);
-          // console.log("edited");
         }
       });
   });

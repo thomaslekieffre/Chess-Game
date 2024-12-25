@@ -87,6 +87,8 @@ export function GameContent(props: PropsType) {
       setRoomInfo(dataJson);
       updatePlayersData(dataJson);
 
+      setGameByMovesArray(dataJson.game)
+
       socket.emit("room_log", dataJson);
       return dataJson;
     }
@@ -112,6 +114,8 @@ export function GameContent(props: PropsType) {
     board,
     setBoard,
     updateGameState,
+    movesList,
+    setGameByMovesArray,
   } = useGameState();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [isResigned, setIsResigned] = useState(false);
@@ -327,13 +331,14 @@ export function GameContent(props: PropsType) {
   };
 
   const handleMove = (from: Position, to: Position) => {
-    console.log(engine.getStrMove());
+    const moves = engine.getStrMove()
+    console.log(moves);
     console.log('STR MOVE ^^^^^^')
     socket.emit("move", {
       from,
       to,
       roomId,
-      moves: engine.getMoves(),
+      moves: moves,
       by: user?.id,
     });
   };
@@ -452,7 +457,7 @@ export function GameContent(props: PropsType) {
                 {/* Panneau droit */}
                 <div className="space-y-4">
                   <MovesHistory
-                    moves={engine.getStrMove()}
+                    moves={movesList}
                     className="h-[calc(100vh-400px)]"
                   />
                   <GameChat className="h-[200px]" />
