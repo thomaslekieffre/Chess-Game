@@ -175,7 +175,7 @@ export class ChessEngine {
     if (!piece || piece.color !== turn) return [];
 
     const potentialMoves = this.getPotentialMoves(from,true,board,enPassant);
-    console.log(potentialMoves)
+    // console.log(potentialMoves)
     return potentialMoves.filter((to) => !this.moveResultsInCheck(from, to,board,enPassant));
   }
 
@@ -583,12 +583,12 @@ export class ChessEngine {
       if (kingPos) break;
     }
 
-    console.log(kingPos)
+    // console.log(kingPos)
 
     if(kingPos){
-      console.log(copiedBoard)
+      // console.log(copiedBoard)
       const isKingAttacked = this.isSquareAttacked(kingPos, piece.color,true,copiedBoard,enPassant)
-      console.log(isKingAttacked,'isat')
+      // console.log(isKingAttacked,'isat')
       return isKingAttacked
     }else{
       console.log('paspos')
@@ -898,6 +898,30 @@ export class ChessEngine {
     return false;
   }
 
+  public setGameUsingFen(
+    fen:FenString|string
+  ){
+    const {
+      board,
+      activeColor,
+      castlingRights,
+      enPassant,
+      halfmoveClock,
+      fullmoveNumber,
+    } = this.importFEN(fen);
+
+    this.state.board = board
+    this.state.currentTurn = activeColor=='b'?'black':'white'
+    this.state.castlingRights = castlingRights
+    this.state.enPassantTarget = enPassant
+    this.state.halfMoveCount = fullmoveNumber/2
+    this.state.lastPawnMoveOrCapture = halfmoveClock
+    this.state.moveCount = fullmoveNumber
+    this.state.strMove = []
+
+    this.updateGameState(false)
+  }
+
   public setGameUsingMoves(
     moves:PgnMove[],
   ){
@@ -926,7 +950,11 @@ export class ChessEngine {
 
     this.updateGameState(false)
 
+    console.log(fromCaseToCoord(lastMove.from),fromCaseToCoord(lastMove.to))
+
     this.makeMove(fromCaseToCoord(lastMove.from),fromCaseToCoord(lastMove.to))
+
+    this.updateGameState()
 
   }
 

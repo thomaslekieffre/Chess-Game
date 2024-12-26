@@ -73,6 +73,7 @@ export default function ClassicModePage() {
             player2: {},
             turn: "white",
           },
+          default_pos:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
           game: "",
           createdAt: timestamp,
         })
