@@ -1,6 +1,6 @@
 //@ts-nocheck
 
-import {CasesList, Field, File, PgnGame, PgnReaderMove, PgnWriterConfiguration, PieceType, PieceTypeAbreg, Position, Rank, files, ranks} from "../types";
+import {CasesList, Field, File, PgnGame, PgnReaderMove, PgnWriterConfiguration, PieceType, PieceTypeAbreg, Position, Rank, files, ranks, ranksOpo} from "../types";
 
 export const fromCoordToCase = (x:number,y:number) => {
     const xPos:File = fromXToRow(x)
@@ -11,7 +11,7 @@ export const fromCoordToCase = (x:number,y:number) => {
 
 export const fromCaseToCoord = (pos:CasesList) => {
     const x:number = files.indexOf(`${pos[0]}`)
-    const y:number = ranks.indexOf(`${pos[1]}`)
+    const y:number = ranksOpo.indexOf(`${pos[1]}`)
     const res:Position = {x,y}
     return res
 }
@@ -23,7 +23,7 @@ export const fromXToRow = (x:number) => {
 
 export const fromYToCol = (y:number) => {
     // const tabNumber = ['8','7','6','5','4','3','2','1']
-    return ranks[y]
+    return ranksOpo[y]
 }
 
 export const getFigByName = (name:PieceType):PieceTypeAbreg => {

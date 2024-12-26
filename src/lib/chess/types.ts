@@ -53,7 +53,7 @@ export type PgnMove = {
   commentDiag?: GameComment,
   commentMove?: string,
   commentAfter?: string,
-  turn?: PieceColor
+  turn: PieceColor
   from: CasesList,
   to: CasesList,
   fen: FenString|string,
