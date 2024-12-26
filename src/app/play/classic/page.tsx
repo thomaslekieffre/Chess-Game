@@ -158,12 +158,14 @@ export default function ClassicModePage() {
               color: "white",
               time: minutes * 60,
               username: user.username,
+              elo_stats: eloStats,
               elo: "1200?",
             },
             player2: {},
             turn: "white",
           },
-          default_pos:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+          default_pos:
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
           game: "",
           createdAt: timestamp,
         })

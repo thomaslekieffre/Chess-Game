@@ -41,24 +41,50 @@ export function GameContent(props: PropsType) {
     elo: "1200?",
   });
 
-  const updatePlayersData = (info: roomType) => {
-    if (!info || !info.id) return;
+  const updatePlayersData = (roomJson: roomType) => {
+    const { player1, player2 } = roomJson.players;
+    console.log("Updating players data");
+    console.log("Player1 full data:", JSON.stringify(player1, null, 2));
+    console.log(
+      "Player1 elo_stats classique:",
+      JSON.stringify(player1.elo_stats?.classique, null, 2)
+    );
+    console.log("Player1 elo_stats type:", typeof player1.elo_stats);
 
-    const { player1, player2 } = info.players;
+    const cadence = roomJson.cadence.split("|")[0];
+    console.log("Cadence:", cadence);
 
-    const updatePlayerInfo = (player: playerType) => {
-      const setPlayerInfo =
-        player.color === "white" ? setWhitePlayerInfo : setBlackPlayerInfo;
+    if (player1.elo_stats && typeof player1.elo_stats === "object") {
+      try {
+        const elo =
+          cadence === "1" || cadence === "0.5"
+            ? player1.elo_stats.classique.bullet
+            : cadence === "3" || cadence === "5"
+            ? player1.elo_stats.classique.blitz
+            : player1.elo_stats.classique.rapide;
 
-      setPlayerInfo({
-        elo: player.elo,
-        username: player.username,
+        console.log("Calculated Elo:", elo);
+        setWhitePlayerInfo({
+          username: player1.username,
+          elo: elo?.toString() || "1200?",
+        });
+      } catch (error) {
+        console.error("Erreur lors du calcul de l'Elo:", error);
+      }
+    }
+
+    if (player2?.elo_stats) {
+      const elo =
+        cadence === "1" || cadence === "0.5"
+          ? player2.elo_stats.classique.bullet
+          : cadence === "3" || cadence === "5"
+          ? player2.elo_stats.classique.blitz
+          : player2.elo_stats.classique.rapide;
+
+      setBlackPlayerInfo({
+        username: player2.username,
+        elo: elo?.toString() || "1200?",
       });
-    };
-
-    updatePlayerInfo(player1);
-    if (player2) {
-      updatePlayerInfo(player2);
     }
   };
 
@@ -200,20 +226,42 @@ export function GameContent(props: PropsType) {
         roomJson.status === "waiting_for_player" &&
         user.id !== roomJson.players.player1.id
       ) {
-        //Rejoin la partie en temp que player2
-
-        console.log("tentative");
-
         const couleur: PieceColor =
           roomJson.players.player1.color == "white" ? "black" : "white";
 
         const newPlayers = roomJson.players;
+
+        // Récupérer l'Elo du joueur
+        const { data: userData, error } = await supabase
+          .from("users")
+          .select("elo_stats")
+          .eq("clerk_id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Erreur lors de la récupération de l'Elo:", error);
+        }
+
+        const cadence = roomJson.cadence.split("|")[0];
+        let elo = "1200?";
+
+        if (userData?.elo_stats) {
+          if (cadence === "1" || cadence === "0.5") {
+            elo = userData.elo_stats.classique.bullet || "1200?";
+          } else if (cadence === "3" || cadence === "5") {
+            elo = userData.elo_stats.classique.blitz || "1200?";
+          } else {
+            elo = userData.elo_stats.classique.rapide || "1200?";
+          }
+        }
+
         newPlayers.player2 = {
           id: user.id,
           color: couleur,
           temp: `${parseInt(roomJson.cadence.split("|")[0]) * 60}`,
           username: user.username ? user.username : "ERREUR",
-          elo: "1200?", // todo: fetch supabase?
+          elo_stats: userData?.elo_stats || null,
+          elo: elo,
         };
 
         await supabase
@@ -224,9 +272,7 @@ export function GameContent(props: PropsType) {
             if (x.error) {
               alert("Erreur lors de la connexion a la partie");
             } else {
-              console.log("cc couleur", couleur);
               setGameInfos(couleur, parseInt(roomJson.cadence.split("|")[0]));
-              console.log("edited");
             }
           });
       } else if (roomJson.status == "in_progress") {
@@ -470,7 +516,7 @@ export function GameContent(props: PropsType) {
         </main>
       ) : (
         <div>
-          {isRoomLoaded ? <p>Sale introuvablle</p> : <p>Chargement...</p>}
+          {isRoomLoaded ? <p>Salle introuvable</p> : <p>Chargement...</p>}
         </div>
       )}
     </div>
