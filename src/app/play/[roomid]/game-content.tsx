@@ -195,11 +195,6 @@ export function GameContent(props: PropsType) {
   }, [user, roomInfo?.id]);
 
   const joinGame = async (roomJson: roomType) => {
-    // console.log('join gammeeee')
-    // console.log(isSignedIn);
-    // console.log(roomJson);
-    // console.log(isSignedIn);
-    // console.log(roomJson.status,user?.id,roomJson.players)
     if (user?.id && roomJson) {
       if (
         roomJson.status === "waiting_for_player" &&
@@ -235,22 +230,17 @@ export function GameContent(props: PropsType) {
           });
       } else if (roomJson.status == "in_progress") {
         if (user.id == roomJson.players.player1.id) {
-          // console.log(roomJson.players.player2);
-          // console.log("df");
 
           setGameInfos(
             roomJson.players.player1.color,
             parseInt(roomJson.cadence.split("|")[0])
           );
         } else if (user.id == roomJson.players.player2.id) {
-          // console.log(roomJson.players.player2);
-          // console.log("z");
           setGameInfos(
             roomJson.players.player2.color,
             parseInt(roomJson.cadence.split("|")[0])
           );
         }
-        // console.log(user.id, roomJson.players);
       }
     }
   };
