@@ -161,6 +161,7 @@ export type roomType = {
     lastmove:string;
   }
   game:PgnMove[];
+  default_pos:string|FenString;
   createdAt:string;
   turn:string;
 }

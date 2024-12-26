@@ -48,6 +48,11 @@ export function useGameState() {
     updateGameState(false)
   }
 
+  const setGameByFen = async (fen:FenString|string) => {
+    engine.setGameUsingFen(fen)
+    updateGameState(false)
+  }
+
   return {
     currentTurn,
     isCheck,
@@ -71,5 +76,6 @@ export function useGameState() {
     setBoard,
     movesList,
     setGameByMovesArray,
+    setGameByFen
   };
 }

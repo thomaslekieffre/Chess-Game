@@ -10,8 +10,8 @@ export const fromCoordToCase = (x:number,y:number) => {
 }
 
 export const fromCaseToCoord = (pos:CasesList) => {
-    const x:number = files[pos[0]]
-    const y:number = ranks[pos[1]]
+    const x:number = files.indexOf(`${pos[0]}`)
+    const y:number = ranks.indexOf(`${pos[1]}`)
     const res:Position = {x,y}
     return res
 }

@@ -87,7 +87,11 @@ export function GameContent(props: PropsType) {
       setRoomInfo(dataJson);
       updatePlayersData(dataJson);
 
-      setGameByMovesArray(dataJson.game)
+      if(dataJson?.game&&dataJson.game[0]){
+        setGameByMovesArray(dataJson.game)
+      }else{
+        setGameByFen(dataJson.default_pos)
+      }
 
       socket.emit("room_log", dataJson);
       return dataJson;
@@ -116,6 +120,7 @@ export function GameContent(props: PropsType) {
     updateGameState,
     movesList,
     setGameByMovesArray,
+    setGameByFen,
   } = useGameState();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [isResigned, setIsResigned] = useState(false);
@@ -194,6 +199,7 @@ export function GameContent(props: PropsType) {
     // console.log(isSignedIn);
     // console.log(roomJson);
     // console.log(isSignedIn);
+    // console.log(roomJson.status,user?.id,roomJson.players)
     if (user?.id && roomJson) {
       if (
         roomJson.status === "waiting_for_player" &&
@@ -203,8 +209,7 @@ export function GameContent(props: PropsType) {
 
         console.log("tentative");
 
-        const couleur: PieceColor =
-          roomJson.players.player1.color == "white" ? "black" : "white";
+        const couleur: PieceColor = roomJson.players.player1.color == "white" ? "black" : "white";
 
         const newPlayers = roomJson.players;
         newPlayers.player2 = {
