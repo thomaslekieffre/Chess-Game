@@ -928,6 +928,8 @@ export class ChessEngine {
       fullmoveNumber,
     } = this.importFEN(fen);
 
+    console.log(activeColor)
+
     this.state.board = board
     this.state.currentTurn = activeColor=='b'?'black':'white'
     this.state.castlingRights = castlingRights
@@ -945,7 +947,10 @@ export class ChessEngine {
 
     this.makeMove(fromCaseToCoord(lastMove.from),fromCaseToCoord(lastMove.to))
 
-    this.updateGameState(false)
+    this.state.currentTurn=lastMove.turn
+
+    
+
 
   }
 
@@ -1113,6 +1118,8 @@ export class ChessEngine {
   public move(from: Position, to: Position): void {
     // Utiliser makeMove qui contient toute la logique de validation
     const success = this.makeMove(from, to);
+
+    console.log(success)
 
     // Si le mouvement n'est pas valide, ne rien faire
     if (!success) return;
