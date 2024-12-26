@@ -87,10 +87,10 @@ export function GameContent(props: PropsType) {
       setRoomInfo(dataJson);
       updatePlayersData(dataJson);
 
-      if(dataJson?.game&&dataJson.game[0]){
-        setGameByMovesArray(dataJson.game)
-      }else{
-        setGameByFen(dataJson.default_pos)
+      if (dataJson?.game && dataJson.game[0]) {
+        setGameByMovesArray(dataJson.game);
+      } else {
+        setGameByFen(dataJson.default_pos);
       }
 
       socket.emit("room_log", dataJson);
@@ -204,7 +204,8 @@ export function GameContent(props: PropsType) {
 
         console.log("tentative");
 
-        const couleur: PieceColor = roomJson.players.player1.color == "white" ? "black" : "white";
+        const couleur: PieceColor =
+          roomJson.players.player1.color == "white" ? "black" : "white";
 
         const newPlayers = roomJson.players;
         newPlayers.player2 = {
@@ -230,7 +231,6 @@ export function GameContent(props: PropsType) {
           });
       } else if (roomJson.status == "in_progress") {
         if (user.id == roomJson.players.player1.id) {
-
           setGameInfos(
             roomJson.players.player1.color,
             parseInt(roomJson.cadence.split("|")[0])
@@ -326,9 +326,9 @@ export function GameContent(props: PropsType) {
   };
 
   const handleMove = (from: Position, to: Position) => {
-    const moves = engine.getStrMove()
+    const moves = engine.getStrMove();
     console.log(moves);
-    console.log('STR MOVE ^^^^^^')
+    console.log("STR MOVE ^^^^^^");
     socket.emit("move", {
       from,
       to,
@@ -343,10 +343,6 @@ export function GameContent(props: PropsType) {
       {isRoomLoaded && roomInfo ? (
         <main className="min-h-screen bg-background overflow-hidden">
           <div>
-            <p>{roomId}</p>
-            <p>{JSON.stringify(roomInfo)}</p>
-            <p>joueur : {playerColor}</p>
-            <p>id : {user?.id}</p>
             <div className="container max-w-[1600px] mx-auto px-4 h-full">
               {/* Header de la partie */}
               <div className="py-6 mb-8 border-b">
