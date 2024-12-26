@@ -165,13 +165,7 @@ export class ChessEngine {
 
   // Méthodes publiques
   public getValidMoves(from: Position,board:(ChessPiece|null)[][]=this.state.board,enPassant=this.state.enPassantTarget,turn=this.state.currentTurn): Position[] {
-    // console.log(this.state.board)
-    // console.log(from)
     const piece = board[from.y][from.x];
-    // console.log(piece)
-    // console.log(this.state.board)
-    // console.log(from)
-    // console.log(this.state.currentTurn)
     if (!piece || piece.color !== turn) return [];
 
     const potentialMoves = this.getPotentialMoves(from,true,board,enPassant);
@@ -199,12 +193,7 @@ export class ChessEngine {
   }
 
   public makeMove(from: Position, to: Position): boolean {
-    console.log("aa");
     const validMoves = this.getValidMoves(from);
-
-    console.log(validMoves);
-    console.log(from, to);
-    console.log("bb");
 
     if (!validMoves.some((move) => move.x === to.x && move.y === to.y)) {
       return false;
@@ -216,6 +205,8 @@ export class ChessEngine {
 
       let fromSquare = fromCoordToCase(move.from.x, move.from.y);
       let toSquare = fromCoordToCase(move.to.x, move.to.y);
+
+      console.log(move.from.x,move.from.y,fromSquare,move.to.x,move.to.y,toSquare)
 
       let target: PieceTypeAbreg | "" = "";
       let targetSquare = JSON.parse(
@@ -505,9 +496,7 @@ export class ChessEngine {
           if (checkingKing && piece.type === "king") continue;
 
           const moves = this.getPotentialMoves({x,y},checkingKing,board,enPassantTarget);
-          // console.log(piece,moves)
           if (moves.some((move) => move.x === pos.x && move.y === pos.y)) {
-            console.log(piece,moves,pos,board)
             return true;
           }
         }
@@ -583,12 +572,9 @@ export class ChessEngine {
       if (kingPos) break;
     }
 
-    // console.log(kingPos)
 
     if(kingPos){
-      // console.log(copiedBoard)
       const isKingAttacked = this.isSquareAttacked(kingPos, piece.color,true,copiedBoard,enPassant)
-      // console.log(isKingAttacked,'isat')
       return isKingAttacked
     }else{
       console.log('paspos')
@@ -926,7 +912,10 @@ export class ChessEngine {
     moves:PgnMove[],
   ){
 
-    const lastMove = moves[moves.length-1]
+    // const lastMove = moves[moves.length-1]
+    const lastMove = moves.pop()
+
+    if(!lastMove) throw new Error('ERREUR AUCUN COUPS DANS MOVES')
 
     const fen = lastMove.fen
 
@@ -948,13 +937,15 @@ export class ChessEngine {
     this.state.moveCount = fullmoveNumber
     this.state.strMove = moves
 
+    console.log(moves,lastMove)
+
     this.updateGameState(false)
 
     console.log(fromCaseToCoord(lastMove.from),fromCaseToCoord(lastMove.to))
 
     this.makeMove(fromCaseToCoord(lastMove.from),fromCaseToCoord(lastMove.to))
 
-    this.updateGameState()
+    this.updateGameState(false)
 
   }
 
