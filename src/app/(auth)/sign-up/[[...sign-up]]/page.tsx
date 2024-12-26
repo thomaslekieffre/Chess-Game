@@ -17,6 +17,18 @@ export default function SignUpPage() {
           real_name: `${firstName} ${lastName}`,
           country: publicMetadata?.country || "Unknown",
           emoji: publicMetadata?.emoji || "🙂",
+          elo_stats: {
+            classique: {
+              bullet: 1200,
+              blitz: 1200,
+              rapide: 1200,
+            },
+            saisonnier: {
+              bullet: 1150,
+              blitz: 1150,
+              rapide: 1150,
+            },
+          },
         });
 
         if (error) {

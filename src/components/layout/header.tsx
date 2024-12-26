@@ -11,7 +11,16 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { motion } from "framer-motion";
-import { Play, BookOpen, Trophy, Eye, Plus, Library, Vote } from "lucide-react";
+import {
+  Play,
+  BookOpen,
+  Trophy,
+  Eye,
+  Plus,
+  Library,
+  Vote,
+  BadgePlus,
+} from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { UserButton } from "@/components/auth/user-button";
@@ -107,6 +116,7 @@ export function Header() {
 
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="text-lg hover:text-primary transition-colors">
+                  <BadgePlus className="w-4 h-4 mr-2" />
                   Créer
                 </NavigationMenuTrigger>
                 <NavigationMenuContent className="bg-background dark:bg-background/80">
