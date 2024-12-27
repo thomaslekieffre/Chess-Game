@@ -96,9 +96,11 @@ export default function ClassicModePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [eloStats, setEloStats] = useState({
-    bullet: null,
-    blitz: null,
-    rapid: null,
+    classique: {
+      bullet: null,
+      blitz: null,
+      rapide: null,
+    },
   });
 
   const fetchUserStats = async () => {
@@ -116,9 +118,11 @@ export default function ClassicModePage() {
         );
       } else {
         setEloStats({
-          bullet: data.elo_stats.classique.bullet,
-          blitz: data.elo_stats.classique.blitz,
-          rapid: data.elo_stats.classique.rapide,
+          classique: {
+            bullet: data.elo_stats.classique.bullet,
+            blitz: data.elo_stats.classique.blitz,
+            rapide: data.elo_stats.classique.rapide,
+          },
         });
       }
     }
@@ -208,19 +212,19 @@ export default function ClassicModePage() {
                 <div className="flex items-center">
                   <Rocket className="w-4 h-4 mr-2" />
                   <span className="text-center">
-                    Bullet: {eloStats.bullet || "N/A"}
+                    Bullet: {eloStats.classique.bullet || "N/A"}
                   </span>
                 </div>
                 <div className="flex items-center">
                   <Zap className="w-4 h-4 mr-2" />
                   <span className="text-center">
-                    Blitz: {eloStats.blitz || "N/A"}
+                    Blitz: {eloStats.classique.blitz || "N/A"}
                   </span>
                 </div>
                 <div className="flex items-center">
                   <Timer className="w-4 h-4 mr-2" />
                   <span className="text-center">
-                    Rapide: {eloStats.rapid || "N/A"}
+                    Rapide: {eloStats.classique.rapide || "N/A"}
                   </span>
                 </div>
               </div>
