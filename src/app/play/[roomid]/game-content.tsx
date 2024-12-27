@@ -43,27 +43,19 @@ export function GameContent(props: PropsType) {
 
   const updatePlayersData = (roomJson: roomType) => {
     const { player1, player2 } = roomJson.players;
-    console.log("Updating players data");
-    console.log("Player1 full data:", JSON.stringify(player1, null, 2));
-    console.log(
-      "Player1 elo_stats classique:",
-      JSON.stringify(player1.elo_stats?.classique, null, 2)
-    );
-    console.log("Player1 elo_stats type:", typeof player1.elo_stats);
-
     const cadence = roomJson.cadence.split("|")[0];
-    console.log("Cadence:", cadence);
 
     if (player1.elo_stats && typeof player1.elo_stats === "object") {
       try {
-        const elo =
-          cadence === "1" || cadence === "0.5"
-            ? player1.elo_stats.classique.bullet
-            : cadence === "3" || cadence === "5"
-            ? player1.elo_stats.classique.blitz
-            : player1.elo_stats.classique.rapide;
+        let elo;
+        if (cadence === "1" || cadence === "0.5") {
+          elo = player1.elo_stats.classique.bullet;
+        } else if (cadence === "3" || cadence === "5") {
+          elo = player1.elo_stats.classique.blitz;
+        } else {
+          elo = player1.elo_stats.classique.rapide;
+        }
 
-        console.log("Calculated Elo:", elo);
         setWhitePlayerInfo({
           username: player1.username,
           elo: elo?.toString() || "1200?",
@@ -74,12 +66,14 @@ export function GameContent(props: PropsType) {
     }
 
     if (player2?.elo_stats) {
-      const elo =
-        cadence === "1" || cadence === "0.5"
-          ? player2.elo_stats.classique.bullet
-          : cadence === "3" || cadence === "5"
-          ? player2.elo_stats.classique.blitz
-          : player2.elo_stats.classique.rapide;
+      let elo;
+      if (cadence === "1" || cadence === "0.5") {
+        elo = player2.elo_stats.classique.bullet;
+      } else if (cadence === "3" || cadence === "5") {
+        elo = player2.elo_stats.classique.blitz;
+      } else {
+        elo = player2.elo_stats.classique.rapide;
+      }
 
       setBlackPlayerInfo({
         username: player2.username,
