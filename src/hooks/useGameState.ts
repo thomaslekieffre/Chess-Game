@@ -22,16 +22,20 @@ export function useGameState() {
     | "mutual-agreement"
   >();
   const [isStalemate, setIsStalemate] = useState(false);
+  const [displayedMove2,setDisplayedMove2] = useState(0)
 
   const updateGameState = (nextToor?:boolean) => {
     const engineState = engine.getGameState();
 
     setBoard(engine.getBoard())
-
+    
     setMovesList(engine.getStrMove())
+
+    setDisplayedMove2(engineState.displayedMove)
 
     setIsCheck(engineState.isCheck);
     setIsCheckmate(engineState.isCheckmate);
+
 
     if (engineState.isCheckmate) {
       setWinner(currentTurn);
@@ -44,6 +48,7 @@ export function useGameState() {
   };
 
   const setGameByMovesArray = async (moves:PgnMove[]) => {
+    console.log(moves)
     engine.setGameUsingMoves(moves)
     updateGameState(false)
   }
@@ -51,6 +56,11 @@ export function useGameState() {
   const setGameByFen = async (fen:FenString|string) => {
     engine.setGameUsingFen(fen)
     updateGameState(false)
+  }
+
+  const setDisplayedMove = async (index:number) => {
+    engine.setDisplayedMove(index)
+    updateGameState(false)    
   }
 
   return {
@@ -76,6 +86,8 @@ export function useGameState() {
     setBoard,
     movesList,
     setGameByMovesArray,
-    setGameByFen
+    setGameByFen,
+    setDisplayedMove,
+    displayedMove2
   };
 }

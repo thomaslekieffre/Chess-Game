@@ -160,6 +160,7 @@ export class ChessEngine {
       strMove: [],
       enPassantTarget:enPassant,
       castlingRights:castlingRights,
+      displayedMove:0,
     };
   }
 
@@ -217,8 +218,11 @@ export class ChessEngine {
       let piece = move.piece;
 
       const notationCurrentTurn:PieceColor = `${this.state.currentTurn}`
-      const castlingRight = this.getCastlingRight()
+      const castlingRight = `${this.getCastlingRight()}`
       const enPassant = '-' // TODO
+      const moveCount = parseInt(`${this.state.moveCount}`)
+      const lastMoveCap = parseInt(`${this.state.lastPawnMoveOrCapture}`)
+
 
 
 
@@ -227,7 +231,8 @@ export class ChessEngine {
 
       // Ajouter le coup à l'historique
 
-      const fen = this.generateFEN(copyBoard,notationCurrentTurn,castlingRight,enPassant,this.state.lastPawnMoveOrCapture,this.state.moveCount)
+      const fen = this.generateFEN(copyBoard,notationCurrentTurn,castlingRight,enPassant,lastMoveCap,moveCount)
+      const fenRes = this.generateFEN(this.state.board,this.state.currentTurn,this.getCastlingRight(),enPassant,this.state.lastPawnMoveOrCapture,this.state.moveCount)
 
       let notation = this.generateChessNotation(
         fromSquare,
@@ -255,11 +260,17 @@ export class ChessEngine {
           fig,
         },
         fen,
+        fenRes,
         index: this.state.strMove.length+1,
         turnNumber:this.state.moveCount,
         nag: [],
         variations: [],
       });
+
+      console.log('move apply')
+      console.log(this.state.moves)
+
+      this.state.displayedMove = this.state.moves.length-1
 
       return true;
     }
@@ -303,7 +314,7 @@ export class ChessEngine {
 
       // Double mouvement initial
       if (
-        !piece.hasMoved &&
+        ((piece.color=="black"&&from.y==1)||((piece.color=="white"&&from.y==6))) &&
         !board[from.y + 2 * direction]?.[from.x]
       ) {
         moves.push({ x: from.x, y: from.y + 2 * direction });
@@ -904,6 +915,7 @@ export class ChessEngine {
     this.state.lastPawnMoveOrCapture = halfmoveClock
     this.state.moveCount = fullmoveNumber
     this.state.strMove = []
+    this.state.displayedMove=0
 
     this.updateGameState(false)
   }
@@ -912,12 +924,15 @@ export class ChessEngine {
     moves:PgnMove[],
   ){
 
-    // const lastMove = moves[moves.length-1]
-    const lastMove = moves.pop()
+    const displayed = moves.length-1
+
+    console.log(moves)
+
+    const lastMove = moves[moves.length-1]
 
     if(!lastMove) throw new Error('ERREUR AUCUN COUPS DANS MOVES')
 
-    const fen = lastMove.fen
+    const fen = lastMove.fenRes
 
     const {
       board,
@@ -928,7 +943,7 @@ export class ChessEngine {
       fullmoveNumber,
     } = this.importFEN(fen);
 
-    console.log(activeColor)
+    // console.log(activeColor)
 
     this.state.board = board
     this.state.currentTurn = activeColor=='b'?'black':'white'
@@ -938,16 +953,18 @@ export class ChessEngine {
     this.state.lastPawnMoveOrCapture = halfmoveClock
     this.state.moveCount = fullmoveNumber
     this.state.strMove = moves
+    this.state.displayedMove=moves.length
+    this.state.displayedMove=displayed
 
-    console.log(moves,lastMove)
+    // console.log(moves,lastMove)
 
     this.updateGameState(false)
 
-    console.log(fromCaseToCoord(lastMove.from),fromCaseToCoord(lastMove.to))
+    // console.log(fromCaseToCoord(lastMove.from),fromCaseToCoord(lastMove.to))
 
-    this.makeMove(fromCaseToCoord(lastMove.from),fromCaseToCoord(lastMove.to))
+    // this.makeMove(fromCaseToCoord(lastMove.from),fromCaseToCoord(lastMove.to))
 
-    this.state.currentTurn=lastMove.turn
+    // this.state.currentTurn=lastMove.turn
 
     
 
@@ -1045,16 +1062,25 @@ export class ChessEngine {
   private applyMove(move: Move): void {
     const { from, to, piece } = move;
     // console.log('WARNING',from,to,piece,this.state.board,'WARNINGNGNNGNGNGNGGGG')
+    // if(this.state.moves.length>0){
+    //   this.setDisplayedMove(this.state.moves.length-1)
+    // }
+
+    if(this.state.displayedMove!=this.state.moves.length-1&&this.state.moves.length!==0) this.setDisplayedMove(this.state.moves.length-1)
+
+    // console.log(this.state.moves,this.state.moves.length)
+    // this.state.displayedMove = this.state.moves.length
 
     this.state.moves.push(move);
+
 
     // Mettre à jour hasMoved
     piece.hasMoved = true;
 
-    console.log("aplly");
     // Appliquer le mouvement principal
     this.state.board[to.y][to.x] = piece;
     this.state.board[from.y][from.x] = null;
+
 
     // console.log('WARNING2',from,to,piece,this.state.board,'WARNINGNGNNGNGNGNGGGG2')
     // Gérer le roque
@@ -1123,6 +1149,24 @@ export class ChessEngine {
 
     // Si le mouvement n'est pas valide, ne rien faire
     if (!success) return;
+  }
+
+  public setDisplayedMove(index:number){
+
+    if(index>this.state.moves.length-1) return console.log('INDEX NON DISPONIBLE')
+
+    const move = this.state.strMove[index]
+
+    const {
+      board,
+    } = this.importFEN(move.fenRes);
+
+    //SET
+
+    this.state.board = board
+
+    this.state.displayedMove = index
+    
   }
 
   private checkStalemate(): boolean {
@@ -1238,6 +1282,10 @@ export class ChessEngine {
       this.state.drawReason = "mutual-agreement";
       this.state.drawOffer = undefined;
     }
+  }
+
+  public getDisplayedMove():number {
+    return this.state.displayedMove
   }
 
   public declineDraw(): void {

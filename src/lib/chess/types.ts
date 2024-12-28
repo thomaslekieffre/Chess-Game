@@ -118,6 +118,7 @@ export type PgnMove = {
   from: CasesList;
   to: CasesList;
   fen: FenString | string;
+  fenRes:FenString | string;
   index?: number;
   turnNumber: number;
   prev?: number;
@@ -200,6 +201,7 @@ export interface GameState {
   winner: PieceColor | null;
   strMove: PgnMove[];
   castlingRights: FenCastlingRights;
+  displayedMove:number;
 }
 
 export type playerType = {
