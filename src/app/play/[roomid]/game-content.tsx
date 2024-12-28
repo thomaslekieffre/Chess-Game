@@ -141,7 +141,9 @@ export function GameContent(props: PropsType) {
     movesList,
     setGameByMovesArray,
     setGameByFen,
+    drawReason,
   } = useGameState();
+  
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [isResigned, setIsResigned] = useState(false);
   const [drawOffer, setDrawOffer] = useState<PieceColor>();
@@ -295,7 +297,6 @@ export function GameContent(props: PropsType) {
 
   useEffect(() => {
     socket.on("connected-to-the-room", (data: roomType) => {
-      // console.log(roomInfo);
       joinGame(data);
       console.log("joined");
     });
@@ -312,10 +313,7 @@ export function GameContent(props: PropsType) {
       const success = engine.makeMove(from, to);
       updateGameState();
 
-      console.log(success);
-
       if (success) {
-        console.log("SUUCCEEESSSSSSS");
         const engineState = engine.getGameState();
         setIsCheck(engineState.isCheck);
         setIsCheckmate(engineState.isCheckmate);
@@ -375,8 +373,6 @@ export function GameContent(props: PropsType) {
 
   const handleMove = (from: Position, to: Position) => {
     const moves = engine.getStrMove();
-    console.log(moves);
-    console.log("STR MOVE ^^^^^^");
     socket.emit("move", {
       from,
       to,
