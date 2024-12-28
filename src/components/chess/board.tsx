@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ChessEngine } from "@/lib/chess/engine";
-import { ChessPiece, Position, PieceType, PieceColor, PgnMove } from "@/lib/chess/types";
+import {
+  ChessPiece,
+  Position,
+  PieceType,
+  PieceColor,
+  PgnMove,
+} from "@/lib/chess/types";
 
 interface ChessBoardProps {
   animated?: boolean;
@@ -18,9 +24,9 @@ interface ChessBoardProps {
   board: (ChessPiece | null)[][];
   setBoard: (board: (ChessPiece | null)[][]) => void;
   playerColor: PieceColor;
-  isPlaying:boolean;
-  displayed:number;
-  list:PgnMove[];
+  isPlaying: boolean;
+  displayed: number;
+  list: PgnMove[];
 }
 
 const PIECE_SYMBOLS: Record<PieceType, { white: string; black: string }> = {
@@ -101,39 +107,40 @@ export function ChessBoard({
   }, [autoPlay, engine, board, setBoard, playerColor]);
 
   const handleSquareClick = (x: number, y: number) => {
+    const isOnLastMove = displayed == list.length - 1 || list.length < 1;
+    const canPlay = isPlaying && isOnLastMove;
 
-    const isOnLastMove = displayed==list.length-1
-    const canPlay = (isPlaying&&isOnLastMove)
+    if (!canPlay) return;
 
-    if(!canPlay) return
+    const tabBlanc = [0, 1, 2, 3, 4, 5, 6, 7];
+    const tabNoir = [0, 1, 2, 3, 4, 5, 6, 7];
+    tabNoir.reverse();
+    const newCord: Position = { x, y };
 
-    const tabBlanc = [0,1,2,3,4,5,6,7]
-    const tabNoir = [0,1,2,3,4,5,6,7]
-    tabNoir.reverse()
-    let newCord:Position = {x,y}
-
-    if(playerColor=='black'){
-      newCord.x = tabNoir[tabBlanc.indexOf(x)]
+    if (playerColor == "black") {
+      newCord.x = tabNoir[tabBlanc.indexOf(x)];
     }
     // console.log(playerColor)
-    console.log(newCord)
-
+    console.log(newCord);
 
     // return
 
     if (!selectedPiece) {
       if (board[newCord.y][newCord.x]?.color == playerColor) {
         const moves = engine.getValidMoves(newCord);
-        console.log(moves)
+        console.log(moves);
         if (moves.length > 0) {
-          setSelectedPiece({x,y});
-          let newMoves = []
-          if(playerColor=='black'){
-            for(let move of moves){
-              newMoves.push({x:tabNoir[tabBlanc.indexOf(move.x)],y:move.y})
+          setSelectedPiece({ x, y });
+          let newMoves = [];
+          if (playerColor == "black") {
+            for (let move of moves) {
+              newMoves.push({
+                x: tabNoir[tabBlanc.indexOf(move.x)],
+                y: move.y,
+              });
             }
-          }else{
-            newMoves=moves
+          } else {
+            newMoves = moves;
           }
           setValidMoves(newMoves);
         }
@@ -144,14 +151,17 @@ export function ChessBoard({
       // return
 
       // console.log(selectedPiece)
-      let newSelectedPiece
-      if(playerColor=='white'){
-        newSelectedPiece = selectedPiece
-      }else{
-        newSelectedPiece = {x:tabNoir[tabBlanc.indexOf(selectedPiece.x)],y:selectedPiece.y}
+      let newSelectedPiece;
+      if (playerColor == "white") {
+        newSelectedPiece = selectedPiece;
+      } else {
+        newSelectedPiece = {
+          x: tabNoir[tabBlanc.indexOf(selectedPiece.x)],
+          y: selectedPiece.y,
+        };
       }
       const success = engine.makeMove(newSelectedPiece, newCord);
-      console.log(success)
+      console.log(success);
       if (success) {
         setBoard(engine.getBoard());
         updateCheckStatus();
@@ -162,27 +172,26 @@ export function ChessBoard({
     }
   };
 
-  const reverseBoard = (b:Array<Array<any>>) => {
-    let newBoard = []
+  const reverseBoard = (b: Array<Array<any>>) => {
+    let newBoard = [];
     // console.log(b)
-    for (let i = b.length-1; i > -1; i--) {
+    for (let i = b.length - 1; i > -1; i--) {
       const ele = b[i];
-      let newRow = []
+      let newRow = [];
 
-      if(ele){
-        for (let j = ele.length-1; j > -1; j--) {
-          const ele2 = ele[j]
-          newRow.push(ele2)
+      if (ele) {
+        for (let j = ele.length - 1; j > -1; j--) {
+          const ele2 = ele[j];
+          newRow.push(ele2);
         }
-        newBoard.push(newRow)
-      }else{
-        newBoard.push(ele)
+        newBoard.push(newRow);
+      } else {
+        newBoard.push(ele);
       }
-
     }
     // console.log(newBoard)
-    return newBoard
-  }
+    return newBoard;
+  };
 
   const renderSquare = (piece: ChessPiece | null, x: number, y: number) => {
     const isSelected = selectedPiece?.x === x && selectedPiece?.y === y;
@@ -225,7 +234,10 @@ export function ChessBoard({
         <div className="relative h-full">
           {/* Coordonnées verticales (1-8) */}
           <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-around text-sm font-medium text-muted-foreground">
-            {(playerColor=='black'?["1", "2", "3", "4", "5", "6", "7", "8"]:["8", "7", "6", "5", "4", "3", "2", "1"]).map((coord) => (
+            {(playerColor == "black"
+              ? ["1", "2", "3", "4", "5", "6", "7", "8"]
+              : ["8", "7", "6", "5", "4", "3", "2", "1"]
+            ).map((coord) => (
               <div
                 key={coord}
                 className="flex items-center justify-center w-6 h-6"
@@ -237,7 +249,10 @@ export function ChessBoard({
 
           {/* Coordonnées horizontales (a-h) */}
           <div className="absolute -bottom-8 left-0 right-0 flex justify-around text-sm font-medium text-muted-foreground">
-            {(playerColor=='white'?["a", "b", "c", "d", "e", "f", "g", "h"]:["h", "g", "f", "e", "d", "c", "b", "a"]).map((coord) => (
+            {(playerColor == "white"
+              ? ["a", "b", "c", "d", "e", "f", "g", "h"]
+              : ["h", "g", "f", "e", "d", "c", "b", "a"]
+            ).map((coord) => (
               <div
                 key={coord}
                 className="flex items-center justify-center w-6 h-6"
@@ -249,7 +264,10 @@ export function ChessBoard({
 
           {/* Échiquier */}
           <div className="grid grid-cols-8 grid-rows-8 h-full w-full rounded-lg overflow-hidden border-2 border-border">
-            {(playerColor=='white'&&board&&board[0]!==undefined?board:reverseBoard(board)).map((row, y) =>
+            {(playerColor == "white" && board && board[0] !== undefined
+              ? board
+              : reverseBoard(board)
+            ).map((row, y) =>
               row.map((piece, x) =>
                 renderSquare(piece, x, playerColor === "black" ? 7 - y : y)
               )
