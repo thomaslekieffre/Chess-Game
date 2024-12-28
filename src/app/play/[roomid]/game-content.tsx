@@ -214,76 +214,84 @@ export function GameContent(props: PropsType) {
     }
   }, [user, roomInfo?.id]);
 
-  const joinGame = async (roomJson: roomType) => {
-    if (user?.id && roomJson) {
-      if (
-        roomJson.status === "waiting_for_player" &&
-        user.id !== roomJson.players.player1.id
-      ) {
-        const couleur: PieceColor =
-          roomJson.players.player1.color == "white" ? "black" : "white";
+  const joinGame = useCallback(
+    async (roomJson: roomType) => {
+      if (user?.id && roomJson) {
+        if (
+          roomJson.status === "waiting_for_player" &&
+          user.id !== roomJson.players.player1.id
+        ) {
+          const couleur: PieceColor =
+            roomJson.players.player1.color == "white" ? "black" : "white";
 
-        const newPlayers = roomJson.players;
+          const newPlayers = roomJson.players;
 
-        // Récupérer l'Elo du joueur
-        const { data: userData, error } = await supabase
-          .from("users")
-          .select("elo_stats")
-          .eq("clerk_id", user.id)
-          .single();
+          // Récupérer l'Elo du joueur
+          const { data: userData, error } = await supabase
+            .from("users")
+            .select("elo_stats")
+            .eq("clerk_id", user.id)
+            .single();
 
-        if (error) {
-          console.error("Erreur lors de la récupération de l'Elo:", error);
-        }
+          if (error) {
+            console.error("Erreur lors de la récupération de l'Elo:", error);
+          }
 
-        const cadence = roomJson.cadence.split("|")[0];
-        let elo = "1200?";
+          const cadence = roomJson.cadence.split("|")[0];
+          let elo = "1200?";
 
-        if (userData?.elo_stats) {
-          if (cadence === "1" || cadence === "0.5") {
-            elo = userData.elo_stats.classique.bullet || "1200?";
-          } else if (cadence === "3" || cadence === "5") {
-            elo = userData.elo_stats.classique.blitz || "1200?";
-          } else {
-            elo = userData.elo_stats.classique.rapide || "1200?";
+          if (userData?.elo_stats) {
+            if (cadence === "1" || cadence === "0.5") {
+              elo = userData.elo_stats.classique.bullet || "1200?";
+            } else if (cadence === "3" || cadence === "5") {
+              elo = userData.elo_stats.classique.blitz || "1200?";
+            } else {
+              elo = userData.elo_stats.classique.rapide || "1200?";
+            }
+          }
+
+          newPlayers.player2 = {
+            id: user.id,
+            color: couleur,
+            time: `${parseInt(roomJson.cadence.split("|")[0]) * 60}`,
+            username: user.username ? user.username : "ERREUR",
+            elo_stats: {
+              classique: {
+                bullet: elo,
+                blitz: elo,
+                rapide: elo,
+              },
+            },
+          };
+
+          await supabase
+            .from("room")
+            .update({ players: newPlayers, status: `in_progress` })
+            .eq("id", roomId)
+            .then((x) => {
+              if (x.error) {
+                alert("Erreur lors de la connexion a la partie");
+              } else {
+                setGameInfos(couleur, parseInt(roomJson.cadence.split("|")[0]));
+              }
+            });
+        } else if (roomJson.status == "in_progress") {
+          if (user.id == roomJson.players.player1.id) {
+            setGameInfos(
+              roomJson.players.player1.color,
+              parseInt(roomJson.cadence.split("|")[0])
+            );
+          } else if (user.id == roomJson.players.player2.id) {
+            setGameInfos(
+              roomJson.players.player2.color,
+              parseInt(roomJson.cadence.split("|")[0])
+            );
           }
         }
-
-        newPlayers.player2 = {
-          id: user.id,
-          color: couleur,
-          temp: `${parseInt(roomJson.cadence.split("|")[0]) * 60}`,
-          username: user.username ? user.username : "ERREUR",
-          elo_stats: userData?.elo_stats || null,
-          elo: elo,
-        };
-
-        await supabase
-          .from("room")
-          .update({ players: newPlayers, status: `in_progress` })
-          .eq("id", roomId)
-          .then((x) => {
-            if (x.error) {
-              alert("Erreur lors de la connexion a la partie");
-            } else {
-              setGameInfos(couleur, parseInt(roomJson.cadence.split("|")[0]));
-            }
-          });
-      } else if (roomJson.status == "in_progress") {
-        if (user.id == roomJson.players.player1.id) {
-          setGameInfos(
-            roomJson.players.player1.color,
-            parseInt(roomJson.cadence.split("|")[0])
-          );
-        } else if (user.id == roomJson.players.player2.id) {
-          setGameInfos(
-            roomJson.players.player2.color,
-            parseInt(roomJson.cadence.split("|")[0])
-          );
-        }
       }
-    }
-  };
+    },
+    [user]
+  );
 
   useEffect(() => {
     socket.on("connected-to-the-room", (data: roomType) => {
@@ -379,140 +387,60 @@ export function GameContent(props: PropsType) {
   };
 
   return (
-    <div>
-      {isRoomLoaded && roomInfo ? (
-        <main className="min-h-screen bg-background overflow-hidden">
-          <div>
-            <div className="container max-w-[1600px] mx-auto px-4 h-full">
-              {/* Header de la partie */}
-              <div className="py-6 mb-8 border-b">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-2xl font-bold">Partie Classique</h1>
-                    <p className="text-muted-foreground">
-                      {/* {roomInfo.cadence.split('|')[0]} minutes par joueur {roomInfo.cadence.split('|')[1]>0?`avec ${roomInfo.cadence.split('|')[1]} seconde d'increment`:''}  */}
-                    </p>
-                  </div>
-                  <div className="flex gap-4">
-                    <Button variant="outline" size="sm">
-                      Copier le lien
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Quitter la partie
-                    </Button>
-                  </div>
-                </div>
-              </div>
+    <div className="flex h-[calc(100vh-4rem)] text-white">
+      {/* Marge gauche (5%) */}
+      <div className="w-[5%]" />
 
-              {/* Layout principal */}
-              <div className="grid grid-cols-[250px_1fr_250px] gap-4">
-                {/* Panneau gauche */}
-                <div className="space-y-4">
-                  {playerColor == "white" ? (
-                    <PlayerCard
-                      name={blackPlayerInfo.username}
-                      rating={blackPlayerInfo.elo}
-                      time={formatTime(blackTime)}
-                      color="black"
-                      isCurrentTurn={currentTurn === "black"}
-                    />
-                  ) : (
-                    <PlayerCard
-                      name={whitePlayerInfo.username}
-                      rating={whitePlayerInfo.elo}
-                      time={formatTime(whiteTime)}
-                      color="white"
-                      isCurrentTurn={currentTurn === "white"}
-                    />
-                  )}
+      {/* Panneau de contrôle (20%) */}
+      <div className="w-[20%] flex flex-col gap-4 mt-64">
+        <PlayerCard
+          name={whitePlayerInfo.username}
+          rating={whitePlayerInfo.elo}
+          time={formatTime(whiteTime)}
+          color="white"
+          isCurrentTurn={currentTurn === "white"}
+        />
+        <GameControls
+          onResign={() => setIsGameOver(true)}
+          onOfferDraw={handleOfferDraw}
+          drawOffer={drawOffer}
+          onAcceptDraw={handleAcceptDraw}
+          onDeclineDraw={handleDeclineDraw}
+          playerColor={playerColor}
+          isGameOver={isGameOver}
+        />
+        <PlayerCard
+          name={blackPlayerInfo.username}
+          rating={blackPlayerInfo.elo}
+          time={formatTime(blackTime)}
+          color="black"
+          isCurrentTurn={currentTurn === "black"}
+        />
+      </div>
 
-                  <GameControls
-                    onResign={() => {
-                      setIsGameOver(true);
-                      setIsResigned(true);
-                      setWinner(getOppositeColor(currentTurn));
-                    }}
-                    onOfferDraw={handleOfferDraw}
-                    drawOffer={drawOffer}
-                    onAcceptDraw={handleAcceptDraw}
-                    onDeclineDraw={handleDeclineDraw}
-                    playerColor={playerColor}
-                    isGameOver={isGameOver}
-                  />
+      {/* Échiquier (50%) */}
+      <div className="w-[50%] flex items-center justify-center p-4">
+        <ChessBoard
+          playerColor={playerColor}
+          className="w-full aspect-square"
+          board={board}
+          setBoard={setBoard}
+          engine={engine}
+          onMove={handleMove}
+        />
+      </div>
 
-                  {playerColor == "white" ? (
-                    <PlayerCard
-                      name={whitePlayerInfo.username}
-                      rating={whitePlayerInfo.elo}
-                      time={formatTime(whiteTime)}
-                      color="white"
-                      isCurrentTurn={currentTurn === "white"}
-                    />
-                  ) : (
-                    <PlayerCard
-                      name={blackPlayerInfo.username}
-                      rating={blackPlayerInfo.elo}
-                      time={formatTime(blackTime)}
-                      color="black"
-                      isCurrentTurn={currentTurn === "black"}
-                    />
-                  )}
-                </div>
+      {/* Historique et chat (20%) */}
+      <div className="w-[20%] py-4 px-2 flex flex-col">
+        <MovesHistory
+          moves={movesList}
+          className="flex-1 mb-4 rounded-lg p-4"
+        />
+        <GameChat className="h-[30%]" />
+      </div>
 
-                {/* Zone centrale avec l'échiquier */}
-                <div className="flex flex-col items-center">
-                  <ChessBoard
-                    playerColor={playerColor}
-                    className="w-full max-w-[1000px]"
-                    board={board}
-                    setBoard={setBoard}
-                    engine={engine}
-                    onMove={(from, to) => {
-                      handleMove(from, to);
-                      const engineState = engine.getGameState();
-                      setIsCheck(engineState.isCheck);
-                      setIsCheckmate(engineState.isCheckmate);
-                      setIsStalemate(engineState.isStalemate);
-                      setCurrentTurn(engineState.currentTurn);
-
-                      if (engineState.isCheckmate || engineState.isStalemate) {
-                        setIsGameOver(true);
-                        if (engineState.isCheckmate) {
-                          setWinner(getOppositeColor(currentTurn));
-                        }
-                      }
-                    }}
-                  />
-                </div>
-
-                {/* Panneau droit */}
-                <div className="space-y-4">
-                  <MovesHistory
-                    moves={movesList}
-                    className="h-[calc(100vh-400px)]"
-                  />
-                  <GameChat className="h-[200px]" />
-                </div>
-              </div>
-            </div>
-
-            <GameMessages
-              isCheck={isCheck}
-              isCheckmate={isCheckmate}
-              isStalemate={isStalemate}
-              isDraw={isDraw}
-              currentTurn={currentTurn}
-              winner={winner}
-              isResigned={isResigned}
-              isTimeOut={isTimeOut}
-            />
-          </div>
-        </main>
-      ) : (
-        <div>
-          {isRoomLoaded ? <p>Salle introuvable</p> : <p>Chargement...</p>}
-        </div>
-      )}
+      {/* Marge droite (5%) */}
+      <div className="w-[5%]" />
     </div>
   );
 }
