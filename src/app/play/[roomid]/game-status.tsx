@@ -38,8 +38,7 @@ export function GameStatus({
   };
 
   return (
-    <Card className="p-4">
-      {/* Temps du joueur noir */}
+    <Card className="p-4 bg-gray-800 rounded-lg shadow-lg">
       <div className="flex items-center gap-4 mb-4">
         <div className="flex-1">
           <h3 className="font-semibold">Joueur Noir</h3>
@@ -47,12 +46,9 @@ export function GameStatus({
         </div>
         <div className="text-2xl font-mono">{formatTime(blackTime)}</div>
       </div>
-
-      {/* Boutons d'action */}
       {!isGameOver && (
         <div className="flex justify-center gap-4 mt-4">
           <Button variant="outline" size="lg" onClick={onResign}>
-            <Flag className="mr-2" />
             Abandonner
           </Button>
           {drawOffer && drawOffer !== playerColor ? (
@@ -71,14 +67,11 @@ export function GameStatus({
               onClick={onOfferDraw}
               disabled={!!drawOffer}
             >
-              <RotateCcw className="mr-2" />
               Proposer nulle
             </Button>
           )}
         </div>
       )}
-
-      {/* Temps du joueur blanc */}
       <div className="flex items-center gap-4 mt-4">
         <div className="flex-1">
           <h3 className="font-semibold">Joueur Blanc</h3>
