@@ -85,7 +85,7 @@ export class ChessEngine {
           const piece = board[y][x];
           if (piece?.color === currentTurn) {
             const from = { x, y };
-            const moves = this.getPotentialMoves(from,true,board,enPassant);
+            const moves = this.getPotentialMoves(from,false,board,enPassant);
 
             for (const to of moves) {
               if (!this.moveResultsInCheck(from, to, board,enPassant)) {
@@ -167,10 +167,11 @@ export class ChessEngine {
   // Méthodes publiques
   public getValidMoves(from: Position,board:(ChessPiece|null)[][]=this.state.board,enPassant=this.state.enPassantTarget,turn=this.state.currentTurn): Position[] {
     const piece = board[from.y][from.x];
+    console.log(piece)
     if (!piece || piece.color !== turn) return [];
 
-    const potentialMoves = this.getPotentialMoves(from,true,board,enPassant);
-    // console.log(potentialMoves)
+    const potentialMoves = this.getPotentialMoves(from,false,board,enPassant);
+    console.log(potentialMoves)
     return potentialMoves.filter((to) => !this.moveResultsInCheck(from, to,board,enPassant));
   }
 
@@ -222,11 +223,15 @@ export class ChessEngine {
       const enPassant = '-' // TODO
       const moveCount = parseInt(`${this.state.moveCount}`)
       const lastMoveCap = parseInt(`${this.state.lastPawnMoveOrCapture}`)
-
-
-
-
+      
+      
+      
+      
       this.applyMove(move);
+      console.log('move apply')
+      console.log(this.state.strMove)
+
+      this.state.displayedMove = this.state.strMove.length
       this.updateGameState();
 
       // Ajouter le coup à l'historique
@@ -267,10 +272,6 @@ export class ChessEngine {
         variations: [],
       });
 
-      console.log('move apply')
-      console.log(this.state.moves)
-
-      this.state.displayedMove = this.state.moves.length-1
 
       return true;
     }
@@ -1151,11 +1152,13 @@ export class ChessEngine {
     if (!success) return;
   }
 
-  public setDisplayedMove(index:number){
+  public setDisplayedMove(index:number,moves=this.state.strMove){
 
-    if(index>this.state.moves.length-1) return console.log('INDEX NON DISPONIBLE')
+    console.log(index,moves,moves.length,moves.length-1,index>moves.length-1)
 
-    const move = this.state.strMove[index]
+    if(index>moves.length-1) return console.log('INDEX NON DISPONIBLE')
+
+    const move = moves[index]
 
     const {
       board,

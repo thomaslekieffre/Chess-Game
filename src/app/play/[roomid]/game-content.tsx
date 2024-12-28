@@ -142,6 +142,8 @@ export function GameContent(props: PropsType) {
     setGameByMovesArray,
     setGameByFen,
     drawReason,
+    displayedMove2,
+    setDisplayedMove,
   } = useGameState();
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -275,6 +277,7 @@ export function GameContent(props: PropsType) {
                 alert("Erreur lors de la connexion a la partie");
               } else {
                 setGameInfos(couleur, parseInt(roomJson.cadence.split("|")[0]));
+                setIsPlaying(true)
               }
             });
         } else if (roomJson.status == "in_progress") {
@@ -283,11 +286,13 @@ export function GameContent(props: PropsType) {
               roomJson.players.player1.color,
               parseInt(roomJson.cadence.split("|")[0])
             );
+            setIsPlaying(true)
           } else if (user.id == roomJson.players.player2.id) {
             setGameInfos(
               roomJson.players.player2.color,
               parseInt(roomJson.cadence.split("|")[0])
             );
+            setIsPlaying(true)
           }
         }
       }
@@ -423,6 +428,9 @@ export function GameContent(props: PropsType) {
           setBoard={setBoard}
           engine={engine}
           onMove={handleMove}
+          isPlaying={isPlaying}
+          displayed={displayedMove2}
+          list={movesList}
         />
       </div>
 
@@ -431,6 +439,8 @@ export function GameContent(props: PropsType) {
         <MovesHistory
           moves={movesList}
           className="flex-1 mb-4 rounded-lg p-4"
+          displayedMove={displayedMove2}
+          setDisplayedMove={setDisplayedMove}
         />
         <GameChat className="h-[30%]" />
       </div>
