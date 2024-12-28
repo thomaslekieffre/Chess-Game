@@ -59,7 +59,7 @@ export function useGameState() {
   }
 
   const setDisplayedMove = async (index:number) => {
-    engine.setDisplayedMove(index)
+    engine.setDisplayedMove(index,engine.getStrMove())
     updateGameState(false)    
   }
 

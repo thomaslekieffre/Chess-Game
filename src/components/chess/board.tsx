@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ChessEngine } from "@/lib/chess/engine";
-import { ChessPiece, Position, PieceType, PieceColor } from "@/lib/chess/types";
+import { ChessPiece, Position, PieceType, PieceColor, PgnMove } from "@/lib/chess/types";
 
 interface ChessBoardProps {
   animated?: boolean;
@@ -18,6 +18,9 @@ interface ChessBoardProps {
   board: (ChessPiece | null)[][];
   setBoard: (board: (ChessPiece | null)[][]) => void;
   playerColor: PieceColor;
+  isPlaying:boolean;
+  displayed:number;
+  list:PgnMove[];
 }
 
 const PIECE_SYMBOLS: Record<PieceType, { white: string; black: string }> = {
@@ -45,6 +48,9 @@ export function ChessBoard({
   board,
   setBoard,
   playerColor,
+  displayed,
+  isPlaying,
+  list,
 }: ChessBoardProps) {
   // const [engine] = useState(() => new ChessEngine());
   // const [board, setBoard] = useState<(ChessPiece | null)[][]>(
@@ -95,6 +101,12 @@ export function ChessBoard({
   }, [autoPlay, engine, board, setBoard, playerColor]);
 
   const handleSquareClick = (x: number, y: number) => {
+
+    const isOnLastMove = displayed==list.length-1
+    const canPlay = (isPlaying&&isOnLastMove)
+
+    if(!canPlay) return
+
     const tabBlanc = [0,1,2,3,4,5,6,7]
     const tabNoir = [0,1,2,3,4,5,6,7]
     tabNoir.reverse()
@@ -112,6 +124,7 @@ export function ChessBoard({
     if (!selectedPiece) {
       if (board[newCord.y][newCord.x]?.color == playerColor) {
         const moves = engine.getValidMoves(newCord);
+        console.log(moves)
         if (moves.length > 0) {
           setSelectedPiece({x,y});
           let newMoves = []

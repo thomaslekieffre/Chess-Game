@@ -18,16 +18,16 @@ export function MovesHistory({
   setDisplayedMove,
   displayedMove,
 }: MovesHistoryProps) {
-  const movesOnScreen = moves.slice(-maxMoves);
+  // const movesOnScreen = moves.slice(-maxMoves);
 
   return (
     <Card className={cn("p-4", className)}>
       <h3 className="font-semibold mb-4">
         Historique des coups ({moves.length})
-        {displayedMove}
+        a : {displayedMove}
       </h3>
       <div className="grid grid-cols-2 gap-2 text-sm">
-        {movesOnScreen.map((move, index) => (
+        {moves.map((move, index) => (
           <button
             key={index}
             style={{background:displayedMove==index?'red':''}}
