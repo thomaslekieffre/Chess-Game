@@ -6,6 +6,8 @@ interface MovesHistoryProps {
   moves: PgnMove[];
   className?: string;
   maxMoves?: number;
+  setDisplayedMove:Function;
+  displayedMove:number
 }
 
 
@@ -13,25 +15,32 @@ export function MovesHistory({
   moves,
   className,
   maxMoves = 10,
+  setDisplayedMove,
+  displayedMove,
 }: MovesHistoryProps) {
-  const displayedMoves = moves.slice(-maxMoves);
+  const movesOnScreen = moves.slice(-maxMoves);
 
   return (
     <Card className={cn("p-4", className)}>
       <h3 className="font-semibold mb-4">
         Historique des coups ({moves.length})
+        {displayedMove}
       </h3>
       <div className="grid grid-cols-2 gap-2 text-sm">
-        {displayedMoves.map((move, index) => (
-          <div
+        {movesOnScreen.map((move, index) => (
+          <button
             key={index}
+            style={{background:displayedMove==index?'red':''}}
             className={cn(
               "p-2 rounded",
               index % 2 === 0 ? "bg-muted" : "bg-background"
             )}
+            onClick={()=>{
+              setDisplayedMove(index)
+            }}
           >
             {move.turnNumber}. {move.notation.notation}
-          </div>
+          </button>
         ))}
       </div>
     </Card>
