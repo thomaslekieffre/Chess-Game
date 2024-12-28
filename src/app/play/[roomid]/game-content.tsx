@@ -108,6 +108,8 @@ export function GameContent(props: PropsType) {
       updatePlayersData(dataJson);
 
       if (dataJson?.game && dataJson.game[0]) {
+        console.log(dataJson)
+        // return
         setGameByMovesArray(dataJson.game);
       } else {
         setGameByFen(dataJson.default_pos);
@@ -141,6 +143,9 @@ export function GameContent(props: PropsType) {
     movesList,
     setGameByMovesArray,
     setGameByFen,
+    setDisplayedMove,
+    displayedMove2,
+    drawReason,
   } = useGameState();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [isResigned, setIsResigned] = useState(false);
@@ -148,6 +153,7 @@ export function GameContent(props: PropsType) {
   const [playerColor, setPlayerColor] = useState<PieceColor>("white");
   const [isTimeOut, setIsTimeOut] = useState(false);
   const [isRoomLoaded, setIsRoomLoaded] = useState(false);
+  
 
   useEffect(() => {
     if (!roomInfo) {
@@ -252,10 +258,10 @@ export function GameContent(props: PropsType) {
         newPlayers.player2 = {
           id: user.id,
           color: couleur,
-          temp: `${parseInt(roomJson.cadence.split("|")[0]) * 60}`,
+          time: `${parseInt(roomJson.cadence.split("|")[0]) * 60}`,
           username: user.username ? user.username : "ERREUR",
           elo_stats: userData?.elo_stats || null,
-          elo: elo,
+          // elo: elo,
         };
 
         await supabase
@@ -490,6 +496,8 @@ export function GameContent(props: PropsType) {
                   <MovesHistory
                     moves={movesList}
                     className="h-[calc(100vh-400px)]"
+                    setDisplayedMove={setDisplayedMove}
+                    displayedMove={displayedMove2}
                   />
                   <GameChat className="h-[200px]" />
                 </div>

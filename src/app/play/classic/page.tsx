@@ -163,7 +163,7 @@ export default function ClassicModePage() {
               time: minutes * 60,
               username: user.username,
               elo_stats: eloStats,
-              elo: "1200?",
+              // elo: "1200?",
             },
             player2: {},
             turn: "white",
