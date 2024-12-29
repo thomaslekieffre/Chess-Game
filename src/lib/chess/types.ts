@@ -239,3 +239,14 @@ export type roomType = {
   createdAt: string;
   turn: string;
 };
+
+export type customBoardSquare = {
+  piece?:{
+    name:PieceType,
+    color:PieceColor
+  },
+  style:Array<string>,
+  data?:any,
+}
+
+export type customBoardType = customBoardSquare[][]
