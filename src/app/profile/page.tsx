@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
+import { getFlagEmoji } from "@/utils/getFlagEmoji";
+
+const imageUrlRegex =
+  /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|bmp|webp|svg|mp4|mov|avi))$/i;
 
 export default function ProfilePage() {
   const { user } = useUser();
@@ -17,31 +21,47 @@ export default function ProfilePage() {
     realName: "",
     country: "",
     emoji: "👋",
+    avatarUrl: "",
+  });
+  const [eloStats, setEloStats] = useState({
+    classique: {
+      bullet: null,
+      blitz: null,
+      rapide: null,
+    },
+    saisonnier: {
+      bullet: null,
+      blitz: null,
+      rapide: null,
+    },
   });
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
-        console.log("Récupération des données pour l'utilisateur ID:", user.id);
         const { data, error } = await supabase
           .from("users")
           .select("*")
-          .eq("clerk_id", user.id) // Utilisez id_clerk pour la correspondance
+          .eq("clerk_id", user.id)
           .single();
 
         if (error) {
           console.error("Erreur lors de la récupération des données:", error);
         } else if (data) {
-          console.log("Données récupérées:", data);
           setFormData({
             username: data.username || "",
             realName: data.real_name || "",
             country: data.country || "",
             emoji: data.emoji || "👋",
+            avatarUrl: data.avatar_url || "",
           });
+          setEloStats(
+            data.elo_stats || {
+              classique: { bullet: null, blitz: null, rapide: null },
+              saisonnier: { bullet: null, blitz: null, rapide: null },
+            }
+          );
         }
-      } else {
-        console.log("Aucun utilisateur connecté.");
       }
     };
 
@@ -57,6 +77,12 @@ export default function ProfilePage() {
         throw new Error("Utilisateur non connecté");
       }
 
+      if (formData.avatarUrl && !imageUrlRegex.test(formData.avatarUrl)) {
+        alert("Veuillez entrer une URL d'image valide.");
+        setIsLoading(false);
+        return;
+      }
+
       const response = await supabase
         .from("users")
         .update({
@@ -64,6 +90,7 @@ export default function ProfilePage() {
           real_name: formData.realName,
           country: formData.country,
           emoji: formData.emoji,
+          avatar_url: formData.avatarUrl,
         })
         .eq("clerk_id", user.id);
 
@@ -86,12 +113,38 @@ export default function ProfilePage() {
   };
 
   return (
-    <main className="min-h-screen pt-20 bg-background">
-      <div className="container max-w-2xl">
-        <h1 className="text-3xl font-bold mb-8">Profil</h1>
+    <main className="min-h-screen pt-32 bg-background">
+      <div className="container max-w-2xl flex space-x-6">
+        <Card className="p-6 w-1/2 border border-gray-400">
+          <div className="flex items-center mb-4">
+            <img
+              src={
+                formData.avatarUrl || "https://ui-avatars.com/api/?name=User"
+              }
+              alt="User Profile"
+              className="w-16 h-16 rounded-full mr-4"
+            />
+            <div>
+              <h2 className="text-xl font-semibold">{formData.username}</h2>
+              <div className="flex items-center space-x-2">
+                <p className="text-lg">{getFlagEmoji(formData.country)}</p>
+                <p className="text-sm">{formData.emoji}</p>
+              </div>
+            </div>
+          </div>
 
-        <Card className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="avatarUrl">Lien de l&apos;image de profil</Label>
+              <Input
+                id="avatarUrl"
+                value={formData.avatarUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, avatarUrl: e.target.value })
+                }
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="username">Nom d&apos;utilisateur</Label>
               <Input
@@ -142,14 +195,47 @@ export default function ProfilePage() {
           </form>
         </Card>
 
-        <Button
-          onClick={handleSignOut}
-          variant="destructive"
-          className="w-full mt-4"
-        >
-          Se déconnecter
-        </Button>
+        <Card className="p-6 w-1/2 border border-gray-400">
+          <h2 className="text-2xl font-bold mb-4">Classement Elo</h2>
+          <div className="space-y-4">
+            <h3 className="text-xl font-semibold">Classique</h3>
+            <div className="flex items-center">
+              <span className="mr-2">🚀</span>
+              <span>Bullet: {eloStats.classique.bullet || "N/A"}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="mr-2">⚡</span>
+              <span>Blitz: {eloStats.classique.blitz || "N/A"}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="mr-2">⏱️</span>
+              <span>Rapide: {eloStats.classique.rapide || "N/A"}</span>
+            </div>
+
+            <h3 className="text-xl font-semibold">Saisonnier</h3>
+            <div className="flex items-center">
+              <span className="mr-2">🔥</span>
+              <span>Bullet: {eloStats.saisonnier.bullet || "N/A"}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="mr-2">✨</span>
+              <span>Blitz: {eloStats.saisonnier.blitz || "N/A"}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="mr-2">⏳</span>
+              <span>Rapide: {eloStats.saisonnier.rapide || "N/A"}</span>
+            </div>
+          </div>
+        </Card>
       </div>
+
+      <Button
+        onClick={handleSignOut}
+        variant="destructive"
+        className="mt-10 mx-auto flex"
+      >
+        Se déconnecter
+      </Button>
     </main>
   );
 }
