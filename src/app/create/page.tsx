@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CustomBoard } from "@/components/chess/custom-board";
+import { PieceType, Position, customBoardSquare, customBoardType } from "@/lib/chess/types";
 
 export default function CreatePiecePage() {
   const { user } = useUser();
@@ -25,8 +26,86 @@ export default function CreatePiecePage() {
   const [isPublic, setIsPublic] = useState(false);
   const [selectedSquares, setSelectedSquares] = useState<boolean[][]>([]);
 
-  const handlePieceSelect = (value: string) => {
+  const generateBoard = () => {
+    let res:customBoardType = []
+    for (let i = 0; i < 17; i++) {
+      let tmp:customBoardSquare[] = []
+      for (let j = 0; j < 17; j++) {
+        tmp.push({
+          style:[]
+        })
+      }
+      res.push(tmp)
+    }
+    return res
+  }
+
+  const [board,setBoard] = useState<customBoardType>(generateBoard())
+
+  const [selectedTools,setSelectedTools] = useState('click-jump')
+
+  const handleData = (array:customBoardType):{jump:Array<Position>,other:any} => {
+    const pieceCoordX = parseInt(`${array.length/2}`) 
+    const pieceCoordY = parseInt(`${array.length/2}`)
+
+    let res:{jump:Array<Position>,other:any} = {jump:[],other:''}
+
+    for (let i = 0; i < array.length; i++) {
+      let row = array[i]
+      for (let j = 0; j < array.length; j++) {
+        const square = row[j]
+        const squareCoord = {x:j,y:i}
+        const diffX = pieceCoordX-squareCoord.x 
+        const diffY = pieceCoordY-squareCoord.y
+        const dif = {x:diffX,y:diffY}
+        if(square?.data&&square?.data.isSelected=='jump'){
+          res.jump.push(dif)
+        }
+      }
+    }
+
+    return res
+  }
+
+  const editSquare = (newValue:customBoardSquare,pos:Position) => {
+    let newBoard = JSON.parse(JSON.stringify(board));
+    newBoard[pos.y][pos.x] = newValue
+    setBoard(board => [...newBoard])
+  }
+
+  const handleSquareClick = async (pos:Position) => {
+    console.log(board,handleData(board))
+    let square = board[pos.y][pos.x]
+    console.log(square)
+    if(selectedTools=="click-jump"){
+      if(square?.piece) return
+      if(square?.data&&square.data.isSelected=='jump'){
+        let res:customBoardSquare = {
+          style:[]
+        }
+        editSquare(res,pos)
+      }
+      if(!square?.data){
+        let res:customBoardSquare = {
+          style:[
+            'bg-blue-200 dark:bg-blue-900'
+          ],
+          data:{
+            isSelected:'jump'
+          }
+        }
+        editSquare(res,pos)
+      }
+    }
+  }
+
+  const handlePieceSelect = (value: PieceType) => {
+    console.log(value);
     setSelectedPiece(value);
+    editSquare({style:[],piece:{
+      name:value,
+      color:'black',
+    }},{x:parseInt(`${board.length/2}`),y:parseInt(`${board.length/2}`)})
   };
 
   const handleSavePiece = async () => {
@@ -82,12 +161,16 @@ export default function CreatePiecePage() {
               <Label>Choisissez une pièce à personnaliser</Label>
               <Select onValueChange={handlePieceSelect}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionnez une pièce" />
+                  <SelectValue placeholder="Sélectionnez; une pièce" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="knight">Cavalier</SelectItem>
                   <SelectItem value="bishop">Fou</SelectItem>
                   <SelectItem value="queen">Reine</SelectItem>
+                  <SelectItem value="king">Roi</SelectItem>
+                  <SelectItem value="rook">Tour</SelectItem>
+                  <SelectItem value="pawn">Pions</SelectItem>
+                  <SelectItem value="custom">Autre</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -118,16 +201,17 @@ export default function CreatePiecePage() {
 
                 <div className="mt-6">
                   <h2 className="text-xl font-semibold mb-4">
-                    Personnalisation du{" "}
-                    {selectedPiece === "knight"
-                      ? "Cavalier"
-                      : selectedPiece === "bishop"
-                      ? "Fou"
-                      : "Reine"}
+                    Personnalisation {pieceName?`du ${pieceName}.`:'de votre piece.'}
                   </h2>
+                  <h3>
+                    Ps : La piece est orienter ver le haut
+                  </h3>
                   <CustomBoard
-                    selectedPiece={selectedPiece}
-                    onSquaresChange={setSelectedSquares}
+                    // selectedPiece={selectedPiece}
+                    // onSquaresChange={setSelectedSquares}
+                    size={17}
+                    onSquareClick={handleSquareClick}
+                    board={board}
                   />
 
                   <Button
