@@ -48,6 +48,21 @@ export async function POST(req: Request) {
         real_name: `${first_name} ${last_name}`,
         country: public_metadata?.country || "Unknown",
         emoji: public_metadata?.emoji || "🙂",
+        avatar_url:
+          public_metadata?.avatar_url ||
+          "https://static.vecteezy.com/system/resources/thumbnails/002/318/271/small_2x/user-profile-icon-free-vector.jpg",
+        elo_stats: {
+          classique: {
+            bullet: public_metadata?.elo_classique_bullet || 1200,
+            blitz: public_metadata?.elo_classique_blitz || 1200,
+            rapide: public_metadata?.elo_classique_rapide || 1200,
+          },
+          saisonnier: {
+            bullet: public_metadata?.elo_saisonnier_bullet || 1200,
+            blitz: public_metadata?.elo_saisonnier_blitz || 1200,
+            rapide: public_metadata?.elo_saisonnier_rapide || 1200,
+          },
+        },
       });
 
       if (error) {
