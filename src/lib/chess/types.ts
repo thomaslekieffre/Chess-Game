@@ -249,4 +249,6 @@ export type customBoardSquare = {
   data?:any,
 }
 
+export type gameStatus = 'loading'|'can-join'|'playing'|'watching'|'waiting'
+
 export type customBoardType = customBoardSquare[][]

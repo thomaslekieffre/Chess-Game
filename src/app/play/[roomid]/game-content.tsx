@@ -7,13 +7,43 @@ import { MovesHistory } from "@/components/chess/moves-history";
 import { PlayerCard } from "@/components/chess/player-card";
 import { Button } from "@/components/ui/button";
 import { useGameState } from "@/hooks/useGameState";
-import { PieceColor, playerType, Position, roomType } from "@/lib/chess/types";
+import { ChessPiece, customBoardSquare, customBoardType, gameStatus, PieceColor, playerType, Position, roomType } from "@/lib/chess/types";
 import { getOppositeColor } from "@/lib/chess/utils";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { GameMessages } from "./game-messages";
+import { CustomBoard } from "@/components/chess/custom-board";
+import { importFEN } from "@/lib/chess/pgn/pgn2";
+
+const generateBoardWaiting = () => {
+  const board:(ChessPiece | null)[][] = importFEN('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1').board
+  let newBoard:customBoardType = []
+  console.log(board,newBoard)
+  for (let i = 0; i < board.length; i++){
+    let row = board[i]
+    let newRow:customBoardSquare[] = []
+    // console.log(row)
+    for (let j = 0; j < board.length; j++){
+      let square = row[j]
+      let newSquare:customBoardSquare = {style:[]}
+      if(square?.color){
+        newSquare={
+          style:[],
+          data:'',
+          piece:{
+            color:square.color,
+            name:square.type,
+          }
+        }
+      }
+      newRow.push(newSquare)
+    }
+    newBoard.push(newRow)
+  }
+  return newBoard
+}
 
 const socket = io("http://localhost:3001");
 
@@ -29,7 +59,6 @@ export function GameContent(props: PropsType) {
   const [blackTime, setBlackTime] = useState(10 * 60);
 
   const [isGameStarted, setIsGameStarted] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
 
   const [whitePlayerInfo, setWhitePlayerInfo] = useState({
     username: "White",
@@ -40,6 +69,8 @@ export function GameContent(props: PropsType) {
     username: "Black",
     elo: "1200?",
   });
+
+  const [status,setStatus] = useState<gameStatus>('loading')
 
   const updatePlayersData = (roomJson: roomType) => {
     const { player1, player2 } = roomJson.players;
@@ -97,8 +128,6 @@ export function GameContent(props: PropsType) {
       .eq("id", roomId);
 
     if (error) {
-      console.log("err");
-      console.log(error);
       alert(error.message);
       return false;
     } else {
@@ -225,74 +254,28 @@ export function GameContent(props: PropsType) {
           roomJson.status === "waiting_for_player" &&
           user.id !== roomJson.players.player1.id
         ) {
-          const couleur: PieceColor =
-            roomJson.players.player1.color == "white" ? "black" : "white";
 
-          const newPlayers = roomJson.players;
+          setStatus('can-join')
+          return
 
-          // Récupérer l'Elo du joueur
-          const { data: userData, error } = await supabase
-            .from("users")
-            .select("elo_stats")
-            .eq("clerk_id", user.id)
-            .single();
-
-          if (error) {
-            console.error("Erreur lors de la récupération de l'Elo:", error);
-          }
-
-          const cadence = roomJson.cadence.split("|")[0];
-          let elo = "1200?";
-
-          if (userData?.elo_stats) {
-            if (cadence === "1" || cadence === "0.5") {
-              elo = userData.elo_stats.classique.bullet || "1200?";
-            } else if (cadence === "3" || cadence === "5") {
-              elo = userData.elo_stats.classique.blitz || "1200?";
-            } else {
-              elo = userData.elo_stats.classique.rapide || "1200?";
-            }
-          }
-
-          newPlayers.player2 = {
-            id: user.id,
-            color: couleur,
-            time: `${parseInt(roomJson.cadence.split("|")[0]) * 60}`,
-            username: user.username ? user.username : "ERREUR",
-            elo_stats: {
-              classique: {
-                bullet: elo,
-                blitz: elo,
-                rapide: elo,
-              },
-            },
-          };
-
-          await supabase
-            .from("room")
-            .update({ players: newPlayers, status: `in_progress` })
-            .eq("id", roomId)
-            .then((x) => {
-              if (x.error) {
-                alert("Erreur lors de la connexion a la partie");
-              } else {
-                setGameInfos(couleur, parseInt(roomJson.cadence.split("|")[0]));
-                setIsPlaying(true)
-              }
-            });
+        }else if(
+          roomJson.status === "waiting_for_player" &&
+          user.id == roomJson.players.player1.id
+        ){
+          setStatus('waiting')
         } else if (roomJson.status == "in_progress") {
           if (user.id == roomJson.players.player1.id) {
             setGameInfos(
               roomJson.players.player1.color,
               parseInt(roomJson.cadence.split("|")[0])
             );
-            setIsPlaying(true)
+            setStatus('playing')
           } else if (user.id == roomJson.players.player2.id) {
             setGameInfos(
               roomJson.players.player2.color,
               parseInt(roomJson.cadence.split("|")[0])
             );
-            setIsPlaying(true)
+            setStatus('playing')
           }
         }
       }
@@ -305,6 +288,15 @@ export function GameContent(props: PropsType) {
       joinGame(data);
       console.log("joined");
     });
+
+    socket.on('game_started',(data:roomType) => {
+      if(status=='loading'||roomInfo?.status=='in_progress') return
+      setRoomInfo(data)
+      if(user&&user?.id==data.players.player1.id){
+        setGameInfos(data.players.player1.color,parseInt(data.cadence.split('|')[0]))
+        setStatus('playing')
+      }
+    })
 
     socket.on("move", (data) => {
       if (data.by === user?.id) {
@@ -385,68 +377,232 @@ export function GameContent(props: PropsType) {
       moves: moves,
       by: user?.id,
     });
-  };
+  };  
 
-  return (
-    <div className="flex h-[calc(100vh-4rem)] text-white">
-      {/* Marge gauche (5%) */}
-      <div className="w-[5%]" />
+  switch (status) {
+    case 'loading':
+      return (
+        <div className="flex h-[calc(100vh-4rem)] text-white">
+          <h1>Loading</h1>
+        </div>
+      )
 
-      {/* Panneau de contrôle (20%) */}
-      <div className="w-[20%] flex flex-col gap-4 mt-64">
-        <PlayerCard
-          name={whitePlayerInfo.username}
-          rating={whitePlayerInfo.elo}
-          time={formatTime(whiteTime)}
-          color="white"
-          isCurrentTurn={currentTurn === "white"}
-        />
-        <GameControls
-          onResign={() => setIsGameOver(true)}
-          onOfferDraw={handleOfferDraw}
-          drawOffer={drawOffer}
-          onAcceptDraw={handleAcceptDraw}
-          onDeclineDraw={handleDeclineDraw}
-          playerColor={playerColor}
-          isGameOver={isGameOver}
-        />
-        <PlayerCard
-          name={blackPlayerInfo.username}
-          rating={blackPlayerInfo.elo}
-          time={formatTime(blackTime)}
-          color="black"
-          isCurrentTurn={currentTurn === "black"}
-        />
-      </div>
+    case 'waiting': 
+      return (
+        <div className="flex h-[calc(100vh-4rem)] text-white">
+          {/* Marge gauche (5%) */}
+          <div className="w-[5%]" />
+        
+          {/* Panneau de contrôle (20%) */}
+          <div className="w-[20%] flex flex-col gap-4 mt-64">
+            <PlayerCard
+              name={'White'}
+              rating={'1200?'}
+              time={'10:00'}
+              color="white"
+              isCurrentTurn={currentTurn === "white"}
+            />
+            <GameControls
+              onResign={() => setIsGameOver(true)}
+              onOfferDraw={handleOfferDraw}
+              drawOffer={drawOffer}
+              onAcceptDraw={handleAcceptDraw}
+              onDeclineDraw={handleDeclineDraw}
+              playerColor={playerColor}
+              isGameOver={isGameOver}
+            />
+            <PlayerCard
+              name={'Black'}
+              rating={'1200?'}
+              time={'10:00'}
+              color="black"
+              isCurrentTurn={currentTurn === "black"}
+            />
+          </div>
+        
+          {/* Échiquier (50%) */}
+          <div className="w-[50%] flex items-center justify-center p-4">
 
-      {/* Échiquier (50%) */}
-      <div className="w-[50%] flex items-center justify-center p-4">
-        <ChessBoard
-          playerColor={playerColor}
-          className="w-full aspect-square"
-          board={board}
-          setBoard={setBoard}
-          engine={engine}
-          onMove={handleMove}
-          isPlaying={isPlaying}
-          displayed={displayedMove2}
-          list={movesList}
-        />
-      </div>
+            {/* {JSON.stringify(generateBoardWaiting())} */}
 
-      {/* Historique et chat (20%) */}
-      <div className="w-[20%] py-4 px-2 flex flex-col">
-        <MovesHistory
-          moves={movesList}
-          className="flex-1 mb-4 rounded-lg p-4"
-          displayedMove={displayedMove2}
-          setDisplayedMove={setDisplayedMove}
-        />
-        <GameChat className="h-[30%]" />
-      </div>
+            <CustomBoard
+              size={8}
+              board={generateBoardWaiting()}
+              onSquareClick={()=>{}}
+            />
+          </div>
+        
+          {/* Historique et chat (20%) */}
+          <div className="w-[20%] h-[80%] py-4 px-2 flex flex-col">
+            <MovesHistory
+              moves={[]}
+              className="flex-1 mb-4 rounded-lg p-4"
+              displayedMove={0}
+              setDisplayedMove={()=>{}}
+            />
+            {/* <GameChat className="h-[30%]" /> */}
+          </div>
+        
+          {/* Marge droite (5%) */}
+          <div className="w-[5%]" />
+        </div>
+      )
 
-      {/* Marge droite (5%) */}
-      <div className="w-[5%]" />
-    </div>
-  );
+    case 'can-join': 
+        return (
+          <div className="flex h-[calc(100vh-4rem)] text-white">
+            <div style={{margin:'0 auto'}} className="w-[50vw]">
+              <h1>Invitation de : {roomInfo?.players.player1.username}</h1>
+
+              <h2>Cadence : {roomInfo?.cadence}</h2>
+
+              <button style={{background:'green'}} onClick={async ()=>{
+                if(!roomInfo) return alert('Erreur lors de la recuperation des donnée')
+                if(!user) return alert('Vous devez être connecter pour pouvoir rejoindre la partie')
+
+                const couleur: PieceColor = roomInfo.players.player1.color == "white" ? "black" : "white";
+    
+                const newPlayers = roomInfo.players;
+      
+                // Récupérer l'Elo du joueur
+                const { data: userData, error } = await supabase
+                  .from("users")
+                  .select("elo_stats")
+                  .eq("clerk_id", user.id)
+                  .single();
+      
+                if (error) {
+                  console.error("Erreur lors de la récupération de l'Elo:", error);
+                }
+      
+                const cadence = roomInfo.cadence.split("|")[0];
+                let elo = "1200?";
+      
+                if (userData?.elo_stats) {
+                  if (cadence === "1" || cadence === "0.5") {
+                    elo = userData.elo_stats.classique.bullet || "1200?";
+                  } else if (cadence === "3" || cadence === "5") {
+                    elo = userData.elo_stats.classique.blitz || "1200?";
+                  } else {
+                    elo = userData.elo_stats.classique.rapide || "1200?";
+                  }
+                }
+      
+                newPlayers.player2 = {
+                  id: user.id,
+                  color: couleur,
+                  time: `${parseInt(roomInfo.cadence.split("|")[0]) * 60}`,
+                  username: user.username ? user.username : "ERREUR",
+                  elo_stats: {
+                    classique: {
+                      bullet: elo,
+                      blitz: elo,
+                      rapide: elo,
+                    },
+                  },
+                };
+      
+                await supabase
+                  .from("room")
+                  .update({ players: newPlayers, status: `in_progress` })
+                  .eq("id", roomId)
+                  .then((x) => {
+                    if (x.error) {
+                      alert("Erreur lors de la connexion a la partie");
+                    } else {
+                      setGameInfos(couleur, parseInt(roomInfo.cadence.split("|")[0]));
+                      setStatus('playing')
+                    }
+                  }); 
+
+                  const newRoomInfo = {
+                    cadence:roomInfo.cadence,
+                    createdAt:roomInfo.createdAt,
+                    default_pos:roomInfo.default_pos,
+                    game:roomInfo.game,
+                    game_mode:roomInfo.game_mode,
+                    id:roomInfo.id,
+                    players:newPlayers,
+                    status:'in_progress',
+                    rated:roomInfo.rated,
+                    turn:roomInfo.turn,
+                  }
+
+                  setRoomInfo(newRoomInfo)
+
+                  socket.emit('game-joined',{newRoomInfo})
+              }}>Rejoindre la partie</button>
+            </div>
+          </div>
+        )
+
+        case 'playing': 
+          return (
+            <div className="flex h-[calc(100vh-4rem)] text-white">
+              {/* Marge gauche (5%) */}
+              <div className="w-[5%]" />
+        
+              {/* Panneau de contrôle (20%) */}
+              <div className="w-[20%] flex flex-col gap-4 mt-64">
+                <PlayerCard
+                  name={whitePlayerInfo.username}
+                  rating={whitePlayerInfo.elo}
+                  time={formatTime(whiteTime)}
+                  color="white"
+                  isCurrentTurn={currentTurn === "white"}
+                />
+                <GameControls
+                  onResign={() => setIsGameOver(true)}
+                  onOfferDraw={handleOfferDraw}
+                  drawOffer={drawOffer}
+                  onAcceptDraw={handleAcceptDraw}
+                  onDeclineDraw={handleDeclineDraw}
+                  playerColor={playerColor}
+                  isGameOver={isGameOver}
+                />
+                <PlayerCard
+                  name={blackPlayerInfo.username}
+                  rating={blackPlayerInfo.elo}
+                  time={formatTime(blackTime)}
+                  color="black"
+                  isCurrentTurn={currentTurn === "black"}
+                />
+              </div>
+        
+              {/* Échiquier (50%) */}
+              <div className="w-[50%] flex items-center justify-center p-4">
+                <ChessBoard
+                  playerColor={playerColor}
+                  className="w-full aspect-square"
+                  board={board}
+                  setBoard={setBoard}
+                  engine={engine}
+                  onMove={handleMove}
+                  isPlaying={status=='playing'}
+                  displayed={displayedMove2}
+                  list={movesList}
+                />
+              </div>
+        
+              {/* Historique et chat (20%) */}
+              <div className="w-[20%] py-4 px-2 flex flex-col">
+                <MovesHistory
+                  moves={movesList}
+                  className="flex-1 mb-4 rounded-lg p-4"
+                  displayedMove={displayedMove2}
+                  setDisplayedMove={setDisplayedMove}
+                />
+                <GameChat className="h-[30%]" />
+              </div>
+        
+              {/* Marge droite (5%) */}
+              <div className="w-[5%]" />
+            </div>
+          );
+      
+  
+    default:
+      break;
+  }
+
 }

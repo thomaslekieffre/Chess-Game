@@ -23,8 +23,9 @@ export function MovesHistory({
   return (
     <Card className={cn("p-4", className)}>
       <h3 className="font-semibold mb-4">
-        Historique des coups ({moves.length})
-        a : {displayedMove}
+        Historique des coups 
+        {/* ({moves.length}) */}
+        {/* a : {displayedMove} */}
       </h3>
       <div className="grid grid-cols-2 gap-2 text-sm">
         {moves.map((move, index) => (
