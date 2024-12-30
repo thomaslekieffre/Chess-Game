@@ -10,6 +10,7 @@ import http from "http";
 import { Server } from "socket.io";
 import { convertToPGN } from "./lib/chess/pgn";
 import { supabase } from "./lib/supabase";
+import { roomType } from "./lib/chess/types";
 
 // import {PgnReader} from '@mliebelt/pgn-reader'
 
@@ -185,6 +186,10 @@ io.on("connection", (socket) => {
     console.log("Utilisateur connecter a la room " + data.id);
     socket.emit("connected-to-the-room", data);
   });
+
+  socket.on('game-joined', async (data:{newRoomInfo:roomType}) => {
+    io.to(`game_${data.newRoomInfo.id}`).emit(`game_started`, data.newRoomInfo);
+  })
 
   socket.on("move", async (data) => {
     await supabase

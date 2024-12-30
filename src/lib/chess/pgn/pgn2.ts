@@ -1,6 +1,6 @@
 //@ts-nocheck
 
-import {CasesList, Field, File, PgnGame, PgnReaderMove, PgnWriterConfiguration, PieceType, PieceTypeAbreg, Position, Rank, files, ranks, ranksOpo} from "../types";
+import {CasesList, Field, File, PgnGame, PgnReaderMove, PgnWriterConfiguration, PieceType, PieceTypeAbreg, Position, Rank, files, ranks, ranksOpo, tabCastlingRights} from "../types";
 
 export const fromCoordToCase = (x:number,y:number) => {
     const xPos:File = fromXToRow(x)
@@ -48,6 +48,82 @@ export const getNameByFig = (fig:string):PieceType => {
         b:'bishop',
     }
     return ObjConv[fig]
+}
+
+export const importFEN = (fen: FenString|string): {
+    board: (ChessPiece | null)[][];
+    activeColor: FenActiveColor;
+    castlingRights: FenCastlingRights;
+    enPassant: Position;
+    halfmoveClock: number;
+    fullmoveNumber: number;
+  } => {
+    // Diviser le FEN en ses composants
+    const [piecePlacement, activeColor, castlingRights, enPassantCoord, halfmoveClock, fullmoveNumber] = fen.split(" ");
+
+    
+    // Valider les composants
+    if (!["w", "b"].includes(activeColor)) {
+      throw new Error(`Invalid active color: ${activeColor}`);
+    }
+  
+    if (!tabCastlingRights.includes(castlingRights as FenCastlingRights)) {
+      throw new Error(`Invalid castling rights: ${castlingRights}`);
+    }
+  
+    if (!/^([a-h][36]|-)$/.test(enPassantCoord)) {
+      throw new Error(`Invalid en passant target: ${enPassantCoord}`);
+    }
+  
+    if (isNaN(parseInt(halfmoveClock, 10))) {
+      throw new Error(`Invalid halfmove clock: ${halfmoveClock}`);
+    }
+  
+    if (isNaN(parseInt(fullmoveNumber, 10))) {
+      throw new Error(`Invalid fullmove number: ${fullmoveNumber}`);
+    }
+  
+    let enPassant:Position = {
+      x:enPassantCoord[0].charCodeAt(0) - "a".charCodeAt(0),
+      y: 7 - (parseInt(enPassantCoord[1]) - 1),
+    }
+
+    // Étape 1: Construire l'échiquier
+    const board: (ChessPiece | null)[][] = Array.from({ length: 8 }, () => Array(8).fill(null));
+    const rows = piecePlacement.split("/");
+  
+    rows.forEach((row, rowIndex) => {
+      let colIndex = 0;
+      for (const char of row) {
+        if (!isNaN(parseInt(char))) {
+          // Case vide (nombre)
+          colIndex += parseInt(char);
+        } else {
+          // Case occupée (pièce)
+          const color: PieceColor = char === char.toLowerCase() ? "black" : "white"; // Minuscule = noir, Majuscule = blanc
+          const type = getNameByFig(char.toLowerCase()); // Type de la pièce (p, r, n, b, q, k)
+          if (!type) {
+            throw new Error(`Invalid piece character: ${char}`);
+          }
+          board[rowIndex][colIndex] = {
+            color,
+            type,
+            hasMoved: false, // Par défaut, on suppose que toutes les pièces n'ont pas encore bougé
+          };
+          colIndex++;
+        }
+      }
+    });
+  
+    // Étape 2: Retourner toutes les informations extraites
+    return {
+      board,
+      activeColor: activeColor as FenActiveColor,
+      castlingRights: castlingRights as FenCastlingRights,
+      enPassant: enPassant,
+      halfmoveClock: parseInt(halfmoveClock, 10),
+      fullmoveNumber: parseInt(fullmoveNumber, 10),
+    };
 }
 
 export const getPieceSymbol = (pieceType: PieceTypeAbreg): PieceTypeAbreg|'' => {
