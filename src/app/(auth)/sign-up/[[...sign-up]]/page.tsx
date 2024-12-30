@@ -12,7 +12,7 @@ export default function SignUpPage() {
         const { id, username, firstName, lastName, publicMetadata } = user;
 
         const { error } = await supabase.from("users").upsert({
-          id,
+          clerk_id: id,
           username: username || `${firstName}_${lastName}`,
           real_name: `${firstName} ${lastName}`,
           country: publicMetadata?.country || "Unknown",

@@ -20,10 +20,15 @@ import {
   Library,
   Vote,
   BadgePlus,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
-import { useAuth } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { UserButton } from "@/components/auth/user-button";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import CustomImage from "@/components/CustomImage";
+import { FriendRequests } from "@/components/friend-requests/FriendRequests";
 
 const playModes = [
   {
@@ -67,8 +72,117 @@ const createModes = [
   },
 ];
 
+interface FriendData {
+  id: string;
+  clerk_id: string;
+  avatar_url: string;
+}
+
 export function Header() {
-  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+  const isSignedIn = !!user;
+  const [isFriendPopupOpen, setFriendPopupOpen] = useState(false);
+  const [friendUsername, setFriendUsername] = useState("");
+  const [friendData, setFriendData] = useState<FriendData | null>(null);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+
+  const toggleFriendPopup = () => {
+    setFriendPopupOpen(!isFriendPopupOpen);
+  };
+
+  const handleAddFriend = async () => {
+    if (!user) return;
+
+    // D'abord récupérer l'ID de l'utilisateur cible
+    const { data: targetUser, error: targetError } = await supabase
+      .from("users")
+      .select("clerk_id")
+      .eq("username", friendUsername)
+      .single();
+
+    if (targetError || !targetUser) {
+      alert("Utilisateur non trouvé.");
+      return;
+    }
+
+    // Vérifier si une demande d'ami existe déjà dans les deux sens
+    const { data: existingRequests, error: requestError } = await supabase
+      .from("friend_requests")
+      .select("status")
+      .or(
+        `and(from.eq.${user.id},to.eq.${targetUser.clerk_id}),and(from.eq.${targetUser.clerk_id},to.eq.${user.id})`
+      );
+
+    if (existingRequests && existingRequests.length > 0) {
+      const request = existingRequests[0];
+      if (request.status === "accepted") {
+        alert("Vous êtes déjà amis avec cet utilisateur.");
+        return;
+      }
+      if (request.status === "pending") {
+        alert("Une demande d'ami est déjà en cours.");
+        return;
+      }
+    }
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, clerk_id, avatar_url")
+      .eq("username", friendUsername)
+      .single();
+
+    if (error || !data) {
+      alert("Utilisateur non trouvé.");
+      return;
+    }
+
+    setFriendData({
+      id: data.id,
+      clerk_id: data.clerk_id,
+      avatar_url: data.avatar_url,
+    });
+    setConfirmationOpen(true);
+  };
+
+  const sendFriendRequest = async () => {
+    if (!friendData) {
+      alert("Aucune donnée d'ami disponible.");
+      return;
+    }
+
+    if (!user) {
+      alert("Utilisateur non connecté.");
+      return;
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("clerk_id")
+      .eq("clerk_id", user.id)
+      .single();
+
+    if (userError || !userData) {
+      alert("Erreur lors de la récupération des données utilisateur");
+      return;
+    }
+
+    const { error } = await supabase.from("friend_requests").insert([
+      {
+        from: userData.clerk_id,
+        to: friendData.clerk_id,
+      },
+    ]);
+
+    if (error) {
+      console.error("Erreur lors de l'envoi de la demande d'ami:", error);
+      alert("Erreur lors de l'envoi de la demande d'ami: " + error.message);
+    } else {
+      alert(`Demande d'ami envoyée à ${friendUsername}`);
+      setConfirmationOpen(false);
+      setFriendUsername("");
+      setFriendData(null);
+    }
+  };
 
   return (
     <motion.header
@@ -86,7 +200,7 @@ export function Header() {
           </Link>
 
           <NavigationMenu>
-            <NavigationMenuList className="flex items-center gap-16">
+            <NavigationMenuList className="flex items-center gap-8">
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="text-lg hover:text-primary transition-colors">
                   Jouer
@@ -172,11 +286,21 @@ export function Header() {
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <button
+                  onClick={toggleFriendPopup}
+                  className="flex items-center"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Amis
+                </button>
+              </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <ModeToggle />
           {isSignedIn ? (
             <UserButton />
@@ -187,6 +311,66 @@ export function Header() {
           )}
         </div>
       </div>
+
+      {isFriendPopupOpen && (
+        <div className="absolute right-0 mt-2 w-64 bg-background border border-border shadow-lg rounded-md p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold">Demande d&apos;ami:</h3>
+            <Link
+              href="/friends"
+              className="text-sm text-primary hover:underline"
+            >
+              Liste d&apos;amis
+            </Link>
+          </div>
+          <div className="space-y-2">
+            <input
+              type="text"
+              placeholder="Nom d'utilisateur"
+              value={friendUsername}
+              onChange={(e) => setFriendUsername(e.target.value)}
+              className="border border-border bg-background rounded p-2 w-full"
+            />
+            <button
+              onClick={handleAddFriend}
+              className="mt-2 bg-primary text-primary-foreground rounded p-2 w-full"
+            >
+              Envoyer demande
+            </button>
+          </div>
+        </div>
+      )}
+
+      {confirmationOpen && friendData && (
+        <div className="absolute right-0 mt-2 w-64 bg-background border border-border shadow-lg rounded-md p-4">
+          <h3 className="font-semibold">Confirmer la demande d&apos;ami</h3>
+          <CustomImage
+            src={friendData.avatar_url}
+            alt="Ami"
+            width={64}
+            height={64}
+          />
+          <p className="text-foreground">
+            Voulez-vous vraiment demander à {friendUsername} d&apos;être ami ?
+          </p>
+          <div className="flex justify-between mt-4">
+            <button
+              onClick={sendFriendRequest}
+              className="bg-primary text-primary-foreground rounded p-2"
+            >
+              OUI
+            </button>
+            <button
+              onClick={() => setConfirmationOpen(false)}
+              className="bg-secondary text-secondary-foreground rounded p-2"
+            >
+              NON
+            </button>
+          </div>
+        </div>
+      )}
+
+      <FriendRequests />
     </motion.header>
   );
 }
