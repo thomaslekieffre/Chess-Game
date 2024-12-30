@@ -133,7 +133,7 @@ export function ChessBoard({
           setSelectedPiece({ x, y });
           let newMoves = [];
           if (playerColor == "black") {
-            for (let move of moves) {
+            for (const move of moves) {
               newMoves.push({
                 x: tabNoir[tabBlanc.indexOf(move.x)],
                 y: move.y,
@@ -172,12 +172,12 @@ export function ChessBoard({
     }
   };
 
-  const reverseBoard = (b: Array<Array<any>>) => {
-    let newBoard = [];
+  const reverseBoard = (b: Array<Array<ChessPiece | null>>) => {
+    const newBoard = [];
     // console.log(b)
     for (let i = b.length - 1; i > -1; i--) {
       const ele = b[i];
-      let newRow = [];
+      const newRow = [];
 
       if (ele) {
         for (let j = ele.length - 1; j > -1; j--) {
