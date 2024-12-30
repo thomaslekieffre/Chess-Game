@@ -18,6 +18,22 @@ import {
 import { CustomBoard } from "@/components/chess/custom-board";
 import { PieceType, Position, customBoardSquare, customBoardType } from "@/lib/chess/types";
 
+const isSelectedStyle = (isSelected:string[]) => {
+  const includesJump = isSelected.includes('jump')
+  const includesLine = isSelected.includes('line')
+  if(includesJump&&includesLine){
+    return  'bg-purple-200 dark:bg-purple-900'
+  }else if(includesJump&&!includesLine){
+    return  'bg-blue-200 dark:bg-blue-900'
+  }else if(includesLine&&!includesJump){
+    return  'bg-red-200 dark:bg-red-900'
+  }else if(isSelected==null||isSelected.length==0){
+    return ''
+  }else{
+    return 'bg-green-200 dark:bg-green-900'
+  }
+}
+
 export default function CreatePiecePage() {
   const { user } = useUser();
   const [selectedPiece, setSelectedPiece] = useState<string>("");
@@ -25,12 +41,25 @@ export default function CreatePiecePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [selectedSquares, setSelectedSquares] = useState<boolean[][]>([]);
+  const [straightLineMove,setStraightLineMove] = useState<{
+    direction:Position,
+    length:number,
+  }[]>([
+    // {direction:{x:1,y:0},length:2},
+    // {direction:{x:-1,y:0},length:2},
+    // {direction:{x:0,y:1},length:2},
+    // {direction:{x:0,y:-1},length:2},
+    // {direction:{x:1,y:1},length:2},
+    // {direction:{x:-1,y:1},length:2},
+    // {direction:{x:1,y:1},length:2},
+    // {direction:{x:1,y:-1},length:2},
+  ])
 
   const generateBoard = () => {
     let res:customBoardType = []
-    for (let i = 0; i < 17; i++) {
+    for (let i = 0; i < 15; i++) {
       let tmp:customBoardSquare[] = []
-      for (let j = 0; j < 17; j++) {
+      for (let j = 0; j < 15; j++) {
         tmp.push({
           style:[]
         })
@@ -58,7 +87,7 @@ export default function CreatePiecePage() {
         const diffX = pieceCoordX-squareCoord.x 
         const diffY = pieceCoordY-squareCoord.y
         const dif = {x:diffX,y:diffY}
-        if(square?.data&&square?.data.isSelected=='jump'){
+        if(square?.data&&square?.data.isSelected.includes('jump')){
           res.jump.push(dif)
         }
       }
@@ -73,29 +102,74 @@ export default function CreatePiecePage() {
     setBoard(board => [...newBoard])
   }
 
+  const displayLine = (line:Position,start:Position,length:number) => {
+    let newBoard = JSON.parse(JSON.stringify(board));
+    for (let i = 1; i < length+1; i++) {
+      if(start.y+line.y>=newBoard.length||start.x+line.x>=newBoard[0].length) return
+      const pieceDir = {x:1,y:-1}
+      let square:customBoardSquare = newBoard[start.y+(line.y*pieceDir.y)*i][start.x+(line.x*pieceDir.x)*i] 
+      console.log('a')
+      if(square?.data?.isSelected){
+        square.data.isSelected.push('line')
+      }else{
+        square.data = {
+          ...square.data,
+          isSelected:['line']
+        }
+      }
+      console.log('b')
+      console.log(square)
+      square.style=[isSelectedStyle(square.data.isSelected)]
+    }
+    // newBoard[pos.y][pos.x] = newValue
+    setBoard(board => [...newBoard])
+  }
+
   const handleSquareClick = async (pos:Position) => {
     console.log(board,handleData(board))
     let square = board[pos.y][pos.x]
+    let res:customBoardSquare = JSON.parse(JSON.stringify(square))
     console.log(square)
     if(selectedTools=="click-jump"){
-      if(square?.piece) return
-      if(square?.data&&square.data.isSelected=='jump'){
-        let res:customBoardSquare = {
-          style:[]
+      if(res?.piece) return
+      if(res?.data?.isSelected){
+        if(res.data.isSelected.includes('jump')){
+          console.log('a')
+          let index = res.data.isSelected.indexOf('jump')
+          console.log(index,res.data.isSelected)
+          res.data.isSelected.splice(index,1)
+          console.log(res.data.isSelected)
+        }else{
+          res.data.isSelected.push('jump')
         }
-        editSquare(res,pos)
-      }
-      if(!square?.data){
-        let res:customBoardSquare = {
-          style:[
-            'bg-blue-200 dark:bg-blue-900'
-          ],
-          data:{
-            isSelected:'jump'
+      }else{
+        if(res.data){
+          res.data.isSelected = ['jump']
+        }else{
+          res.data = {
+            isSelected:['jump']
           }
         }
-        editSquare(res,pos)
       }
+      res.style=[isSelectedStyle(res.data.isSelected)]
+      editSquare(res,pos)
+      // if(square?.data?.isSelected&&square.data.isSelected.includes('jump')){
+      //   let res:customBoardSquare = {
+      //     style:[]
+      //   }
+      //   editSquare(res,pos)
+      // }
+      // if(!square?.data){
+      //   let res:customBoardSquare = {
+      //     style:[
+      //       'bg-blue-200 dark:bg-blue-900'
+      //     ],
+      //     data:{
+      //       isSelected:['jump']
+      //     }
+      //   }
+      //   editSquare(res,pos)
+      // }
     }
   }
 
@@ -150,7 +224,7 @@ export default function CreatePiecePage() {
 
   return (
     <main className="min-h-screen pt-20 bg-background">
-      <div className="container max-w-2xl">
+      <div className="container max-w-5xl">
         <h1 className="text-3xl font-bold mb-8">
           Créer une pièce personnalisée
         </h1>
@@ -209,10 +283,36 @@ export default function CreatePiecePage() {
                   <CustomBoard
                     // selectedPiece={selectedPiece}
                     // onSquaresChange={setSelectedSquares}
-                    size={17}
+                    size={15}
                     onSquareClick={handleSquareClick}
                     board={board}
                   />
+                  
+                  <div style={{display:'flex',flexDirection:'column',gap:'2rem'}}>
+                    <button onClick={()=>{
+                      let newMove = {direction:{x:0,y:1},length:4}
+                      setStraightLineMove(straightLineMove => [...straightLineMove,newMove])
+                      displayLine(newMove.direction,{x:parseInt(`${board.length/2}`),y:parseInt(`${board.length/2}`)},newMove.length)
+                    }}>
+                      Crée
+                    </button>
+                    {straightLineMove.map((item,i)=>{
+                      // const dir = 0
+                      const angleInRadians = Math.atan2(item.direction.y, item.direction.x);
+                      const angleInDegrees = (angleInRadians * 180) / Math.PI;
+
+                      let positiveAngle = (angleInDegrees+270)%360
+
+                      if(positiveAngle==360) positiveAngle=0
+
+                      return (
+                        <div key={i} style={{display:'flex',flexDirection:'row'}}>
+                          angle : {positiveAngle}
+                          <div style={{transform:`rotate(${positiveAngle-90}deg)`}}>{`--->`}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
 
                   <Button
                     onClick={handleSavePiece}
