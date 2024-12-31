@@ -9,6 +9,7 @@ interface Friend {
   username: string;
   avatar_url: string;
   real_name: string;
+  emoji: string;
   elo_stats: {
     classique: {
       bullet: number;
@@ -27,6 +28,7 @@ interface FriendInfo {
   username: string;
   avatar_url: string;
   real_name: string;
+  emoji: string;
   elo_stats: {
     classique: {
       bullet: number;
@@ -59,13 +61,15 @@ export default function FriendsPage() {
             username,
             avatar_url,
             real_name,
-            elo_stats
+            elo_stats,
+            emoji
           ),
           to_user:users!friend_requests_to_fkey (
             username,
             avatar_url,
             real_name,
-            elo_stats
+            elo_stats,
+            emoji
           )
         `
         )
@@ -95,6 +99,7 @@ export default function FriendsPage() {
             avatar_url: friendInfo.avatar_url,
             real_name: friendInfo.real_name,
             elo_stats: friendInfo.elo_stats,
+            emoji: friendInfo.emoji,
           };
         });
 
@@ -126,6 +131,7 @@ export default function FriendsPage() {
                 <div>
                   <h3 className="font-semibold text-lg">{friend.username}</h3>
                   <p className="text-muted-foreground">{friend.real_name}</p>
+                  <p className="text-muted-foreground">{friend.emoji}</p>
                 </div>
               </div>
               <div className="mt-4 space-y-2">
