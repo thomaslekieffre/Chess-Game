@@ -163,7 +163,6 @@ export default function ClassicModePage() {
               time: minutes * 60,
               username: user.username,
               elo_stats: eloStats,
-              // elo: "1200?",
             },
             player2: {},
             turn: "white",
@@ -179,7 +178,7 @@ export default function ClassicModePage() {
         alert("Erreur lors de la création de la room");
         setIsLoading(false);
       } else {
-        router.push(`/play/${response.data[0].id}`);
+        router.push(`/play/classic/${response.data[0].id}`);
       }
     } catch (error) {
       alert("Une erreur est survenue: " + error);
