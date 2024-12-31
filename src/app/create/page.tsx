@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { CustomBoard } from "@/components/chess/custom-board";
 import { PieceType, Position, customBoardSquare, customBoardType } from "@/lib/chess/types";
+import Compass from "@/components/ui/compass";
 
 const isSelectedStyle = (isSelected:string[]) => {
   const includesJump = isSelected.includes('jump')
@@ -54,6 +55,8 @@ export default function CreatePiecePage() {
     // {direction:{x:1,y:1},length:2},
     // {direction:{x:1,y:-1},length:2},
   ])
+  const [selectedDirection, setSelectedDirection] = useState<Position>({x:1,y:0});
+  const [selectedDistance, setSelectedDistance] = useState('8')
 
   const generateBoard = () => {
     let res:customBoardType = []
@@ -289,13 +292,34 @@ export default function CreatePiecePage() {
                   />
                   
                   <div style={{display:'flex',flexDirection:'column',gap:'2rem'}}>
-                    <button onClick={()=>{
-                      let newMove = {direction:{x:0,y:1},length:4}
-                      setStraightLineMove(straightLineMove => [...straightLineMove,newMove])
-                      displayLine(newMove.direction,{x:parseInt(`${board.length/2}`),y:parseInt(`${board.length/2}`)},newMove.length)
-                    }}>
-                      Crée
-                    </button>
+                    <div style={{display:'flex',flexDirection:'row',alignItems:"center",gap:'2rem'}}>
+                      <button onClick={()=>{
+                        let newMove = {direction:selectedDirection,length:parseInt(selectedDistance)}
+
+                        for (let i = 0; i < straightLineMove.length; i++) {
+                          const line = straightLineMove[i];
+                          
+                          if(line.direction==selectedDirection){
+                            if(line.length>parseInt(selectedDistance)){
+                              console.log('return')
+                              return
+                            }else{
+                              let newArray = JSON.parse(JSON.stringify(straightLineMove))
+                              newArray.pop(i)
+                              setStraightLineMove(straightLineMove => [...newArray])
+                              console.log('pop')
+                            }
+                          }
+                        }
+
+                        setStraightLineMove(straightLineMove => [...straightLineMove,newMove])
+                        displayLine(newMove.direction,{x:parseInt(`${board.length/2}`),y:parseInt(`${board.length/2}`)},newMove.length)
+                      }}>
+                        Crée
+                      </button>
+                      <input min={1} max={7} type="number" style={{height:"2rem"}} onChange={(e)=>{setSelectedDistance(e.target.value)}}></input>
+                      <Compass selectedDirection={selectedDirection} setSelectedDirection={setSelectedDirection}></Compass>
+                    </div>
                     {straightLineMove.map((item,i)=>{
                       // const dir = 0
                       const angleInRadians = Math.atan2(item.direction.y, item.direction.x);
