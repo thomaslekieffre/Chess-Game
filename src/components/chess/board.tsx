@@ -29,17 +29,47 @@ interface ChessBoardProps {
   list: PgnMove[];
 }
 
-const PIECE_SYMBOLS: Record<PieceType, { white: string; black: string }> = {
-  king: { white: "♔", black: "♚" },
-  queen: { white: "♕", black: "♛" },
-  rook: { white: "♖", black: "♜" },
-  bishop: { white: "♗", black: "♝" },
-  knight: { white: "♘", black: "♞" },
-  pawn: { white: "♙", black: "♟" },
-};
-
 function PieceComponent({ piece }: { piece: ChessPiece }) {
-  return <span>{PIECE_SYMBOLS[piece.type][piece.color]}</span>;
+  const pieceImages: Record<PieceType, { white: string; black: string }> = {
+    king: {
+      white: "/chess-pieces/w-king.png",
+      black: "/chess-pieces/b-king.png",
+    },
+    queen: {
+      white: "/chess-pieces/w-queen.png",
+      black: "/chess-pieces/b-queen.png",
+    },
+    rook: {
+      white: "/chess-pieces/w-rook.png",
+      black: "/chess-pieces/b-rook.png",
+    },
+    bishop: {
+      white: "/chess-pieces/w-bishop.png",
+      black: "/chess-pieces/b-bishop.png",
+    },
+    knight: {
+      white: "/chess-pieces/w-knight.png",
+      black: "/chess-pieces/b-knight.png",
+    },
+    pawn: {
+      white: "/chess-pieces/w-pawn.png",
+      black: "/chess-pieces/b-pawn.png",
+    },
+  };
+
+  return (
+    <img
+      src={pieceImages[piece.type][piece.color]}
+      alt={`${piece.color} ${piece.type}`}
+      className="w-[80%] h-[80%] object-contain select-none m-auto"
+      style={{
+        filter: piece.color === "white" ? "brightness(1)" : "brightness(0.2)",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+      }}
+      draggable={false}
+    />
+  );
 }
 
 export function ChessBoard({
