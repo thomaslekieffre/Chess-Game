@@ -34,7 +34,10 @@ const Quests = ({ userId }: { userId: string }) => {
         };
       });
 
-      setQuests(questsWithCompletion);
+      const incompleteQuests = questsWithCompletion.filter(
+        (quest) => !quest.is_completed
+      );
+      setQuests(incompleteQuests);
     }
   };
 
@@ -43,7 +46,6 @@ const Quests = ({ userId }: { userId: string }) => {
   }, []);
 
   const completeQuest = async (questId: string) => {
-    // Récupérer les détails de la quête pour obtenir l'XP
     const { data: questData, error: questError } = await supabase
       .from("quests")
       .select("xp_reward")
@@ -57,7 +59,6 @@ const Quests = ({ userId }: { userId: string }) => {
 
     const xpReward = questData.xp_reward;
 
-    // Mettre à jour la table user_quests
     const { error } = await supabase
       .from("user_quests")
       .upsert({ clerk_id: userId, quest_id: questId, is_completed: true });
@@ -65,7 +66,6 @@ const Quests = ({ userId }: { userId: string }) => {
     if (error) {
       console.error("Erreur lors de la complétion de la quête:", error);
     } else {
-      // Mettre à jour l'XP de l'utilisateur
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("xp, battle_pass_level")
@@ -83,10 +83,9 @@ const Quests = ({ userId }: { userId: string }) => {
       let newXp = userData.xp + xpReward;
       let newLevel = userData.battle_pass_level;
 
-      // Vérifier si l'XP dépasse 500
       if (newXp >= 500) {
-        newLevel += Math.floor(newXp / 500); // Augmenter le niveau
-        newXp = newXp % 500; // Remettre l'XP à 0 ou à la valeur restante
+        newLevel += Math.floor(newXp / 500);
+        newXp = newXp % 500;
       }
 
       await supabase
@@ -94,7 +93,6 @@ const Quests = ({ userId }: { userId: string }) => {
         .update({ xp: newXp, battle_pass_level: newLevel })
         .eq("clerk_id", userId);
 
-      // Recharger les quêtes après la complétion
       fetchQuests();
     }
   };
@@ -104,14 +102,19 @@ const Quests = ({ userId }: { userId: string }) => {
       <h2 className="text-xl font-semibold mb-2">Quêtes</h2>
       <ul className="space-y-4">
         {quests.map((quest) => (
-          <li key={quest.quest_id} className="flex justify-between">
-            <span>{quest.description}</span>
-            <span>{quest.xp_reward} XP</span>
-            {!quest.is_completed && (
-              <button onClick={() => completeQuest(quest.quest_id)}>
-                Compléter
-              </button>
-            )}
+          <li
+            key={quest.quest_id}
+            className="flex justify-between items-center"
+          >
+            <span className="flex-1">{quest.description}</span>
+            <span className="flex gap-4 items-center">
+              {quest.xp_reward} XP
+              {!quest.is_completed && (
+                <button onClick={() => completeQuest(quest.quest_id)}>
+                  Compléter
+                </button>
+              )}
+            </span>
           </li>
         ))}
       </ul>
