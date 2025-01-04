@@ -11,6 +11,7 @@ import {
   PieceColor,
   PgnMove,
 } from "@/lib/chess/types";
+import Arrow from "@/components/chess/arrow";
 
 interface ChessBoardProps {
   animated?: boolean;
@@ -29,7 +30,17 @@ interface ChessBoardProps {
   list: PgnMove[];
 }
 
-function PieceComponent({ piece }: { piece: ChessPiece }) {
+function PieceComponent({
+  piece,
+  isPlaying,
+  playerColor,
+  onDragStart,
+}: {
+  piece: ChessPiece;
+  isPlaying: boolean;
+  playerColor: PieceColor;
+  onDragStart: (e: React.DragEvent, x: number, y: number) => void;
+}) {
   const pieceImages: Record<PieceType, { white: string; black: string }> = {
     king: {
       white: "/chess-pieces/w-king.png",
@@ -62,12 +73,13 @@ function PieceComponent({ piece }: { piece: ChessPiece }) {
       src={pieceImages[piece.type][piece.color]}
       alt={`${piece.color} ${piece.type}`}
       className="w-[80%] h-[80%] object-contain select-none m-auto"
+      draggable={isPlaying && piece.color === playerColor}
+      onDragStart={(e) => onDragStart(e, piece.x, piece.y)}
       style={{
         filter: piece.color === "white" ? "brightness(1)" : "brightness(0.2)",
         userSelect: "none",
         WebkitUserSelect: "none",
       }}
-      draggable={false}
     />
   );
 }
@@ -95,6 +107,13 @@ export function ChessBoard({
   const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
   const [kingInCheck, setKingInCheck] = useState<Position | null>(null);
+  const [selectedSquare, setSelectedSquare] = useState<Position | null>(null);
+  const [draggedPiece, setDraggedPiece] = useState<Position | null>(null);
+  const [arrows, setArrows] = useState<
+    { from: Position; to: Position; color: string }[]
+  >([]);
+  const [rightClickStart, setRightClickStart] = useState<Position | null>(null);
+  const [arrowColor, setArrowColor] = useState<string>("red");
 
   const findKing = (color: "white" | "black"): Position | null => {
     for (let y = 0; y < 8; y++) {
@@ -223,6 +242,49 @@ export function ChessBoard({
     return newBoard;
   };
 
+  const handleRightMouseDown = (e: React.MouseEvent, x: number, y: number) => {
+    e.preventDefault();
+    const piece = board[y][x];
+
+    if (e.shiftKey) {
+      setArrowColor(arrowColor === "red" ? "blue" : "red");
+      return;
+    }
+
+    if (e.altKey) {
+      setArrows([]);
+      return;
+    }
+
+    setRightClickStart({ x, y });
+  };
+
+  const handleRightMouseUp = (e: React.MouseEvent, x: number, y: number) => {
+    e.preventDefault();
+    if (rightClickStart) {
+      if (rightClickStart.x === x && rightClickStart.y === y) {
+        setArrows((prev) =>
+          prev.filter((arrow) => !(arrow.from.x === x && arrow.from.y === y))
+        );
+      } else {
+        const moves = engine.getValidMoves(rightClickStart);
+        const isValidMove = moves.some((move) => move.x === x && move.y === y);
+
+        if (isValidMove) {
+          setArrows((prev) => [
+            ...prev,
+            {
+              from: rightClickStart,
+              to: { x, y },
+              color: arrowColor,
+            },
+          ]);
+        }
+      }
+      setRightClickStart(null);
+    }
+  };
+
   const renderSquare = (piece: ChessPiece | null, x: number, y: number) => {
     const isSelected = selectedPiece?.x === x && selectedPiece?.y === y;
     const isValidMove = validMoves.some((move) => move.x === x && move.y === y);
@@ -239,6 +301,11 @@ export function ChessBoard({
           isKingInCheck && "ring-4 ring-red-500 animate-pulse bg-red-500/20"
         )}
         onClick={() => !autoPlay && handleSquareClick(x, y)}
+        onMouseDown={(e) => e.button === 2 && handleRightMouseDown(e, x, y)}
+        onMouseUp={(e) => e.button === 2 && handleRightMouseUp(e, x, y)}
+        onContextMenu={(e) => e.preventDefault()}
+        onDragOver={handleDragOver}
+        onDrop={(e) => handleDrop(e, x, y)}
       >
         {piece && (
           <motion.div
@@ -251,15 +318,109 @@ export function ChessBoard({
                 "text-red-500 animate-bounce"
             )}
           >
-            <PieceComponent piece={piece} />
+            <PieceComponent
+              piece={{ ...piece, x, y }}
+              isPlaying={isPlaying}
+              playerColor={playerColor}
+              onDragStart={handleDragStart}
+            />
           </motion.div>
         )}
       </motion.div>
     );
   };
 
+  const handleDragStart = (e: React.DragEvent, x: number, y: number) => {
+    const isOnLastMove = displayed == list.length - 1 || list.length < 1;
+    const canPlay = isPlaying && isOnLastMove;
+
+    if (canPlay) {
+      const tabBlanc = [0, 1, 2, 3, 4, 5, 6, 7];
+      const tabNoir = [0, 1, 2, 3, 4, 5, 6, 7];
+      tabNoir.reverse();
+
+      const newCoord = { x, y };
+      if (playerColor === "black") {
+        newCoord.x = tabNoir[tabBlanc.indexOf(x)];
+      }
+
+      if (board[newCoord.y][newCoord.x]?.color === playerColor) {
+        e.dataTransfer.effectAllowed = "move";
+        const moves = engine.getValidMoves(newCoord);
+        if (moves.length > 0) {
+          setDraggedPiece({ x, y });
+          let newMoves = [];
+          if (playerColor === "black") {
+            for (const move of moves) {
+              newMoves.push({
+                x: tabNoir[tabBlanc.indexOf(move.x)],
+                y: move.y,
+              });
+            }
+          } else {
+            newMoves = moves;
+          }
+          setValidMoves(newMoves);
+        }
+      }
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, dropX: number, dropY: number) => {
+    e.preventDefault();
+    if (draggedPiece && isPlaying) {
+      const tabBlanc = [0, 1, 2, 3, 4, 5, 6, 7];
+      const tabNoir = [0, 1, 2, 3, 4, 5, 6, 7];
+      tabNoir.reverse();
+
+      let newDraggedPiece = draggedPiece;
+      let newDropCoord = { x: dropX, y: dropY };
+
+      if (playerColor === "black") {
+        newDraggedPiece = {
+          x: tabNoir[tabBlanc.indexOf(draggedPiece.x)],
+          y: draggedPiece.y,
+        };
+        newDropCoord = {
+          x: tabNoir[tabBlanc.indexOf(dropX)],
+          y: dropY,
+        };
+      }
+
+      // Vérifier si le mouvement est valide
+      const validMoves = engine.getValidMoves(newDraggedPiece);
+      const isValidMove = validMoves.some(
+        (move) => move.x === newDropCoord.x && move.y === newDropCoord.y
+      );
+
+      if (isValidMove) {
+        const success = engine.makeMove(newDraggedPiece, newDropCoord);
+        if (success) {
+          setBoard(engine.getBoard());
+          updateCheckStatus();
+          onMove?.(newDraggedPiece, newDropCoord);
+        }
+      }
+      setDraggedPiece(null);
+      setValidMoves([]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
   return (
-    <div className={cn("w-full max-w-4xl mx-auto", className)}>
+    <div
+      className={cn("w-full max-w-4xl mx-auto", className)}
+      onMouseDown={(e) => {
+        if (e.button === 2) {
+          e.preventDefault();
+          setArrows([]);
+        }
+      }}
+    >
       <div className="aspect-square w-full bg-background/50 dark:bg-card/50 backdrop-blur-sm p-8 rounded-xl">
         <div className="relative h-full">
           {/* Coordonnées verticales (1-8) */}
@@ -293,15 +454,23 @@ export function ChessBoard({
           </div>
 
           {/* Échiquier */}
-          <div className="grid grid-cols-8 grid-rows-8 h-full w-full rounded-lg overflow-hidden border-2 border-border">
-            {(playerColor == "white" && board && board[0] !== undefined
-              ? board
-              : reverseBoard(board)
-            ).map((row, y) =>
-              row.map((piece, x) =>
-                renderSquare(piece, x, playerColor === "black" ? 7 - y : y)
-              )
+          <div className="grid grid-cols-8 grid-rows-8 h-full w-full rounded-lg overflow-hidden border-2 border-border relative">
+            {(playerColor === "white" ? board : reverseBoard(board)).map(
+              (row, y) =>
+                row.map((piece, x) =>
+                  renderSquare(piece, x, playerColor === "black" ? 7 - y : y)
+                )
             )}
+
+            {/* Rendu des flèches */}
+            {arrows.map((arrow, index) => (
+              <Arrow
+                key={index}
+                from={arrow.from}
+                to={arrow.to}
+                color={arrow.color}
+              />
+            ))}
           </div>
         </div>
       </div>
