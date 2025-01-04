@@ -118,7 +118,7 @@ export type PgnMove = {
   from: CasesList;
   to: CasesList;
   fen: FenString | string;
-  fenRes:FenString | string;
+  fenRes: FenString | string;
   index?: number;
   turnNumber: number;
   prev?: number;
@@ -141,7 +141,16 @@ export type PgnGame = {
   moves: PgnMove[];
 };
 
-export type Position = { x: number; y: number };
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface Arrow {
+  from: Position;
+  to: Position;
+}
+
 export type PieceColor = "white" | "black";
 export type PieceType =
   | "pawn"
@@ -156,6 +165,8 @@ export type PieceTypeAbreg = "P" | "R" | "N" | "B" | "Q" | "K";
 export interface ChessPiece {
   type: PieceType;
   color: PieceColor;
+  x: number;
+  y: number;
   hasMoved: boolean;
 }
 
@@ -201,7 +212,7 @@ export interface GameState {
   winner: PieceColor | null;
   strMove: PgnMove[];
   castlingRights: FenCastlingRights;
-  displayedMove:number;
+  displayedMove: number;
 }
 
 export type playerType = {
@@ -241,14 +252,19 @@ export type roomType = {
 };
 
 export type customBoardSquare = {
-  piece?:{
-    name:PieceType,
-    color:PieceColor
-  },
-  style:Array<string>,
-  data?:any,
-}
+  piece?: {
+    name: PieceType;
+    color: PieceColor;
+  };
+  style: Array<string>;
+  data?: any;
+};
 
-export type gameStatus = 'loading'|'can-join'|'playing'|'watching'|'waiting'
+export type gameStatus =
+  | "loading"
+  | "can-join"
+  | "playing"
+  | "watching"
+  | "waiting";
 
-export type customBoardType = customBoardSquare[][]
+export type customBoardType = customBoardSquare[][];
