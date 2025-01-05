@@ -437,18 +437,11 @@ export function ChessBoard({
   };
 
   return (
-    <div
-      className={cn("w-full max-w-4xl mx-auto", className)}
-      onMouseDown={(e) => {
-        if (e.button === 2) {
-          e.preventDefault();
-        }
-      }}
-    >
+    <div className={cn("w-full max-w-4xl mx-auto pt-16", className)}>
       <div className="aspect-square w-full bg-background/50 dark:bg-card/50 backdrop-blur-sm p-8 rounded-xl">
         <div className="relative h-full">
           {/* Indicateur de couleur */}
-          <div className="absolute -top-8 left-0 right-0 flex justify-center items-center gap-4">
+          <div className="absolute -top-14 left-0 right-0 flex justify-center items-center gap-4">
             {/* Indicateur de couleur du joueur */}
             <div className="flex items-center gap-2">
               <div
