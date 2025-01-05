@@ -10,6 +10,7 @@ import {
   PieceType,
   PieceColor,
   PgnMove,
+  ColoredSquare,
 } from "@/lib/chess/types";
 import Arrow from "@/components/chess/arrow";
 
@@ -28,6 +29,7 @@ interface ChessBoardProps {
   isPlaying: boolean;
   displayed: number;
   list: PgnMove[];
+  onColorSquare?: (square: ColoredSquare) => void;
 }
 
 interface MovePattern {
@@ -108,6 +110,7 @@ export function ChessBoard({
   displayed,
   isPlaying,
   list,
+  onColorSquare,
 }: ChessBoardProps) {
   // const [engine] = useState(() => new ChessEngine());
   // const [board, setBoard] = useState<(ChessPiece | null)[][]>(
@@ -123,6 +126,11 @@ export function ChessBoard({
   >([]);
   const [rightClickStart, setRightClickStart] = useState<Position | null>(null);
   const [arrowColor, setArrowColor] = useState<string>("red");
+  const [coloredSquares, setColoredSquares] = useState<ColoredSquare[]>([]);
+  const [sharedColor, setSharedColor] = useState<string>(
+    "rgba(255, 0, 0, 0.6)"
+  );
+  const [isRightMouseDown, setIsRightMouseDown] = useState(false);
 
   const findKing = (color: "white" | "black"): Position | null => {
     for (let y = 0; y < 8; y++) {
@@ -165,8 +173,9 @@ export function ChessBoard({
   }, [autoPlay, engine, board, setBoard, playerColor]);
 
   const handleSquareClick = (x: number, y: number) => {
-    // Supprimer toutes les flèches lors d'un clic gauche
+    // Supprimer toutes les flèches et les cases colorées lors d'un clic gauche
     setArrows([]);
+    setColoredSquares([]);
 
     // Continuer avec la logique existante du clic
     if (!isPlaying) return;
@@ -202,53 +211,75 @@ export function ChessBoard({
 
   const handleRightMouseDown = (e: React.MouseEvent, x: number, y: number) => {
     e.preventDefault();
+    setIsRightMouseDown(true);
 
-    // Shift + clic droit pour changer la couleur
     if (e.shiftKey) {
-      setArrowColor((prevColor) => {
-        const colors = ["red", "blue", "green", "yellow"];
-        const currentIndex = colors.indexOf(prevColor);
+      setSharedColor((prevColor) => {
+        const colors = [
+          "rgba(255, 0, 0, 0.6)",
+          "rgba(0, 0, 255, 0.6)",
+          "rgba(0, 255, 0, 0.6)",
+          "rgba(255, 255, 0, 0.6)",
+        ];
+        const currentIndex = colors.findIndex((color) => color === prevColor);
         return colors[(currentIndex + 1) % colors.length];
       });
       return;
     }
 
-    // Alt + clic droit pour effacer toutes les flèches
     if (e.altKey) {
-      setArrows([]);
+      setColoredSquares([]);
       return;
     }
 
-    setRightClickStart({ x, y });
+    if (e.button === 2) {
+      setRightClickStart({ x, y });
+    }
   };
 
   const handleRightMouseUp = (e: React.MouseEvent, x: number, y: number) => {
     e.preventDefault();
-    if (rightClickStart) {
-      if (rightClickStart.x === x && rightClickStart.y === y) {
-        // Supprimer les flèches existantes depuis cette position
-        setArrows((prev) =>
-          prev.filter((arrow) => !(arrow.from.x === x && arrow.from.y === y))
-        );
-      } else {
-        // Ajouter une nouvelle flèche tout en conservant les précédentes
+
+    if (e.button === 2) {
+      if (
+        rightClickStart &&
+        rightClickStart.x === x &&
+        rightClickStart.y === y
+      ) {
+        setColoredSquares((prev) => {
+          const existingIndex = prev.findIndex(
+            (square) => square.x === x && square.y === y
+          );
+          if (existingIndex !== -1) {
+            return prev.filter((_, index) => index !== existingIndex);
+          }
+          return [...prev, { x, y, color: sharedColor }];
+        });
+      } else if (rightClickStart) {
         setArrows((prev) => [
           ...prev,
           {
             from: rightClickStart,
             to: { x, y },
-            color: arrowColor,
+            color: sharedColor.replace(
+              /rgba\((\d+),\s*(\d+),\s*(\d+),[^)]+\)/,
+              "rgb($1, $2, $3)"
+            ),
           },
         ]);
       }
       setRightClickStart(null);
     }
+    setIsRightMouseDown(false);
   };
 
   const renderSquare = (piece: ChessPiece | null, x: number, y: number) => {
     const isSelected = selectedPiece?.x === x && selectedPiece?.y === y;
     const isValidMove = validMoves.some((move) => move.x === x && move.y === y);
     const isKingInCheck = kingInCheck?.x === x && kingInCheck?.y === y;
+    const coloredSquare = coloredSquares.find(
+      (square) => square.x === x && square.y === y
+    );
 
     return (
       <motion.div
@@ -261,11 +292,16 @@ export function ChessBoard({
           isKingInCheck && "ring-4 ring-red-500 animate-pulse bg-red-500/20"
         )}
         onClick={() => !autoPlay && handleSquareClick(x, y)}
-        onMouseDown={(e) => e.button === 2 && handleRightMouseDown(e, x, y)}
+        onMouseDown={(e) => handleRightMouseDown(e, x, y)}
         onMouseUp={(e) => e.button === 2 && handleRightMouseUp(e, x, y)}
         onContextMenu={(e) => e.preventDefault()}
         onDragOver={handleDragOver}
         onDrop={(e) => handleDrop(e, x, y)}
+        style={{
+          ...(coloredSquare && {
+            backgroundColor: coloredSquare.color,
+          }),
+        }}
       >
         {piece && (
           <motion.div
@@ -425,7 +461,7 @@ export function ChessBoard({
             {/* Rendu des flèches */}
             {arrows.map((arrow, index) => (
               <Arrow
-                key={index}
+                key={`arrow-${arrow.from.x}-${arrow.from.y}-${arrow.to.x}-${arrow.to.y}`}
                 from={arrow.from}
                 to={arrow.to}
                 color={arrow.color}
@@ -436,7 +472,7 @@ export function ChessBoard({
           <div className="absolute top-2 right-2 flex gap-2">
             <div
               className="w-4 h-4 rounded-full border border-white"
-              style={{ backgroundColor: arrowColor }}
+              style={{ backgroundColor: sharedColor }}
               title="Shift + clic droit pour changer la couleur"
             />
           </div>
