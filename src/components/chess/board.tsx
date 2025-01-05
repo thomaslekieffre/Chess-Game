@@ -227,6 +227,8 @@ export function ChessBoard({
         setBoard(engine.getBoard());
         updateCheckStatus();
         onMove?.(newSelectedPiece, newCord);
+        setColoredSquares([]);
+        setArrows([]);
       }
       setSelectedPiece(null);
       setValidMoves([]);
@@ -424,6 +426,8 @@ export function ChessBoard({
           setBoard(engine.getBoard());
           updateCheckStatus();
           onMove?.(newDraggedPiece, newDropCoord);
+          setColoredSquares([]);
+          setArrows([]);
         }
       }
       setDraggedPiece(null);
