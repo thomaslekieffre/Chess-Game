@@ -5,16 +5,31 @@ interface ArrowProps {
   from: Position;
   to: Position;
   color?: string;
+  playerColor?: "white" | "black";
 }
 
-const Arrow: React.FC<ArrowProps> = ({ from, to, color = "red" }) => {
+const Arrow: React.FC<ArrowProps> = ({
+  from,
+  to,
+  color = "red",
+  playerColor = "white",
+}) => {
   const arrowId = `arrowhead-${from.x}-${from.y}-${to.x}-${to.y}`;
 
+  // Ajuster les coordonnées pour les noirs
+  const adjustedFrom = { ...from };
+  const adjustedTo = { ...to };
+
+  if (playerColor === "black") {
+    adjustedFrom.y = 7 - from.y;
+    adjustedTo.y = 7 - to.y;
+  }
+
   // Calculer les coordonnées en pourcentage pour le centre exact de chaque case
-  const x1 = from.x * 12.5 + 6.25;
-  const y1 = (7 - from.y) * 12.5 + 6.25;
-  const x2 = to.x * 12.5 + 6.25;
-  const y2 = (7 - to.y) * 12.5 + 6.25;
+  const x1 = adjustedFrom.x * 12.5 + 6.25;
+  const y1 = (7 - adjustedFrom.y) * 12.5 + 6.25;
+  const x2 = adjustedTo.x * 12.5 + 6.25;
+  const y2 = (7 - adjustedTo.y) * 12.5 + 6.25;
 
   // Calculer l'angle de la flèche
   const angle = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
