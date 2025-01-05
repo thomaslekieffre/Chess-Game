@@ -161,7 +161,7 @@ export function ChessBoard({
     }
   }, [autoPlay, engine, board, setBoard, playerColor]);
 
-  const handleSquareClick = (e: React.MouseEvent, x: number, y: number) => {
+  const handleSquareClick = (x: number, y: number, e: React.MouseEvent) => {
     if (e.shiftKey) {
       setColoredSquares([]);
       setArrows([]);
@@ -320,7 +320,7 @@ export function ChessBoard({
           isValidMove && "after:absolute after:inset-0 after:bg-primary/20",
           isKingInCheck && "ring-4 ring-red-500 animate-pulse bg-red-500/20"
         )}
-        onClick={(e) => !autoPlay && handleSquareClick(e, x, y)}
+        onClick={(e) => !autoPlay && handleSquareClick(x, y, e)}
         onMouseDown={(e) => e.button === 2 && handleRightMouseDown(e, x, y)}
         onMouseUp={(e) => e.button === 2 && handleRightMouseUp(e, x, y)}
         onContextMenu={(e) => e.preventDefault()}
@@ -447,6 +447,48 @@ export function ChessBoard({
     >
       <div className="aspect-square w-full bg-background/50 dark:bg-card/50 backdrop-blur-sm p-8 rounded-xl">
         <div className="relative h-full">
+          {/* Indicateur de couleur */}
+          <div className="absolute -top-8 left-0 right-0 flex justify-center items-center gap-4">
+            {/* Indicateur de couleur du joueur */}
+            <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  "w-4 h-4 rounded-full",
+                  playerColor === "white" ? "bg-white" : "bg-gray-700"
+                )}
+              />
+              <span className="text-muted-foreground">
+                Vous jouez les {playerColor === "white" ? "blancs" : "noirs"}
+              </span>
+            </div>
+
+            {/* Indicateur de couleur des flèches/cases */}
+            <div className="flex items-center gap-2">
+              <div
+                className="w-4 h-4 rounded-full cursor-pointer"
+                style={{ backgroundColor: sharedColor }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSharedColor((prevColor) => {
+                    const colors = [
+                      "rgba(255, 0, 0, 0.6)",
+                      "rgba(0, 0, 255, 0.6)",
+                      "rgba(0, 255, 0, 0.6)",
+                      "rgba(255, 255, 0, 0.6)",
+                    ];
+                    const currentIndex = colors.findIndex(
+                      (color) => color === prevColor
+                    );
+                    return colors[(currentIndex + 1) % colors.length];
+                  });
+                }}
+              />
+              <span className="text-xs text-muted-foreground">
+                (Shift + Click gauche pour effacer)
+              </span>
+            </div>
+          </div>
+
           {/* Coordonnées verticales (1-8) */}
           <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-around text-sm font-medium text-muted-foreground">
             {(playerColor == "black"
@@ -493,6 +535,7 @@ export function ChessBoard({
                 from={arrow.from}
                 to={arrow.to}
                 color={arrow.color}
+                playerColor={playerColor}
               />
             ))}
           </div>
