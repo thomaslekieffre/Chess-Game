@@ -8,19 +8,20 @@ interface ArrowProps {
 }
 
 const Arrow: React.FC<ArrowProps> = ({ from, to, color = "red" }) => {
-  // Calculer les coordonnées en pourcentage pour le centre de chaque case
+  // Calculer les coordonnées en pourcentage pour le centre exact de chaque case
   const x1 = from.x * 12.5 + 6.25;
-  const y1 = from.y * 12.5 + 6.25;
+  const y1 = (7 - from.y) * 12.5 + 6.25;
   const x2 = to.x * 12.5 + 6.25;
-  const y2 = to.y * 12.5 + 6.25;
+  const y2 = (7 - to.y) * 12.5 + 6.25;
 
   // Calculer l'angle de la flèche
   const angle = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
 
-  // Ajuster la longueur de la flèche pour qu'elle commence au centre de la case
+  // Ajuster la longueur de la flèche
   const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-  const shortenedLength = length - 6; // Réduire la longueur pour que la flèche s'arrête avant le bord de la case
+  const shortenedLength = length - 2; // Réduire légèrement pour que la flèche ne dépasse pas trop
 
+  // Calculer le point d'arrivée ajusté
   const endX = x1 + shortenedLength * Math.cos((angle * Math.PI) / 180);
   const endY = y1 + shortenedLength * Math.sin((angle * Math.PI) / 180);
 
@@ -33,6 +34,8 @@ const Arrow: React.FC<ArrowProps> = ({ from, to, color = "red" }) => {
         width: "100%",
         height: "100%",
         pointerEvents: "none",
+        transform: "scale(1, -1)", // Inverser l'axe Y
+        transformOrigin: "center",
       }}
     >
       <defs>
@@ -54,7 +57,7 @@ const Arrow: React.FC<ArrowProps> = ({ from, to, color = "red" }) => {
         x2={`${endX}%`}
         y2={`${endY}%`}
         stroke={color}
-        strokeWidth="3"
+        strokeWidth="2"
         strokeOpacity="0.6"
         markerEnd={`url(#arrowhead-${color})`}
       />
