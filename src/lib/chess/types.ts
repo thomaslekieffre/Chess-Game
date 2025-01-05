@@ -268,3 +268,9 @@ export type gameStatus =
   | "waiting";
 
 export type customBoardType = customBoardSquare[][];
+
+export type ColoredSquare = {
+  x: number;
+  y: number;
+  color: string;
+};

@@ -8,6 +8,8 @@ interface ArrowProps {
 }
 
 const Arrow: React.FC<ArrowProps> = ({ from, to, color = "red" }) => {
+  const arrowId = `arrowhead-${from.x}-${from.y}-${to.x}-${to.y}`;
+
   // Calculer les coordonnées en pourcentage pour le centre exact de chaque case
   const x1 = from.x * 12.5 + 6.25;
   const y1 = (7 - from.y) * 12.5 + 6.25;
@@ -34,20 +36,21 @@ const Arrow: React.FC<ArrowProps> = ({ from, to, color = "red" }) => {
         width: "100%",
         height: "100%",
         pointerEvents: "none",
-        transform: "scale(1, -1)", // Inverser l'axe Y
+        transform: "scale(1, -1)",
         transformOrigin: "center",
       }}
     >
       <defs>
         <marker
-          id={`arrowhead-${color}`}
-          markerWidth="10"
-          markerHeight="7"
-          refX="9"
-          refY="3.5"
+          id={arrowId}
+          markerWidth="15"
+          markerHeight="10"
+          refX="12"
+          refY="5"
           orient="auto"
+          markerUnits="userSpaceOnUse"
         >
-          <polygon points="0 0, 10 3.5, 0 7" fill={color} fillOpacity="0.6" />
+          <polygon points="0 0, 15 5, 0 10" fill={color} />
         </marker>
       </defs>
 
@@ -57,9 +60,8 @@ const Arrow: React.FC<ArrowProps> = ({ from, to, color = "red" }) => {
         x2={`${endX}%`}
         y2={`${endY}%`}
         stroke={color}
-        strokeWidth="2"
-        strokeOpacity="0.6"
-        markerEnd={`url(#arrowhead-${color})`}
+        strokeWidth="3"
+        markerEnd={`url(#${arrowId})`}
       />
     </svg>
   );
