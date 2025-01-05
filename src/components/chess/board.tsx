@@ -10,7 +10,6 @@ import {
   PieceType,
   PieceColor,
   PgnMove,
-  ColoredSquare,
 } from "@/lib/chess/types";
 import Arrow from "@/components/chess/arrow";
 
@@ -29,16 +28,6 @@ interface ChessBoardProps {
   isPlaying: boolean;
   displayed: number;
   list: PgnMove[];
-  onColorSquare?: (square: ColoredSquare) => void;
-}
-
-interface MovePattern {
-  type: "straight" | "diagonal" | "L" | "custom";
-  maxDistance?: number;
-  direction?: {
-    x: number;
-    y: number;
-  };
 }
 
 function PieceComponent({
@@ -110,7 +99,6 @@ export function ChessBoard({
   displayed,
   isPlaying,
   list,
-  onColorSquare,
 }: ChessBoardProps) {
   // const [engine] = useState(() => new ChessEngine());
   // const [board, setBoard] = useState<(ChessPiece | null)[][]>(
@@ -126,11 +114,12 @@ export function ChessBoard({
   >([]);
   const [rightClickStart, setRightClickStart] = useState<Position | null>(null);
   const [arrowColor, setArrowColor] = useState<string>("red");
-  const [coloredSquares, setColoredSquares] = useState<ColoredSquare[]>([]);
+  const [coloredSquares, setColoredSquares] = useState<
+    { x: number; y: number; color: string }[]
+  >([]);
   const [sharedColor, setSharedColor] = useState<string>(
     "rgba(255, 0, 0, 0.6)"
   );
-  const [isRightMouseDown, setIsRightMouseDown] = useState(false);
 
   const findKing = (color: "white" | "black"): Position | null => {
     for (let y = 0; y < 8; y++) {
@@ -172,19 +161,75 @@ export function ChessBoard({
     }
   }, [autoPlay, engine, board, setBoard, playerColor]);
 
-  const handleSquareClick = (x: number, y: number) => {
-    // Supprimer toutes les flèches et les cases colorées lors d'un clic gauche
-    setArrows([]);
-    setColoredSquares([]);
+  const handleSquareClick = (e: React.MouseEvent, x: number, y: number) => {
+    if (e.shiftKey) {
+      setColoredSquares([]);
+      setArrows([]);
+      return;
+    }
 
-    // Continuer avec la logique existante du clic
-    if (!isPlaying) return;
+    const isOnLastMove = displayed == list.length - 1 || list.length < 1;
+    const canPlay = isPlaying && isOnLastMove;
 
-    const piece = board[y][x];
-    if (selectedPiece) {
-      // ... reste du code existant
-    } else if (piece && piece.color === playerColor) {
-      // ... reste du code existant
+    if (!canPlay) return;
+
+    const tabBlanc = [0, 1, 2, 3, 4, 5, 6, 7];
+    const tabNoir = [0, 1, 2, 3, 4, 5, 6, 7];
+    tabNoir.reverse();
+    const newCord: Position = { x, y };
+
+    if (playerColor == "black") {
+      newCord.x = tabNoir[tabBlanc.indexOf(x)];
+    }
+    // console.log(playerColor)
+    console.log(newCord);
+
+    // return
+
+    if (!selectedPiece) {
+      if (board[newCord.y][newCord.x]?.color == playerColor) {
+        const moves = engine.getValidMoves(newCord);
+        console.log(moves);
+        if (moves.length > 0) {
+          setSelectedPiece({ x, y });
+          let newMoves = [];
+          if (playerColor == "black") {
+            for (const move of moves) {
+              newMoves.push({
+                x: tabNoir[tabBlanc.indexOf(move.x)],
+                y: move.y,
+              });
+            }
+          } else {
+            newMoves = moves;
+          }
+          setValidMoves(newMoves);
+        }
+      }
+    } else {
+      // console.log(x,y)
+
+      // return
+
+      // console.log(selectedPiece)
+      let newSelectedPiece;
+      if (playerColor == "white") {
+        newSelectedPiece = selectedPiece;
+      } else {
+        newSelectedPiece = {
+          x: tabNoir[tabBlanc.indexOf(selectedPiece.x)],
+          y: selectedPiece.y,
+        };
+      }
+      const success = engine.makeMove(newSelectedPiece, newCord);
+      console.log(success);
+      if (success) {
+        setBoard(engine.getBoard());
+        updateCheckStatus();
+        onMove?.(newSelectedPiece, newCord);
+      }
+      setSelectedPiece(null);
+      setValidMoves([]);
     }
   };
 
@@ -211,7 +256,6 @@ export function ChessBoard({
 
   const handleRightMouseDown = (e: React.MouseEvent, x: number, y: number) => {
     e.preventDefault();
-    setIsRightMouseDown(true);
 
     if (e.shiftKey) {
       setSharedColor((prevColor) => {
@@ -219,7 +263,6 @@ export function ChessBoard({
           "rgba(255, 0, 0, 0.6)",
           "rgba(0, 0, 255, 0.6)",
           "rgba(0, 255, 0, 0.6)",
-          "rgba(255, 255, 0, 0.6)",
         ];
         const currentIndex = colors.findIndex((color) => color === prevColor);
         return colors[(currentIndex + 1) % colors.length];
@@ -227,25 +270,14 @@ export function ChessBoard({
       return;
     }
 
-    if (e.altKey) {
-      setColoredSquares([]);
-      return;
-    }
-
-    if (e.button === 2) {
-      setRightClickStart({ x, y });
-    }
+    setRightClickStart({ x, y });
   };
 
   const handleRightMouseUp = (e: React.MouseEvent, x: number, y: number) => {
     e.preventDefault();
 
-    if (e.button === 2) {
-      if (
-        rightClickStart &&
-        rightClickStart.x === x &&
-        rightClickStart.y === y
-      ) {
+    if (rightClickStart) {
+      if (rightClickStart.x === x && rightClickStart.y === y) {
         setColoredSquares((prev) => {
           const existingIndex = prev.findIndex(
             (square) => square.x === x && square.y === y
@@ -255,28 +287,25 @@ export function ChessBoard({
           }
           return [...prev, { x, y, color: sharedColor }];
         });
-      } else if (rightClickStart) {
+      } else {
         setArrows((prev) => [
           ...prev,
           {
             from: rightClickStart,
             to: { x, y },
-            color: sharedColor.replace(
-              /rgba\((\d+),\s*(\d+),\s*(\d+),[^)]+\)/,
-              "rgb($1, $2, $3)"
-            ),
+            color: sharedColor,
           },
         ]);
       }
       setRightClickStart(null);
     }
-    setIsRightMouseDown(false);
   };
 
   const renderSquare = (piece: ChessPiece | null, x: number, y: number) => {
     const isSelected = selectedPiece?.x === x && selectedPiece?.y === y;
     const isValidMove = validMoves.some((move) => move.x === x && move.y === y);
     const isKingInCheck = kingInCheck?.x === x && kingInCheck?.y === y;
+
     const coloredSquare = coloredSquares.find(
       (square) => square.x === x && square.y === y
     );
@@ -291,8 +320,8 @@ export function ChessBoard({
           isValidMove && "after:absolute after:inset-0 after:bg-primary/20",
           isKingInCheck && "ring-4 ring-red-500 animate-pulse bg-red-500/20"
         )}
-        onClick={() => !autoPlay && handleSquareClick(x, y)}
-        onMouseDown={(e) => handleRightMouseDown(e, x, y)}
+        onClick={(e) => !autoPlay && handleSquareClick(e, x, y)}
+        onMouseDown={(e) => e.button === 2 && handleRightMouseDown(e, x, y)}
         onMouseUp={(e) => e.button === 2 && handleRightMouseUp(e, x, y)}
         onContextMenu={(e) => e.preventDefault()}
         onDragOver={handleDragOver}
@@ -395,7 +424,6 @@ export function ChessBoard({
           setBoard(engine.getBoard());
           updateCheckStatus();
           onMove?.(newDraggedPiece, newDropCoord);
-          setArrows([]);
         }
       }
       setDraggedPiece(null);
@@ -461,20 +489,12 @@ export function ChessBoard({
             {/* Rendu des flèches */}
             {arrows.map((arrow, index) => (
               <Arrow
-                key={`arrow-${arrow.from.x}-${arrow.from.y}-${arrow.to.x}-${arrow.to.y}`}
+                key={index}
                 from={arrow.from}
                 to={arrow.to}
                 color={arrow.color}
               />
             ))}
-          </div>
-
-          <div className="absolute top-2 right-2 flex gap-2">
-            <div
-              className="w-4 h-4 rounded-full border border-white"
-              style={{ backgroundColor: sharedColor }}
-              title="Shift + clic droit pour changer la couleur"
-            />
           </div>
         </div>
       </div>
@@ -494,101 +514,3 @@ function getAllPossibleMoves(engine: ChessEngine) {
   }
   return moves;
 }
-
-const generateArrow = (
-  from: Position,
-  pattern: MovePattern,
-  color: string = "blue"
-) => {
-  const arrows: { from: Position; to: Position; color: string }[] = [];
-
-  switch (pattern.type) {
-    case "straight":
-      // Mouvements horizontaux et verticaux
-      const directions = [
-        { x: 0, y: 1 }, // haut
-        { x: 0, y: -1 }, // bas
-        { x: 1, y: 0 }, // droite
-        { x: -1, y: 0 }, // gauche
-      ];
-
-      directions.forEach((dir) => {
-        const maxDist = pattern.maxDistance || 7;
-        for (let i = 1; i <= maxDist; i++) {
-          const to = {
-            x: from.x + dir.x * i,
-            y: from.y + dir.y * i,
-          };
-          if (isValidPosition(to)) {
-            arrows.push({ from, to, color });
-          }
-        }
-      });
-      break;
-
-    case "diagonal":
-      // Mouvements diagonaux
-      const diagonalDirs = [
-        { x: 1, y: 1 }, // haut-droite
-        { x: 1, y: -1 }, // bas-droite
-        { x: -1, y: 1 }, // haut-gauche
-        { x: -1, y: -1 }, // bas-gauche
-      ];
-
-      diagonalDirs.forEach((dir) => {
-        const maxDist = pattern.maxDistance || 7;
-        for (let i = 1; i <= maxDist; i++) {
-          const to = {
-            x: from.x + dir.x * i,
-            y: from.y + dir.y * i,
-          };
-          if (isValidPosition(to)) {
-            arrows.push({ from, to, color });
-          }
-        }
-      });
-      break;
-
-    case "L":
-      // Mouvements du cavalier
-      const knightMoves = [
-        { x: 2, y: 1 },
-        { x: 2, y: -1 },
-        { x: -2, y: 1 },
-        { x: -2, y: -1 },
-        { x: 1, y: 2 },
-        { x: 1, y: -2 },
-        { x: -1, y: 2 },
-        { x: -1, y: -2 },
-      ];
-
-      knightMoves.forEach((move) => {
-        const to = {
-          x: from.x + move.x,
-          y: from.y + move.y,
-        };
-        if (isValidPosition(to)) {
-          arrows.push({ from, to, color });
-        }
-      });
-      break;
-
-    case "custom":
-      if (pattern.direction) {
-        const to = {
-          x: from.x + pattern.direction.x,
-          y: from.y + pattern.direction.y,
-        };
-        if (isValidPosition(to)) {
-          arrows.push({ from, to, color });
-        }
-      }
-      break;
-  }
-
-  return arrows;
-};
-
-const isValidPosition = (pos: Position): boolean => {
-  return pos.x >= 0 && pos.x < 8 && pos.y >= 0 && pos.y < 8;
-};
