@@ -213,6 +213,7 @@ export interface GameState {
   strMove: PgnMove[];
   castlingRights: FenCastlingRights;
   displayedMove: number;
+  materialAdvantage: number;
 }
 
 export type playerType = {

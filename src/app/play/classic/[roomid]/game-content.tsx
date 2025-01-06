@@ -580,6 +580,7 @@ export function GameContent(props: PropsType) {
               time={formatTime(whiteTime)}
               color="white"
               isCurrentTurn={currentTurn === "white"}
+              materialAdvantage={engine.getGameState().materialAdvantage}
             />
             <GameControls
               onResign={() => setIsGameOver(true)}
@@ -596,6 +597,7 @@ export function GameContent(props: PropsType) {
               time={formatTime(blackTime)}
               color="black"
               isCurrentTurn={currentTurn === "black"}
+              materialAdvantage={engine.getGameState().materialAdvantage}
             />
           </div>
 
