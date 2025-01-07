@@ -30,14 +30,14 @@ const generateBoardWaiting = () => {
   const board: (ChessPiece | null)[][] = importFEN(
     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
   ).board;
-  let newBoard: customBoardType = [];
+  const newBoard: customBoardType = [];
   console.log(board, newBoard);
   for (let i = 0; i < board.length; i++) {
-    let row = board[i];
-    let newRow: customBoardSquare[] = [];
+    const row = board[i];
+    const newRow: customBoardSquare[] = [];
     // console.log(row)
     for (let j = 0; j < board.length; j++) {
-      let square = row[j];
+      const square = row[j];
       let newSquare: customBoardSquare = { style: [] };
       if (square?.color) {
         newSquare = {
@@ -83,7 +83,10 @@ export function GameContent(props: PropsType) {
 
   const [status, setStatus] = useState<gameStatus>("loading");
 
-  const updatePlayersData = (roomJson: roomType) => {
+  const [whitePlayerTitle, setWhitePlayerTitle] = useState<string | null>(null);
+  const [blackPlayerTitle, setBlackPlayerTitle] = useState<string | null>(null);
+
+  const updatePlayersData = async (roomJson: roomType) => {
     const { player1, player2 } = roomJson.players;
     const cadence = roomJson.cadence.split("|")[0];
 
@@ -122,6 +125,42 @@ export function GameContent(props: PropsType) {
         elo: elo?.toString() || "1200?",
       });
     }
+
+    const fetchPlayerTitle = async (clerkId: string) => {
+      try {
+        const { data: titleData, error: titleError } = await supabase
+          .from("user_achievements")
+          .select(
+            `
+            achievement_id,
+            achievements!inner(title)
+          `
+          )
+          .eq("clerk_id", clerkId)
+          .eq("is_selected", true)
+          .single();
+
+        if (titleError) {
+          console.log("Aucun titre trouvé pour le joueur:", clerkId);
+          return null;
+        }
+
+        if (!titleData?.achievements?.title) {
+          return null;
+        }
+
+        return titleData.achievements.title;
+      } catch (error) {
+        console.error("Erreur lors de la récupération du titre:", error);
+        return null;
+      }
+    };
+
+    const whiteTitle = await fetchPlayerTitle(player1.id);
+    const blackTitle = player2?.id ? await fetchPlayerTitle(player2.id) : null;
+
+    setWhitePlayerTitle(whiteTitle);
+    setBlackPlayerTitle(blackTitle);
   };
 
   const [roomInfo, setRoomInfo] = useState<roomType>();
@@ -581,6 +620,7 @@ export function GameContent(props: PropsType) {
               color="white"
               isCurrentTurn={currentTurn === "white"}
               materialAdvantage={engine.getGameState().materialAdvantage}
+              selectedTitle={whitePlayerTitle || undefined}
             />
             <GameControls
               onResign={() => setIsGameOver(true)}
@@ -598,6 +638,7 @@ export function GameContent(props: PropsType) {
               color="black"
               isCurrentTurn={currentTurn === "black"}
               materialAdvantage={engine.getGameState().materialAdvantage}
+              selectedTitle={blackPlayerTitle || undefined}
             />
           </div>
 
