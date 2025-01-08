@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface Achievement {
   id: string;
@@ -14,6 +16,7 @@ interface Achievement {
 
 export function AchievementsList({ userId }: { userId: string }) {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [showUnlocked, setShowUnlocked] = useState<boolean | null>(null);
 
   useEffect(() => {
     fetchAchievements();
@@ -100,28 +103,82 @@ export function AchievementsList({ userId }: { userId: string }) {
     }
   };
 
+  const filteredAchievements =
+    showUnlocked === null
+      ? [...achievements].sort((a, b) => a.title.localeCompare(b.title))
+      : achievements.filter(
+          (achievement) => achievement.unlocked === showUnlocked
+        );
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {achievements.map((achievement) => (
-        <Card key={achievement.id} className="p-4">
-          <h3 className={`font-bold ${getRarityColor(achievement.rarity)}`}>
-            {achievement.title}
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {achievement.description}
-          </p>
-          {achievement.unlocked && (
+    <div>
+      <div className="flex items-center space-x-4 mb-6">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="filter-achievements"
+            checked={showUnlocked !== null}
+            onCheckedChange={(checked) => {
+              if (!checked) {
+                setShowUnlocked(null);
+              } else {
+                setShowUnlocked(true);
+              }
+            }}
+            className="dark:bg-gray-700"
+          />
+          <Label htmlFor="filter-achievements" className="text-foreground">
+            Filtrer les succès
+          </Label>
+        </div>
+        {showUnlocked !== null && (
+          <div className="flex space-x-2">
             <Button
-              variant={achievement.is_selected ? "default" : "outline"}
+              variant={showUnlocked ? "default" : "outline"}
               size="sm"
-              onClick={() => selectAchievement(achievement.id)}
-              disabled={achievement.is_selected}
+              onClick={() => setShowUnlocked(true)}
+              className="dark:border-gray-700"
             >
-              {achievement.is_selected ? "Sélectionné" : "Sélectionner"}
+              Débloqués
             </Button>
-          )}
-        </Card>
-      ))}
+            <Button
+              variant={!showUnlocked ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowUnlocked(false)}
+              className="dark:border-gray-700"
+            >
+              Non débloqués
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredAchievements.map((achievement) => (
+          <Card
+            key={achievement.id}
+            className={`p-4 ${
+              showUnlocked === null && !achievement.unlocked ? "opacity-50" : ""
+            }`}
+          >
+            <h3 className={`font-bold ${getRarityColor(achievement.rarity)}`}>
+              {achievement.title}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {achievement.description}
+            </p>
+            {achievement.unlocked && (
+              <Button
+                variant={achievement.is_selected ? "default" : "outline"}
+                size="sm"
+                onClick={() => selectAchievement(achievement.id)}
+                disabled={achievement.is_selected}
+              >
+                {achievement.is_selected ? "Sélectionné" : "Sélectionner"}
+              </Button>
+            )}
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

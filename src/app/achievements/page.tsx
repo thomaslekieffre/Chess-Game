@@ -21,7 +21,7 @@ export default function AchievementsPage() {
   return (
     <div className="min-h-screen pt-20 bg-background">
       <div className="container">
-        <h1 className="text-3xl font-bold mb-8">Mes Succès</h1>
+        <h1 className="text-3xl font-bold mb-8">Liste des Succès</h1>
         <AchievementsList userId={user.id} />
       </div>
     </div>

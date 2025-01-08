@@ -132,24 +132,27 @@ export function GameContent(props: PropsType) {
           .from("user_achievements")
           .select(
             `
-            achievement_id,
-            achievements!inner(title)
+            *,
+            achievements!inner (
+              title
+            )
           `
           )
           .eq("clerk_id", clerkId)
           .eq("is_selected", true)
-          .single();
+          .maybeSingle();
 
         if (titleError) {
+          console.error("Erreur lors de la récupération du titre:", titleError);
+          return null;
+        }
+
+        if (!titleData) {
           console.log("Aucun titre trouvé pour le joueur:", clerkId);
           return null;
         }
 
-        if (!titleData?.achievements?.title) {
-          return null;
-        }
-
-        return titleData.achievements.title;
+        return titleData.achievements?.title || null;
       } catch (error) {
         console.error("Erreur lors de la récupération du titre:", error);
         return null;
