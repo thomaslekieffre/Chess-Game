@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import KickUser from "@/components/admin/KickUser";
 import CreateQuest from "@/components/admin/CreateQuest";
 import CreateReward from "@/components/admin/CreateReward";
+import CreateAchievement from "@/components/admin/CreateAchievement";
 import { supabase } from "@/lib/supabase";
 
 const AdminPage = () => {
@@ -45,6 +46,7 @@ const AdminPage = () => {
             <KickUser />
             <CreateQuest />
             <CreateReward />
+            <CreateAchievement />
           </div>
         </div>
       ) : (
