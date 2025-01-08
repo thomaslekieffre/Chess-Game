@@ -10,6 +10,7 @@ interface PlayerCardProps {
   color: "white" | "black";
   isCurrentTurn: boolean;
   materialAdvantage?: number;
+  selectedTitle?: string;
 }
 
 export function PlayerCard({
@@ -19,6 +20,7 @@ export function PlayerCard({
   color,
   isCurrentTurn,
   materialAdvantage = 0,
+  selectedTitle,
 }: PlayerCardProps) {
   const displayAdvantage = () => {
     if (materialAdvantage === 0) return null;
@@ -35,6 +37,9 @@ export function PlayerCard({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-xl capitalize">{name}</h3>
+          {selectedTitle && (
+            <p className="text-xs text-primary italic mb-1">{selectedTitle}</p>
+          )}
           <p className="text-sm text-muted-foreground">{rating} Elo</p>
           {displayAdvantage()}
         </div>

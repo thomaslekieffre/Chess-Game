@@ -288,6 +288,15 @@ export function Header() {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
+                <Link href="/achievements">
+                  <Button variant="ghost">
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Succès
+                  </Button>
+                </Link>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
                 <button
                   onClick={toggleFriendPopup}
                   className="flex items-center"
