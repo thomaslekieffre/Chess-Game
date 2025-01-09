@@ -11,6 +11,8 @@ interface PlayerCardProps {
   isCurrentTurn: boolean;
   materialAdvantage?: number;
   selectedTitle?: string;
+  bannerUrl?: string;
+  borderStyle?: string;
 }
 
 export function PlayerCard({
@@ -21,6 +23,8 @@ export function PlayerCard({
   isCurrentTurn,
   materialAdvantage = 0,
   selectedTitle,
+  bannerUrl,
+  borderStyle,
 }: PlayerCardProps) {
   const displayAdvantage = () => {
     if (materialAdvantage === 0) return null;
@@ -32,8 +36,20 @@ export function PlayerCard({
     );
   };
 
+  console.log("Banner URL:", bannerUrl);
+
   return (
-    <Card className={cn("p-4 mb-4", isCurrentTurn && "border-primary")}>
+    <Card
+      className={cn(
+        "p-4 mb-4",
+        isCurrentTurn && "border-primary",
+        borderStyle,
+        bannerUrl ? "bg-cover bg-center" : "bg-white dark:bg-black"
+      )}
+      style={{
+        backgroundImage: bannerUrl ? `url(${bannerUrl})` : undefined,
+      }}
+    >
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-xl capitalize">{name}</h3>
