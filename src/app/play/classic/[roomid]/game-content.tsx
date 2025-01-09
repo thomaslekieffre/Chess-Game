@@ -74,50 +74,152 @@ export function GameContent(props: PropsType) {
   const [whitePlayerInfo, setWhitePlayerInfo] = useState({
     username: "White",
     elo: "1200?",
-    bannerUrl: "",
   });
 
   const [blackPlayerInfo, setBlackPlayerInfo] = useState({
     username: "Black",
     elo: "1200?",
-    bannerUrl: "",
   });
 
   const [status, setStatus] = useState<gameStatus>("loading");
 
   const [whitePlayerTitle, setWhitePlayerTitle] = useState<string | null>(null);
   const [blackPlayerTitle, setBlackPlayerTitle] = useState<string | null>(null);
+  const [whitePlayerBanner, setWhitePlayerBanner] = useState<string | null>(
+    null
+  );
+  const [blackPlayerBanner, setBlackPlayerBanner] = useState<string | null>(
+    null
+  );
 
   const updatePlayersData = async (roomJson: roomType) => {
     const { player1, player2 } = roomJson.players;
+    const cadence = roomJson.cadence.split("|")[0];
 
-    // Récupérer les données des joueurs, y compris la bannière
-    const { data: player1Data } = await supabase
-      .from("users")
-      .select("banner_url, elo_stats")
-      .eq("clerk_id", player1.id)
-      .single();
+    if (player1.elo_stats && typeof player1.elo_stats === "object") {
+      try {
+        let elo;
+        if (cadence === "1" || cadence === "0.5") {
+          elo = player1.elo_stats.classique.bullet;
+        } else if (cadence === "3" || cadence === "5") {
+          elo = player1.elo_stats.classique.blitz;
+        } else {
+          elo = player1.elo_stats.classique.rapide;
+        }
 
-    const { data: player2Data } = player2?.id
-      ? await supabase
-          .from("users")
-          .select("banner_url, elo_stats")
-          .eq("clerk_id", player2.id)
-          .single()
-      : { data: null };
+        setWhitePlayerInfo({
+          username: player1.username,
+          elo: elo?.toString() || "1200?",
+        });
+      } catch (error) {
+        console.error("Erreur lors du calcul de l'Elo:", error);
+      }
+    }
 
-    setWhitePlayerInfo({
-      username: player1.username,
-      elo: player1.elo_stats?.classique?.bullet?.toString() || "1200?",
-      bannerUrl: player1Data?.banner_url || "",
-    });
+    if (player2?.elo_stats) {
+      let elo;
+      if (cadence === "1" || cadence === "0.5") {
+        elo = player2.elo_stats.classique.bullet;
+      } else if (cadence === "3" || cadence === "5") {
+        elo = player2.elo_stats.classique.blitz;
+      } else {
+        elo = player2.elo_stats.classique.rapide;
+      }
 
-    if (player2) {
       setBlackPlayerInfo({
         username: player2.username,
-        elo: player2.elo_stats?.classique?.bullet?.toString() || "1200?",
-        bannerUrl: player2Data?.banner_url || "",
+        elo: elo?.toString() || "1200?",
       });
+    }
+
+    const fetchPlayerTitle = async (clerkId: string) => {
+      try {
+        const { data: titleData, error: titleError } = await supabase
+          .from("user_achievements")
+          .select(
+            `
+            *,
+            achievements!inner (
+              title
+            )
+          `
+          )
+          .eq("clerk_id", clerkId)
+          .eq("is_selected", true)
+          .maybeSingle();
+
+        if (titleError) {
+          console.error("Erreur lors de la récupération du titre:", titleError);
+          return null;
+        }
+
+        if (!titleData) {
+          console.log("Aucun titre trouvé pour le joueur:", clerkId);
+          return null;
+        }
+
+        return titleData.achievements?.title || null;
+      } catch (error) {
+        console.error("Erreur lors de la récupération du titre:", error);
+        return null;
+      }
+    };
+
+    const whiteTitle = await fetchPlayerTitle(player1.id);
+    const blackTitle = player2?.id ? await fetchPlayerTitle(player2.id) : null;
+
+    setWhitePlayerTitle(whiteTitle);
+    setBlackPlayerTitle(blackTitle);
+
+    const whiteBanner = await fetchPlayerBanner(player1.id);
+    const blackBanner = player2?.id
+      ? await fetchPlayerBanner(player2.id)
+      : null;
+
+    setWhitePlayerBanner(whiteBanner);
+    setBlackPlayerBanner(blackBanner);
+  };
+
+  const fetchPlayerBanner = async (clerkId: string) => {
+    try {
+      const { data: bannerData, error: bannerError } = await supabase
+        .from("user_banners")
+        .select(
+          `
+          *,
+          banners!inner (
+            link
+          )
+        `
+        )
+        .eq("clerk_id", clerkId)
+        .eq("is_selected", true)
+        .maybeSingle();
+
+      if (bannerError) {
+        console.error(
+          "Erreur lors de la récupération de la bannière:",
+          bannerError
+        );
+        return null;
+      }
+
+      if (!bannerData) {
+        console.log("Aucune bannière trouvée pour le joueur:", clerkId);
+        return null;
+      }
+
+      return {
+        bannerUrl: bannerData.banners?.link || null,
+        textColors: {
+          text: bannerData.text_color || "#FFFFFF",
+          title: bannerData.title_color || "#FFFFFF",
+          rating: bannerData.rating_color || "#9CA3AF",
+        },
+      };
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la bannière:", error);
+      return null;
     }
   };
 
@@ -388,9 +490,6 @@ export function GameContent(props: PropsType) {
     });
   };
 
-  console.log("White Player Info:", whitePlayerInfo);
-  console.log("Black Player Info:", blackPlayerInfo);
-
   switch (status) {
     case "loading":
       return (
@@ -413,7 +512,6 @@ export function GameContent(props: PropsType) {
               time={"10:00"}
               color="white"
               isCurrentTurn={currentTurn === "white"}
-              bannerUrl={whitePlayerInfo.bannerUrl}
             />
             <GameControls
               onResign={() => setIsGameOver(true)}
@@ -430,7 +528,6 @@ export function GameContent(props: PropsType) {
               time={"10:00"}
               color="black"
               isCurrentTurn={currentTurn === "black"}
-              bannerUrl={blackPlayerInfo.bannerUrl}
             />
           </div>
 
@@ -490,13 +587,9 @@ export function GameContent(props: PropsType) {
                 // Récupérer l'Elo du joueur
                 const { data: userData, error } = await supabase
                   .from("users")
-                  .select("elo_stats, banner_url")
+                  .select("elo_stats")
                   .eq("clerk_id", user.id)
                   .single();
-
-                if (userData?.banner_url) {
-                  console.log("Banner URL found:", userData.banner_url);
-                }
 
                 if (error) {
                   console.error(
@@ -530,7 +623,6 @@ export function GameContent(props: PropsType) {
                       rapide: elo,
                     },
                   },
-                  bannerUrl: userData?.banner_url || "",
                 };
 
                 await supabase
@@ -587,9 +679,9 @@ export function GameContent(props: PropsType) {
               time={formatTime(whiteTime)}
               color="white"
               isCurrentTurn={currentTurn === "white"}
-              materialAdvantage={engine.getGameState().materialAdvantage}
+              selectedBanner={whitePlayerBanner?.bannerUrl}
+              textColors={whitePlayerBanner?.textColors}
               selectedTitle={whitePlayerTitle || undefined}
-              bannerUrl={whitePlayerInfo.bannerUrl}
             />
             <GameControls
               onResign={() => setIsGameOver(true)}
@@ -608,7 +700,7 @@ export function GameContent(props: PropsType) {
               isCurrentTurn={currentTurn === "black"}
               materialAdvantage={engine.getGameState().materialAdvantage}
               selectedTitle={blackPlayerTitle || undefined}
-              bannerUrl={blackPlayerInfo.bannerUrl}
+              selectedBanner={blackPlayerBanner || undefined}
             />
           </div>
 
