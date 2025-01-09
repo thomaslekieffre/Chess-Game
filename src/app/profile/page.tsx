@@ -44,7 +44,16 @@ export default function ProfilePage() {
     completedQuests: 0,
   });
   const [timeSpent, setTimeSpent] = useState(0);
-  const [bannerUrl, setBannerUrl] = useState("");
+  const [bannerUrl] = useState("");
+  const [titleColor, setTitleColor] = useState("#FFFFFF");
+  const [textColor, setTextColor] = useState("#FFFFFF");
+  const [ratingColor, setRatingColor] = useState("#9CA3AF");
+  const [selectedBanner, setSelectedBanner] = useState({
+    bannerUrl: "",
+    titleColor: "#FFFFFF",
+    textColor: "#FFFFFF",
+    ratingColor: "#9CA3AF",
+  });
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -123,6 +132,40 @@ export default function ProfilePage() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const fetchSelectedBanner = async () => {
+      if (user) {
+        const { data: bannerData, error: bannerError } = await supabase
+          .from("user_banners")
+          .select(
+            `
+            *,
+            banners!inner (
+              link
+            )
+          `
+          )
+          .eq("clerk_id", user.id)
+          .eq("is_selected", true)
+          .single();
+
+        if (bannerData) {
+          setSelectedBanner({
+            bannerUrl: bannerData.banners.link,
+            titleColor: bannerData.title_color || "#FFFFFF",
+            textColor: bannerData.text_color || "#FFFFFF",
+            ratingColor: bannerData.rating_color || "#9CA3AF",
+          });
+          setTitleColor(bannerData.title_color || "#FFFFFF");
+          setTextColor(bannerData.text_color || "#FFFFFF");
+          setRatingColor(bannerData.rating_color || "#9CA3AF");
+        }
+      }
+    };
+
+    fetchSelectedBanner();
+  }, [user]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -162,6 +205,23 @@ export default function ProfilePage() {
         alert("Erreur lors de la mise à jour du profil");
       } else {
         alert("Profil mis à jour avec succès");
+      }
+
+      const { error: bannerError } = await supabase
+        .from("user_banners")
+        .update({
+          text_color: textColor,
+          title_color: titleColor,
+          rating_color: ratingColor,
+        })
+        .eq("clerk_id", user.id)
+        .eq("is_selected", true);
+
+      if (bannerError) {
+        console.error(
+          "Erreur lors de la mise à jour des couleurs:",
+          bannerError
+        );
       }
     } catch (error) {
       console.error("Erreur complète:", error);
@@ -252,13 +312,57 @@ export default function ProfilePage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="bannerUrl">Lien de la bannière</Label>
-              <Input
-                id="bannerUrl"
-                value={bannerUrl}
-                onChange={(e) => setBannerUrl(e.target.value)}
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Couleurs de la bannière</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="titleColor">Nom</Label>
+                    <Input
+                      type="color"
+                      id="titleColor"
+                      value={titleColor}
+                      onChange={(e) => {
+                        setTitleColor(e.target.value);
+                        setSelectedBanner((prev) => ({
+                          ...prev,
+                          titleColor: e.target.value,
+                        }));
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="textColor">Titre/Timer</Label>
+                    <Input
+                      type="color"
+                      id="textColor"
+                      value={textColor}
+                      onChange={(e) => {
+                        setTextColor(e.target.value);
+                        setSelectedBanner((prev) => ({
+                          ...prev,
+                          textColor: e.target.value,
+                        }));
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="ratingColor">Elo</Label>
+                    <Input
+                      type="color"
+                      id="ratingColor"
+                      value={ratingColor}
+                      onChange={(e) => {
+                        setRatingColor(e.target.value);
+                        setSelectedBanner((prev) => ({
+                          ...prev,
+                          ratingColor: e.target.value,
+                        }));
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
@@ -301,13 +405,22 @@ export default function ProfilePage() {
         </Card>
       </div>
 
-      <Button
-        onClick={handleSignOut}
-        variant="destructive"
-        className="mt-10 mx-auto flex"
-      >
-        Se déconnecter
-      </Button>
+      <div className="flex items-center justify-center">
+        <PlayerCard
+          className="p-6 w-1/2 mt-8"
+          name={formData.username}
+          rating={eloStats.classique.bullet || "N/A"}
+          time="10:00"
+          color="white"
+          isCurrentTurn={true}
+          selectedBanner={selectedBanner.bannerUrl}
+          textColors={{
+            text: selectedBanner.textColor,
+            title: selectedBanner.titleColor,
+            rating: selectedBanner.ratingColor,
+          }}
+        />
+      </div>
 
       <UserStats
         totalAchievements={stats.totalAchievements}
@@ -316,14 +429,13 @@ export default function ProfilePage() {
         completedQuests={stats.completedQuests}
       />
 
-      <PlayerCard
-        name={formData.username}
-        rating={eloStats.classique.bullet || "N/A"}
-        time="10:00"
-        color="white"
-        isCurrentTurn={true}
-        bannerUrl={bannerUrl}
-      />
+      <Button
+        onClick={handleSignOut}
+        variant="destructive"
+        className="mt-10 mx-auto flex"
+      >
+        Se déconnecter
+      </Button>
     </main>
   );
 }

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface PlayerCardProps {
+  className?: string;
   name: string;
   rating: string;
   time: string;
@@ -11,11 +12,16 @@ interface PlayerCardProps {
   isCurrentTurn: boolean;
   materialAdvantage?: number;
   selectedTitle?: string;
-  bannerUrl?: string;
-  borderStyle?: string;
+  selectedBanner?: string | null;
+  textColors?: {
+    text: string;
+    title: string;
+    rating: string;
+  };
 }
 
 export function PlayerCard({
+  className,
   name,
   rating,
   time,
@@ -23,8 +29,12 @@ export function PlayerCard({
   isCurrentTurn,
   materialAdvantage = 0,
   selectedTitle,
-  bannerUrl,
-  borderStyle,
+  selectedBanner,
+  textColors = {
+    text: "#FFFFFF",
+    title: "#FFFFFF",
+    rating: "",
+  },
 }: PlayerCardProps) {
   const displayAdvantage = () => {
     if (materialAdvantage === 0) return null;
@@ -36,30 +46,46 @@ export function PlayerCard({
     );
   };
 
-  console.log("Banner URL:", bannerUrl);
+  console.log("Banner URL:", selectedBanner);
 
   return (
     <Card
       className={cn(
         "p-4 mb-4",
+        className,
         isCurrentTurn && "border-primary",
-        borderStyle,
-        bannerUrl ? "bg-cover bg-center" : "bg-white dark:bg-black"
+        selectedBanner ? "bg-cover bg-center" : "bg-white dark:bg-black"
       )}
       style={{
-        backgroundImage: bannerUrl ? `url(${bannerUrl})` : undefined,
+        backgroundImage: selectedBanner ? `url(${selectedBanner})` : undefined,
       }}
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-semibold text-xl capitalize">{name}</h3>
-          {selectedTitle && (
-            <p className="text-xs text-primary italic mb-1">{selectedTitle}</p>
-          )}
-          <p className="text-sm text-muted-foreground">{rating} Elo</p>
-          {displayAdvantage()}
+      <div className="relative z-10 p-4 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3
+              className="font-semibold text-xl capitalize"
+              style={{ color: textColors.title }}
+            >
+              {name}
+            </h3>
+            {selectedTitle && (
+              <p
+                className="text-xs italic mb-1"
+                style={{ color: textColors.text }}
+              >
+                {selectedTitle}
+              </p>
+            )}
+            <p className="text-sm" style={{ color: textColors.rating }}>
+              {rating} Elo
+            </p>
+            {displayAdvantage()}
+          </div>
+          <div className="text-xl font-mono" style={{ color: textColors.text }}>
+            {time}
+          </div>
         </div>
-        <div className="text-xl font-mono">{time}</div>
       </div>
     </Card>
   );
