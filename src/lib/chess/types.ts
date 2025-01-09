@@ -233,6 +233,7 @@ export type playerType = {
       rapide?: string;
     };
   };
+  bannerUrl?: string;
 };
 
 export type roomType = {

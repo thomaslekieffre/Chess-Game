@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { getFlagEmoji } from "@/utils/getFlagEmoji";
+import UserStats from "@/components/profile/UserStats";
+import { PlayerCard } from "@/components/chess/player-card";
 
 const imageUrlRegex =
   /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|bmp|webp|svg|mp4|mov|avi))$/i;
@@ -35,6 +37,14 @@ export default function ProfilePage() {
       rapide: null,
     },
   });
+  const [stats, setStats] = useState({
+    totalAchievements: 0,
+    unlockedAchievements: 0,
+    // totalTimeSpent: 0,
+    completedQuests: 0,
+  });
+  const [timeSpent, setTimeSpent] = useState(0);
+  const [bannerUrl, setBannerUrl] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -61,12 +71,57 @@ export default function ProfilePage() {
               saisonnier: { bullet: null, blitz: null, rapide: null },
             }
           );
+          // setTimeSpent(data.total_time_spent || 0);
         }
       }
     };
 
     fetchUserData();
   }, [user]);
+
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      if (user) {
+        const { data: achievementsData } = await supabase
+          .from("achievements")
+          .select("*");
+
+        const totalAchievements = achievementsData?.length || 0;
+        const { data: userAchievements } = await supabase
+          .from("user_achievements")
+          .select("achievement_id")
+          .eq("clerk_id", user.id);
+
+        const unlockedAchievements = userAchievements?.length || 0;
+
+        // const totalTimeSpent = timeSpent;
+        const { data: userQuests } = await supabase
+          .from("user_quests")
+          .select("quest_id")
+          .eq("clerk_id", user.id)
+          .eq("is_completed", true);
+
+        const completedQuests = userQuests?.length || 0;
+
+        setStats({
+          totalAchievements,
+          unlockedAchievements,
+          // totalTimeSpent,
+          completedQuests,
+        });
+      }
+    };
+
+    fetchUserStats();
+  }, [user, timeSpent]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeSpent((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +138,12 @@ export default function ProfilePage() {
         return;
       }
 
+      if (bannerUrl && !imageUrlRegex.test(bannerUrl)) {
+        alert("Veuillez entrer une URL de bannière valide.");
+        setIsLoading(false);
+        return;
+      }
+
       const response = await supabase
         .from("users")
         .update({
@@ -91,6 +152,8 @@ export default function ProfilePage() {
           country: formData.country,
           emoji: formData.emoji,
           avatar_url: formData.avatarUrl,
+          banner_url: bannerUrl,
+          total_time_spent: timeSpent,
         })
         .eq("clerk_id", user.id);
 
@@ -189,6 +252,15 @@ export default function ProfilePage() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="bannerUrl">Lien de la bannière</Label>
+              <Input
+                id="bannerUrl"
+                value={bannerUrl}
+                onChange={(e) => setBannerUrl(e.target.value)}
+              />
+            </div>
+
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Mise à jour..." : "Sauvegarder les modifications"}
             </Button>
@@ -236,6 +308,22 @@ export default function ProfilePage() {
       >
         Se déconnecter
       </Button>
+
+      <UserStats
+        totalAchievements={stats.totalAchievements}
+        unlockedAchievements={stats.unlockedAchievements}
+        // totalTimeSpent={stats.totalTimeSpent}
+        completedQuests={stats.completedQuests}
+      />
+
+      <PlayerCard
+        name={formData.username}
+        rating={eloStats.classique.bullet || "N/A"}
+        time="10:00"
+        color="white"
+        isCurrentTurn={true}
+        bannerUrl={bannerUrl}
+      />
     </main>
   );
 }
