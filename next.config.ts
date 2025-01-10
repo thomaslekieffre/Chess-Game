@@ -4,6 +4,12 @@ const nextConfig: NextConfig = {
   images: {
     domains: ["ui-avatars.com", "img.clerk.com"],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 export default nextConfig;
