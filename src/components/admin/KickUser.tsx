@@ -1,9 +1,10 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { useState } from "react";
 
 const KickUser = () => {
+  const supabase = supabaseClient();
   const [userId, setUserId] = useState("");
 
   const handleKickUser = async () => {

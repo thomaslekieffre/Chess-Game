@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -16,6 +16,8 @@ interface Banner {
 }
 
 export function BannersList({ userId }: { userId: string }) {
+  const supabase = supabaseClient();
+    
   const [banners, setBanners] = useState<Banner[]>([]);
   const [showUnlocked, setShowUnlocked] = useState<boolean | null>(null);
 

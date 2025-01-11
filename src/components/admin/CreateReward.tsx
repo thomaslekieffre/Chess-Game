@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 const CreateReward = () => {
+  const supabase = supabaseClient();
+
   const [rewardName, setRewardName] = useState("");
   const [levelRequired, setLevelRequired] = useState(0);
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { Rocket, Zap, Timer } from "lucide-react";
 
 type LeaderboardEntry = {
@@ -23,6 +23,7 @@ type LeaderboardEntry = {
 };
 
 export default function LeaderboardPage() {
+  const supabase = supabaseClient();
   const [mode, setMode] = useState<"classique" | "saisonnier">("classique");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 

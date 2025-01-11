@@ -26,7 +26,7 @@ import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { UserButton } from "@/components/auth/user-button";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import CustomImage from "@/components/CustomImage";
 import { FriendRequests } from "@/components/friend-requests/FriendRequests";
 
@@ -80,6 +80,7 @@ interface FriendData {
 
 export function Header() {
   const { user } = useUser();
+  const supabase = supabaseClient();
   const isSignedIn = !!user;
   const [isFriendPopupOpen, setFriendPopupOpen] = useState(false);
   const [friendUsername, setFriendUsername] = useState("");

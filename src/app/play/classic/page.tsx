@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 
 const timeCategories = {
@@ -91,6 +91,7 @@ const timeCategories = {
 
 export default function ClassicModePage() {
   const { isSignedIn, user } = useUser();
+  const supabase = supabaseClient();
   const { signOut } = useClerk();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);

@@ -1,6 +1,6 @@
 import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import CustomImage from "@/components/CustomImage";
 
 interface FriendRequest {
@@ -16,6 +16,7 @@ interface FriendRequest {
 
 export function FriendRequests() {
   const { user } = useUser();
+  const supabase = supabaseClient();
   const [requests, setRequests] = useState<FriendRequest[]>([]);
 
   useEffect(() => {

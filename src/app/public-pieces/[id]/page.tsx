@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { CustomBoard } from "@/components/chess/custom-board";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ArrowLeft } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -25,6 +25,7 @@ export default function PieceDetailsPage() {
   const [piece, setPiece] = useState<PieceDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useUser();
+  const supabase = supabaseClient();
 
   useEffect(() => {
     fetchPieceDetails();

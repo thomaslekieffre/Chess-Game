@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 interface Quest {
   quest_id: string;
@@ -11,6 +11,8 @@ interface Quest {
 }
 
 const Quests = ({ userId }: { userId: string }) => {
+  const supabase = supabaseClient();
+
   const [quests, setQuests] = useState<Quest[]>([]);
 
   const fetchQuests = async () => {
