@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { getFlagEmoji } from "@/utils/getFlagEmoji";
 import UserStats from "@/components/profile/UserStats";
 import { PlayerCard } from "@/components/chess/player-card";
@@ -16,6 +16,7 @@ const imageUrlRegex =
 
 export default function ProfilePage() {
   const { user } = useUser();
+  const supabase = supabaseClient();
   const { signOut } = useClerk();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({

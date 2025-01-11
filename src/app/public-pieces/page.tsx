@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronUp } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 
@@ -22,6 +22,7 @@ export default function PublicPiecesPage() {
   const [pieces, setPieces] = useState<PublicPiece[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useUser();
+  const supabase = supabaseClient();
 
   useEffect(() => {
     fetchPieces();

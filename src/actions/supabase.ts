@@ -1,8 +1,9 @@
 "use server"
 
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 const updateData = async (from:string,update:Record<string,any>,queryKey:string,queryValue:any,thenFunc:Function) => {
+    const supabase = supabaseClient();
     await supabase
       .from(from)
       .update(update)

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,6 +15,7 @@ interface Achievement {
 }
 
 export function AchievementsList({ userId }: { userId: string }) {
+  const supabase = supabaseClient();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [showUnlocked, setShowUnlocked] = useState<boolean | null>(null);
 

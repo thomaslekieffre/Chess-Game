@@ -1,10 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  const supabase = supabaseClient();
   const { data, error } = await supabase.from("rewards").select("*");
 
   if (error) {

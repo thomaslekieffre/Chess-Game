@@ -3,9 +3,10 @@
 import { SignIn } from "@clerk/nextjs";
 import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 export default function SignInPage() {
+  const supabase = supabaseClient();
   const { user } = useUser();
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 interface Progress {
   battle_pass_level: number;
@@ -9,6 +9,8 @@ interface Progress {
 }
 
 const BattlePassProgress = ({ clerkId }: { clerkId: string }) => {
+  const supabase = supabaseClient();
+
   const [progress, setProgress] = useState<Progress | null>(null);
 
   useEffect(() => {

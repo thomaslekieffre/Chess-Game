@@ -7,10 +7,11 @@ import KickUser from "@/components/admin/KickUser";
 import CreateQuest from "@/components/admin/CreateQuest";
 import CreateReward from "@/components/admin/CreateReward";
 import CreateAchievement from "@/components/admin/CreateAchievement";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 const AdminPage = () => {
   const { user } = useUser();
+  const supabase = supabaseClient();
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 

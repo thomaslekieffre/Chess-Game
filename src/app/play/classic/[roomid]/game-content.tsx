@@ -18,7 +18,7 @@ import {
   roomType,
 } from "@/lib/chess/types";
 import { getOppositeColor } from "@/lib/chess/utils";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
@@ -63,6 +63,7 @@ type PropsType = {
 };
 
 export function GameContent(props: PropsType) {
+  const supabase = supabaseClient();
   const { roomId } = props;
   const { isSignedIn, user } = useUser();
 

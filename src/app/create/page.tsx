@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useUser } from "@clerk/nextjs";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import {
   Select,
   SelectContent,
@@ -199,6 +199,7 @@ export default function CreatePiecePage() {
     setIsLoading(true);
 
     try {
+      const supabase = supabaseClient();
       const { error } = await supabase.from("custom_pieces").insert({
         name: pieceName,
         piece_type: selectedPiece,

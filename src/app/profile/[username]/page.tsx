@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { getFlagEmoji } from "@/utils/getFlagEmoji";
 
@@ -28,6 +28,7 @@ interface UserData {
 
 const ProfilePage = () => {
   const { username } = useParams();
+  const supabase = supabaseClient();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 

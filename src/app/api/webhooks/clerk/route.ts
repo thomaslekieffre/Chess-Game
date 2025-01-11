@@ -1,9 +1,10 @@
 import { Webhook } from "svix";
 import { WebhookEvent } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   console.log("Webhook reçu");
+  const supabase = supabaseClient();
   const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {

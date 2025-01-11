@@ -9,7 +9,7 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import { convertToPGN } from "./lib/chess/pgn";
-import { supabase } from "./lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { roomType } from "./lib/chess/types";
 
 // import {PgnReader} from '@mliebelt/pgn-reader'
@@ -167,6 +167,7 @@ import { roomType } from "./lib/chess/types";
 
 const app = express();
 const server = http.createServer(app);
+const supabase = supabaseClient();
 
 const io = new Server(server, {
   cors: {

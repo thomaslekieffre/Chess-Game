@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 interface Reward {
   reward_id: string;
@@ -10,6 +10,8 @@ interface Reward {
 }
 
 const Rewards = () => {
+  const supabase = supabaseClient();
+
   const [rewards, setRewards] = useState<Reward[]>([]);
 
   useEffect(() => {

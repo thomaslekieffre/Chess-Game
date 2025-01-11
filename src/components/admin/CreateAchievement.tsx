@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 const CreateAchievement = () => {
+  const supabase = supabaseClient();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [rarity, setRarity] = useState("common");

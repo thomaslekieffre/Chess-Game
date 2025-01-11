@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 const CreateQuest = () => {
+  const supabase = supabaseClient();
+
   const [description, setDescription] = useState("");
   const [xpReward, setXpReward] = useState(0);
 

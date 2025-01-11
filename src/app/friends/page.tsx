@@ -2,7 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import CustomImage from "@/components/CustomImage";
 
 interface Friend {
@@ -45,6 +45,7 @@ interface FriendInfo {
 
 export default function FriendsPage() {
   const { user } = useUser();
+  const supabase = supabaseClient();
   const [friends, setFriends] = useState<Friend[]>([]);
 
   useEffect(() => {

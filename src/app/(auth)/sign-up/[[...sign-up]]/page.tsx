@@ -3,13 +3,14 @@
 import { SignUp } from "@clerk/nextjs";
 import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 
 export default function SignUpPage() {
   const { user } = useUser(); // Hook pour obtenir l'utilisateur connecté
 
   useEffect(() => {
     const updateUserInDatabase = async () => {
+      const supabase = supabaseClient();
       if (user) {
         const { id, username, firstName, lastName, publicMetadata } = user;
 
