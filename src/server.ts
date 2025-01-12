@@ -171,7 +171,7 @@ const supabase = supabaseClient();
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "http://localhost:8080",
     methods: ["GET", "POST"],
     allowedHeaders: ["my-custom-header"],
     credentials: true,
@@ -188,24 +188,24 @@ io.on("connection", (socket) => {
     socket.emit("connected-to-the-room", data);
   });
 
-  socket.on('game-joined', async (data:{newRoomInfo:roomType}) => {
+  socket.on("game-joined", async (data: { newRoomInfo: roomType }) => {
     io.to(`game_${data.newRoomInfo.id}`).emit(`game_started`, data.newRoomInfo);
-  })
+  });
 
   socket.on("move", async (data) => {
     await supabase
       .from("room")
       // .update({ game: convertToPGN(data.moves) })
-      .update({game:data.moves})
+      .update({ game: data.moves })
       .eq("id", data.roomId)
       .then((x) => {
         // console.log(x);
         if (x.error) {
-          console.log(x.error,x.statusText)
+          console.log(x.error, x.statusText);
           alert("Erreur lors de la connexion a la partie");
         } else {
           console.log("edited");
-          console.log('aaaaaaa')
+          console.log("aaaaaaa");
           io.to(`game_${data.roomId}`).emit(`move`, data);
         }
       });
@@ -216,7 +216,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.SOCKET_PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Serveur Socket.IO en cours d'exécution sur le port ${PORT}`);
 });
