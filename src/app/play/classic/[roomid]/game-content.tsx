@@ -56,7 +56,8 @@ const generateBoardWaiting = () => {
   return newBoard;
 };
 
-const socket = io("http://localhost:3001");
+const socket = io(process.env.NEXT_SERVER_URL || "http://server:3000");
+console.log(process.env.NEXT_SERVER_URL);
 
 type PropsType = {
   roomId: string;

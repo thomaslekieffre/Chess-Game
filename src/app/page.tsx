@@ -22,16 +22,24 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
               <AnimatedText
-                text="Réinventez les Échecs"
-                className="text-6xl font-bold mb-6"
+                text="Réinventez les Échecs !"
+                className="text-5xl font-bold mb-6"
               />
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="text-xl text-muted-foreground mb-8"
+                className="text-xl text-secondary mb-8 font-light"
               >
-                Créez vos propres pièces. Défiez le monde. Devenez une légende.
+                Créez vos propres pièces, défiez le monde et devenez une
+                légende.
+                <br />
+                <br />
+                Avec ChessGame, faites bcp de blabla pour avoir un long pavé et
+                peut etre que vous pourrez être marketing chez nous pour bien
+                pub et avoir des users. Plus il y a d&apos;users plus il y aura
+                d&apos;activité et de hype autour. Plus il y a de hype, plus les
+                gens paieront et donc on aura plus d&apos;€.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -42,13 +50,13 @@ export default function Home() {
                 <Button
                   size="lg"
                   className="hover:scale-105 transition-transform"
+                  variant="outline"
                 >
                   <Play className="mr-2 h-5 w-5" />
                   Jouer Maintenant
                 </Button>
                 <Button
                   size="lg"
-                  variant="outline"
                   className="hover:scale-105 transition-transform"
                 >
                   <BookOpen className="mr-2 h-5 w-5" />
@@ -63,7 +71,11 @@ export default function Home() {
               transition={{ delay: 0.3, type: "spring" }}
               className="relative"
             >
-              <DemoBoard />
+              <img
+                src="/echiquier.png"
+                className="w-full h-full"
+                alt="Echiquier"
+              />
             </motion.div>
           </div>
         </div>

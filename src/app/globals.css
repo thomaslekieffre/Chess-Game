@@ -1,32 +1,51 @@
+@import url("https://fonts.googleapis.com/css2?family=Vina+Sans&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --primary: 346.8 77.2% 49.8%;
-  --primary-foreground: 355.7 100% 97.3%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --border: 240 3.7% 15.9%;
+  --background: 192 100% 97%;
+  --foreground: 192 100% 7%;
+  --card: 192 100% 97%;
+  --card-foreground: 192 100% 7%;
+  --popover: 192 100% 97%;
+  --popover-foreground: 192 100% 7%;
+  --primary: 192 85% 31%;
+  --primary-foreground: 192 100% 97%;
+  --secondary: 192 47% 7%;
+  --secondary-foreground: 192 100% 97%;
+  --muted: 192 47% 7%;
+  --muted-foreground: 192 100% 97%;
+  --accent: 192 85% 31%;
+  --accent-foreground: 192 100% 97%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 192 100% 97%;
+  --border: 192 16% 83%;
+  --input: 192 16% 83%;
+  --ring: 192 85% 31%;
+  --radius: 0.5rem;
 }
 
-.light {
-  --background: 0 0% 93%;
-  --foreground: 240 10% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --primary: 346.8 77.2% 49.8%;
-  --primary-foreground: 355.7 100% 97.3%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 346.8 77.2% 49.8%;
-  --radius: 0.5rem;
+.dark {
+  --background: 222 100% 7%;
+  --foreground: 192 100% 97%;
+  --card: 222 100% 7%;
+  --card-foreground: 192 100% 97%;
+  --popover: 222 100% 7%;
+  --popover-foreground: 192 100% 97%;
+  --primary: 192 85% 31%;
+  --primary-foreground: 192 100% 97%;
+  --secondary: 192 100% 97%;
+  --secondary-foreground: 222 100% 7%;
+  --muted: 192 100% 97%;
+  --muted-foreground: 222 100% 7%;
+  --accent: 192 85% 31%;
+  --accent-foreground: 192 100% 97%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 192 100% 97%;
+  --border: 222 47% 11%;
+  --input: 222 47% 11%;
+  --ring: 192 85% 31%;
 }
 
 body {
@@ -35,6 +54,6 @@ body {
 
 @layer components {
   .container {
-    @apply max-w-6xl mx-auto px-4;
+    @apply max-w-7xl mx-auto px-4;
   }
 }

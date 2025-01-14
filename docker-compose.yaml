@@ -1,7 +1,20 @@
 services:
   web:
-    build: .
+    image: chessgame-front
+    build:
+      context: .
+      dockerfile: Dockerfile.Front
     ports:
       - "8080:3000"
+    env_file:
+      - .env.local
+
+  server:
+    image: chessgame-server
+    build:
+      context: .
+      dockerfile: Dockerfile.Server
+    ports:
+      - "8081:3000"
     env_file:
       - .env.local

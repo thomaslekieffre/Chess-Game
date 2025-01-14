@@ -21,6 +21,8 @@ import {
   Vote,
   BadgePlus,
   UserPlus,
+  PenLine,
+  Users2,
 } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
@@ -184,42 +186,49 @@ export function Header() {
       setFriendData(null);
     }
   };
-
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm"
+      className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border"
     >
       <div className="container flex items-center justify-between h-16">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-6">
           <Link
             href="/"
-            className="text-xl font-bold hover:text-primary transition-colors"
+            className="text-lg font-semibold hover:text-primary transition-colors flex items-center gap-2"
           >
-            ChessGame
+            <div className="w-8 h-8">
+              <img src="/icon/logo.png" className="fill-current w-6 h-8" />
+            </div>
+            <span className="font-['Vina_Sans'] text-2xl font-light">
+              ChessGame
+            </span>
           </Link>
 
           <NavigationMenu>
-            <NavigationMenuList className="flex items-center gap-8">
+            <NavigationMenuList className="flex items-center gap-4">
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="text-lg hover:text-primary transition-colors">
+                <NavigationMenuTrigger className="flex items-center gap-2 hover:text-primary transition-colors">
+                  {/* <img src="icon/icon1.svg" className="w-5 h-5 dark:invert" /> */}
                   Jouer
                 </NavigationMenuTrigger>
-                <NavigationMenuContent className="bg-background dark:bg-background/80">
+                <NavigationMenuContent className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg">
                   <div className="grid w-[400px] gap-3 p-4">
                     {playModes.map((mode) => (
                       <NavigationMenuLink
                         key={mode.href}
                         href={isSignedIn ? mode.href : "/sign-in"}
-                        className="flex items-center gap-4 p-2 hover:bg-muted rounded-md transition-colors"
+                        className="flex items-center gap-4 p-3 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors group"
                       >
-                        <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-md bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary group-hover:bg-white/40 dark:group-hover:bg-white/40 transition-colors">
                           {mode.icon}
                         </div>
                         <div>
-                          <div className="font-medium">{mode.title}</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="font-medium group-hover:text-white transition-colors ">
+                            {mode.title}
+                          </div>
+                          <div className="text-sm text-muted-foreground group-hover:text-white/80 transition-colors">
                             {mode.description}
                           </div>
                         </div>
@@ -228,26 +237,27 @@ export function Header() {
                   </div>
                 </NavigationMenuContent>
               </NavigationMenuItem>
-
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="text-lg hover:text-primary transition-colors">
-                  <BadgePlus className="w-4 h-4 mr-2" />
+                <NavigationMenuTrigger className="flex items-center gap-2 hover:text-primary transition-colors">
+                  <PenLine className="w-4 h-4" />
                   Créer
                 </NavigationMenuTrigger>
-                <NavigationMenuContent className="bg-background dark:bg-background/80">
+                <NavigationMenuContent className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg">
                   <div className="grid w-[400px] gap-3 p-4">
                     {createModes.map((mode) => (
                       <NavigationMenuLink
                         key={mode.href}
                         href={isSignedIn ? mode.href : "/sign-in"}
-                        className="flex items-center gap-4 p-2 hover:bg-muted rounded-md transition-colors"
+                        className="flex items-center gap-4 p-3 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors group"
                       >
-                        <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-md bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary group-hover:bg-white/40 dark:group-hover:bg-white/40 transition-colors">
                           {mode.icon}
                         </div>
                         <div>
-                          <div className="font-medium">{mode.title}</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="font-medium group-hover:text-white transition-colors">
+                            {mode.title}
+                          </div>
+                          <div className="text-sm text-muted-foreground group-hover:text-white/80 transition-colors">
                             {mode.description}
                           </div>
                         </div>
@@ -256,131 +266,47 @@ export function Header() {
                   </div>
                 </NavigationMenuContent>
               </NavigationMenuItem>
-
               <NavigationMenuItem>
-                <Link
-                  href={isSignedIn ? "/learn" : "/sign-in"}
-                  legacyBehavior
-                  passHref
-                >
-                  <NavigationMenuLink className="flex items-center gap-2 hover:text-primary transition-colors">
+                <Link href="/learn">
+                  <Button variant="ghost" className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4" />
                     Apprendre
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
-
-              <NavigationMenuItem>
-                <Link href="/watch" legacyBehavior passHref>
-                  <NavigationMenuLink className="flex items-center gap-2 hover:text-primary transition-colors">
-                    <Eye className="w-4 h-4" />
-                    Regarder
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
-
-              <NavigationMenuItem>
-                <Link href="/leaderboard" legacyBehavior passHref>
-                  <NavigationMenuLink className="flex items-center gap-2 hover:text-primary transition-colors">
-                    <Trophy className="w-4 h-4" />
-                    Classement
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
-
-              <NavigationMenuItem>
-                <Link href="/achievements">
-                  <Button variant="ghost">
-                    <Trophy className="w-4 h-4 mr-2" />
-                    Succès
                   </Button>
                 </Link>
               </NavigationMenuItem>
-
               <NavigationMenuItem>
-                <button
-                  onClick={toggleFriendPopup}
-                  className="flex items-center"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  Amis
-                </button>
+                <Link href="/watch">
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <Eye className="w-4 h-4" />
+                    Regarder
+                  </Button>
+                </Link>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link href="/leaderboard">
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <Trophy className="w-4 h-4" />
+                    Classement
+                  </Button>
+                </Link>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link href="/friends">
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <Users2 className="w-4 h-4" />
+                    Amis
+                  </Button>
+                </Link>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
           <ModeToggle />
-          {isSignedIn ? (
-            <UserButton />
-          ) : (
-            <Button asChild>
-              <Link href="/sign-in">Se connecter</Link>
-            </Button>
-          )}
+          <UserButton />
         </div>
       </div>
-
-      {isFriendPopupOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-background border border-border shadow-lg rounded-md p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold">Demande d&apos;ami:</h3>
-            <Link
-              href="/friends"
-              className="text-sm text-primary hover:underline"
-            >
-              Liste d&apos;amis
-            </Link>
-          </div>
-          <div className="space-y-2">
-            <input
-              type="text"
-              placeholder="Nom d'utilisateur"
-              value={friendUsername}
-              onChange={(e) => setFriendUsername(e.target.value)}
-              className="border border-border bg-background rounded p-2 w-full"
-            />
-            <button
-              onClick={handleAddFriend}
-              className="mt-2 bg-primary text-primary-foreground rounded p-2 w-full"
-            >
-              Envoyer demande
-            </button>
-          </div>
-        </div>
-      )}
-
-      {confirmationOpen && friendData && (
-        <div className="absolute right-0 mt-2 w-64 bg-background border border-border shadow-lg rounded-md p-4">
-          <h3 className="font-semibold">Confirmer la demande d&apos;ami</h3>
-          <CustomImage
-            src={friendData.avatar_url}
-            alt="Ami"
-            width={64}
-            height={64}
-          />
-          <p className="text-foreground">
-            Voulez-vous vraiment demander à {friendUsername} d&apos;être ami ?
-          </p>
-          <div className="flex justify-between mt-4">
-            <button
-              onClick={sendFriendRequest}
-              className="bg-primary text-primary-foreground rounded p-2"
-            >
-              OUI
-            </button>
-            <button
-              onClick={() => setConfirmationOpen(false)}
-              className="bg-secondary text-secondary-foreground rounded p-2"
-            >
-              NON
-            </button>
-          </div>
-        </div>
-      )}
-
-      <FriendRequests />
     </motion.header>
   );
 }

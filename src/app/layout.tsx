@@ -2,10 +2,11 @@ import { Header } from "@/components/layout/header";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Nunito } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const nunito = Nunito({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "ChessGame",
@@ -20,7 +21,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="fr" suppressHydrationWarning>
-        <body className={inter.className}>
+        <body className={`${nunito.className}`}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
