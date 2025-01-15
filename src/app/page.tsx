@@ -19,20 +19,18 @@ export default function Home() {
 
       <section className="relative min-h-screen flex items-center pt-16">
         <div className="container relative z-20">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div>
+          <div className="flex items-center">
+            <div className="w-1/2">
               <AnimatedText
-                text="Réinventez les Échecs !"
-                className="text-5xl font-bold mb-6"
+                text="Reinventez les echecs !"
+                className="text-5xl font-bold mb-6 font-['Vina_Sans'] font-light"
               />
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="text-xl text-secondary mb-8 font-light"
+                className="text-xl text-secondary mb-8 font-light max-w-xl"
               >
-                Créez vos propres pièces, défiez le monde et devenez une
-                légende.
                 <br />
                 <br />
                 Avec ChessGame, faites bcp de blabla pour avoir un long pavé et
@@ -69,12 +67,18 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, type: "spring" }}
-              className="relative"
+              className="absolute right-0 w-[45%] h-[80vh]"
+              style={{
+                transform: "translateX(5%)",
+              }}
             >
               <img
                 src="/echiquier.png"
-                className="w-full h-full"
                 alt="Echiquier"
+                className="w-full h-full object-cover"
+                style={{
+                  objectPosition: "center right",
+                }}
               />
             </motion.div>
           </div>
