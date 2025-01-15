@@ -1402,3 +1402,18 @@ export class ChessEngine {
     return this.state.materialAdvantage;
   }
 }
+
+
+const b = {
+  beforemove:[],
+  move:[],
+  aftermove:[],
+}
+
+const c =  {
+  update:()=>{
+  },
+  selectMove:[],
+  move:[],
+  afterMove:[],
+}

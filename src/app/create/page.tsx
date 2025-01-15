@@ -18,6 +18,10 @@ import {
 import { CustomBoard } from "@/components/chess/custom-board";
 import { PieceType, Position, customBoardSquare, customBoardType } from "@/lib/chess/types";
 import Compass from "@/components/ui/compass";
+import BrickContainer from "@/components/chess/create/events/brick-container";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import type {BrickData} from '@/types/create'
 
 const isSelectedStyle = (isSelected:string[]) => {
   const includesJump = isSelected.includes('jump')
@@ -45,18 +49,56 @@ export default function CreatePiecePage() {
   const [straightLineMove,setStraightLineMove] = useState<{
     direction:Position,
     length:number,
-  }[]>([
-    // {direction:{x:1,y:0},length:2},
-    // {direction:{x:-1,y:0},length:2},
-    // {direction:{x:0,y:1},length:2},
-    // {direction:{x:0,y:-1},length:2},
-    // {direction:{x:1,y:1},length:2},
-    // {direction:{x:-1,y:1},length:2},
-    // {direction:{x:1,y:1},length:2},
-    // {direction:{x:1,y:-1},length:2},
-  ])
+  }[]>([])
   const [selectedDirection, setSelectedDirection] = useState<Position>({x:1,y:0});
   const [selectedDistance, setSelectedDistance] = useState('8')
+
+  const [bricks, setBricks] = useState<BrickData[]>([
+    { id: 1, x: 50, y: 50, color: "#ff6347", type:"b1", content: "Brick 1" },
+
+    { id: 2, x: 50, y: 300, color: "#ff6367", type:"b2", content: "Brick 2" },
+
+    { id: 3, x: 200, y: 50, color: "#4682b4", type:"b3", content: "Brick 3" },
+    
+    { id: 4, x: 350, y: 50, color: "#32cd32", type:"b4", content: "Brick 4" },
+    
+
+    { id: 5, x: 500, y: 50, color: "#37ca13", content: "Brick 5", type:'bhole1', holes:[{type:'drop',value:null,accept:['b1','b2'],id:1},{type:'drop',value:null,accept:['b3'],id:2}]},
+  ]);
+
+  // Mettre à jour la position d'une brique
+  const moveBrick = (id: number, x: number, y: number) => {
+    setBricks((prevBricks) =>
+      prevBricks.map((brick) =>
+        brick.id === id ? { ...brick, x, y } : brick
+      )
+    );
+  };
+
+
+  const insertBrickToContainer = (brickId: number, targetId: number,holeIndex:number) => {
+    const movedBrick = bricks.find((brick) => brick.id === brickId);
+    if(!movedBrick) return alert('mhmh')
+    
+    const updatedBricks = bricks.map((brick) => {
+      if (brick.id === targetId) {
+        if(!brick.holes) return
+        brick.holes[holeIndex] = {
+          type:'drop',
+          value:movedBrick,
+          accept:brick.holes[holeIndex].accept
+        }
+        return {
+          ...brick
+        };
+      }
+      if (brick.id === brickId) {
+        return null;
+      }
+      return brick;
+    }).filter((brick) => brick !== null);
+    setBricks(updatedBricks);
+  };
 
   const generateBoard = () => {
     let res:customBoardType = []
@@ -278,65 +320,90 @@ export default function CreatePiecePage() {
                 </div>
 
                 <div className="mt-6">
-                  <h2 className="text-xl font-semibold mb-4">
-                    Personnalisation {pieceName?`du ${pieceName}.`:'de votre piece.'}
-                  </h2>
-                  <h3>
-                    Ps : La piece est orienter ver le haut
-                  </h3>
-                  <CustomBoard
-                    // selectedPiece={selectedPiece}
-                    // onSquaresChange={setSelectedSquares}
-                    size={15}
-                    onSquareClick={handleSquareClick}
-                    board={board}
-                  />
-                  
-                  <div style={{display:'flex',flexDirection:'column',gap:'2rem'}}>
-                    <div style={{display:'flex',flexDirection:'row',alignItems:"center",gap:'2rem'}}>
-                      <button onClick={()=>{
-                        let newMove = {direction:selectedDirection,length:parseInt(selectedDistance)}
+                  <header>
+                    <h2 className="text-xl font-semibold mb-4">
+                      Personnalisation {pieceName?`du ${pieceName}.`:'de votre piece.'}
+                    </h2>
+                    <h3>
+                      Ps : La piece est orienter ver le haut
+                    </h3>
+                  </header>
 
-                        for (let i = 0; i < straightLineMove.length; i++) {
-                          const line = straightLineMove[i];
-                          
-                          if(line.direction==selectedDirection){
-                            if(line.length>parseInt(selectedDistance)){
-                              console.log('return')
-                              return
-                            }else{
-                              let newArray = JSON.parse(JSON.stringify(straightLineMove))
-                              newArray.pop(i)
-                              setStraightLineMove(straightLineMove => [...newArray])
-                              console.log('pop')
+
+                  <div>
+                    <CustomBoard
+                      // selectedPiece={selectedPiece}
+                      // onSquaresChange={setSelectedSquares}
+                      size={15}
+                      onSquareClick={handleSquareClick}
+                      board={board}
+                      selectedPiece="white"
+                      highlightSquares={[]}
+                      readOnly={true}
+                      // animatedPiece={true}
+                    />
+                    
+                    <div style={{display:'flex',flexDirection:'column',gap:'2rem'}}>
+                      <div style={{display:'flex',flexDirection:'row',alignItems:"center",gap:'2rem'}}>
+                        <button onClick={()=>{
+                          let newMove = {direction:selectedDirection,length:parseInt(selectedDistance)}
+
+                          for (let i = 0; i < straightLineMove.length; i++) {
+                            const line = straightLineMove[i];
+                            
+                            if(line.direction==selectedDirection){
+                              if(line.length>parseInt(selectedDistance)){
+                                console.log('return')
+                                return
+                              }else{
+                                let newArray = JSON.parse(JSON.stringify(straightLineMove))
+                                newArray.pop(i)
+                                setStraightLineMove(straightLineMove => [...newArray])
+                                console.log('pop')
+                              }
                             }
                           }
-                        }
 
-                        setStraightLineMove(straightLineMove => [...straightLineMove,newMove])
-                        displayLine(newMove.direction,{x:parseInt(`${board.length/2}`),y:parseInt(`${board.length/2}`)},newMove.length)
-                      }}>
-                        Crée
-                      </button>
-                      <input min={1} max={7} type="number" style={{height:"2rem"}} onChange={(e)=>{setSelectedDistance(e.target.value)}}></input>
-                      <Compass selectedDirection={selectedDirection} setSelectedDirection={setSelectedDirection}></Compass>
+                          setStraightLineMove(straightLineMove => [...straightLineMove,newMove])
+                          displayLine(newMove.direction,{x:parseInt(`${board.length/2}`),y:parseInt(`${board.length/2}`)},newMove.length)
+                        }}>
+                          Crée
+                        </button>
+                        <input min={1} max={7} type="number" style={{height:"2rem"}} onChange={(e)=>{setSelectedDistance(e.target.value)}}></input>
+                        <Compass selectedDirection={selectedDirection} setSelectedDirection={setSelectedDirection}></Compass>
+                      </div>
+                      {straightLineMove.map((item,i)=>{
+                        // const dir = 0
+                        const angleInRadians = Math.atan2(item.direction.y, item.direction.x);
+                        const angleInDegrees = (angleInRadians * 180) / Math.PI;
+
+                        let positiveAngle = (angleInDegrees+270)%360
+
+                        if(positiveAngle==360) positiveAngle=0
+
+                        return (
+                          <div key={i} style={{display:'flex',flexDirection:'row'}}>
+                            angle : {positiveAngle}
+                            <div style={{transform:`rotate(${positiveAngle-90}deg)`}}>{`--->`}</div>
+                          </div>
+                        )
+                      })}
                     </div>
-                    {straightLineMove.map((item,i)=>{
-                      // const dir = 0
-                      const angleInRadians = Math.atan2(item.direction.y, item.direction.x);
-                      const angleInDegrees = (angleInRadians * 180) / Math.PI;
+                  </div>
 
-                      let positiveAngle = (angleInDegrees+270)%360
+                  <div className="events">
+                    <h2>Events :</h2>
 
-                      if(positiveAngle==360) positiveAngle=0
+                    <div style={{ padding: "20px", textAlign: "center" }}>
+                      <h1>Brick Builder</h1>
+                      <DndProvider backend={HTML5Backend}>
+                        <BrickContainer bricks={bricks} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick}/>
+                      </DndProvider>  
+                    </div>
+                    {/* <div className="bricks-container">
 
-                      return (
-                        <div key={i} style={{display:'flex',flexDirection:'row'}}>
-                          angle : {positiveAngle}
-                          <div style={{transform:`rotate(${positiveAngle-90}deg)`}}>{`--->`}</div>
-                        </div>
-                      )
-                    })}
+                    </div> */}
+
                   </div>
 
                   <Button
