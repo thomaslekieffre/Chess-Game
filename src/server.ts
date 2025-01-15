@@ -218,5 +218,10 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.SOCKET_PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`Serveur Socket.IO en cours d'exécution sur le port ${PORT}`);
+  console.log(`Serveur démarré sur : http://localhost:${PORT}`);
+  console.log("Configuration CORS :", {
+    origin: "*",
+    methods: ["GET", "POST"],
+    credentials: true,
+  });
 });

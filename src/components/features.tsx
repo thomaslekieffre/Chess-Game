@@ -80,7 +80,7 @@ export function Features() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid md:grid-cols-3 gap-8"
+          className="grid md:grid-cols-3 gap-8 mb-32"
         >
           {features.map((feature, index) => (
             <motion.div key={index} variants={item}>
@@ -98,6 +98,14 @@ export function Features() {
             </motion.div>
           ))}
         </motion.div>
+      </div>
+      <div className="relative w-full h-[500px]">
+        <img
+          src="/echiquierLP.png"
+          alt="Echiquier"
+          className="w-full h-full object-cover object-top"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
       </div>
     </section>
   );

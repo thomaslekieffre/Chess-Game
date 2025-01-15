@@ -7,6 +7,7 @@ import { AnimatedText } from "@/components/ui/animated-text";
 import { Features } from "@/components/features";
 import { Header } from "@/components/layout/header";
 import { DemoBoard } from "@/components/chess/demo-board";
+import { Footer } from "@/components/layout/footer";
 
 export default function Home() {
   return (
