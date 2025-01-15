@@ -1,30 +1,26 @@
 "use client";
 
 import { ChessBoard } from "@/components/chess/board";
+import { CustomBoard } from "@/components/chess/custom-board";
 import { GameChat } from "@/components/chess/game-chat";
 import { GameControls } from "@/components/chess/game-controls";
 import { MovesHistory } from "@/components/chess/moves-history";
 import { PlayerCard } from "@/components/chess/player-card";
-import { Button } from "@/components/ui/button";
 import { useGameState } from "@/hooks/useGameState";
+import { importFEN } from "@/lib/chess/pgn/pgn2";
 import {
   ChessPiece,
   customBoardSquare,
   customBoardType,
   gameStatus,
   PieceColor,
-  playerType,
   Position,
-  roomType,
+  roomType
 } from "@/lib/chess/types";
 import { getOppositeColor } from "@/lib/chess/utils";
 import { supabaseClient } from "@/lib/supabase";
 import { useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
-import { GameMessages } from "./game-messages";
-import { CustomBoard } from "@/components/chess/custom-board";
-import { importFEN } from "@/lib/chess/pgn/pgn2";
 
 const generateBoardWaiting = () => {
   const board: (ChessPiece | null)[][] = importFEN(
@@ -56,7 +52,7 @@ const generateBoardWaiting = () => {
   return newBoard;
 };
 
-const socket = io(process.env.NEXT_SERVER_URL || "http://localhost:3001");
+const socket = "http://localhost:3000";
 console.log(process.env.NEXT_SERVER_URL);
 
 type PropsType = {
