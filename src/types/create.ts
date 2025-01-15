@@ -35,3 +35,8 @@ export type BrickData = {
   type:string;
   holes?:fieldType[];
 }
+
+export interface DragItem {
+  id: number;
+  type: string;
+}

@@ -64,6 +64,8 @@ export default function CreatePiecePage() {
     
 
     { id: 5, x: 500, y: 50, color: "#37ca13", content: "Brick 5", type:'bhole1', holes:[{type:'drop',value:null,accept:['b1','b2'],id:1},{type:'drop',value:null,accept:['b3'],id:2}]},
+
+    { id: 6, x: 500, y: 400, color: "#56db13", content: "Brick 6", type:'bhole2', holes:[{type:'drop',value:{ id: 5, x: 350, y: 50, color: "#32cd32", type:"b5", content: "Brick 5" },accept:['b5','b3','b4'],id:1}]},
   ]);
 
   // Mettre à jour la position d'une brique
@@ -77,13 +79,30 @@ export default function CreatePiecePage() {
 
 
   const insertBrickToContainer = (brickId: number, targetId: number,holeIndex:number) => {
-    const movedBrick = bricks.find((brick) => brick.id === brickId);
-    if(!movedBrick) return alert('mhmh')
+
+    // console.log(brickId,targetId,holeIndex)
+
+    // return
+
+    const tmpBrick:BrickData[] = JSON.parse(JSON.stringify(bricks))
+
+    const movedBrick = tmpBrick.find((brick) => brick.id === brickId);
+    const targetBrick = tmpBrick.find((brick) => brick.id === targetId); 
+    const holes = targetBrick?.holes
+
+    if(!holes) return alert('mhmhmh')
     
-    const updatedBricks = bricks.map((brick) => {
+    const holeData = holes[holeIndex]
+
+    if(!movedBrick||!targetBrick||!holeData) return alert('mhmh')
+
+    if(!holeData.accept.includes(movedBrick.type)) return alert ('Not accepted')
+    
+    const updatedtmpBrick = tmpBrick.map((brick) => {
       if (brick.id === targetId) {
         if(!brick.holes) return
         brick.holes[holeIndex] = {
+          id:brick.holes[holeIndex].id,
           type:'drop',
           value:movedBrick,
           accept:brick.holes[holeIndex].accept
@@ -97,6 +116,7 @@ export default function CreatePiecePage() {
       }
       return brick;
     }).filter((brick) => brick !== null);
+    return 
     setBricks(updatedBricks);
   };
 

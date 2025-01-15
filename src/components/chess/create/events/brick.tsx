@@ -1,6 +1,7 @@
-import React, { FC, useRef, useState } from "react";
+import React, { FC, useEffect, useMemo, useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import type { BrickData, fieldType } from "@/types/create";
+import type { BrickData, DragItem, fieldType } from "@/types/create";
+import Hole from "./hole";
 
 interface BrickProps {
   id: number;
@@ -12,11 +13,6 @@ interface BrickProps {
   isPlaced?:boolean;
   moveBrick: (id: number, x: number, y: number) => void;
   insertBrickToContainer: (brickId: number, targetId: number, holeIndex: number) => void;
-}
-
-interface DragItem {
-  id: number;
-  type: string;
 }
 
 const Brick: FC<BrickProps> = ({
@@ -31,10 +27,10 @@ const Brick: FC<BrickProps> = ({
   holes=[],
 }) => {
   const ref = useRef<HTMLDivElement>(null);
-  
-  const holeRefs = useRef<HTMLDivElement[]>([]); // Références pour chaque trou
 
   const hasHole = holes.length>0
+
+
 
   // Drag logic
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -45,6 +41,7 @@ const Brick: FC<BrickProps> = ({
     }),
     end: (item, monitor) => {
       const offset = monitor.getSourceClientOffset();
+      console.log(item)
       if (offset) {
         const parent = ref.current?.offsetParent as HTMLElement;
         const parentRect = parent.getBoundingClientRect();
@@ -56,20 +53,22 @@ const Brick: FC<BrickProps> = ({
   }));
 
   // Drop logic
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: "BRICK",
-    drop: (item: DragItem) => {
-      if (hasHole && item.id !== id) {
-        // if((contained&&contained.length>0)&&!acceptMany) return
-        // insertBrickToContainer(item.id, id); // insert brick into the brick with hole
-      }
-    },
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
-    }),
-  }));
+  // const [{ isOver }, drop] = useDrop(() => ({
+  //   accept: "BRICK",
+  //   drop: (item: DragItem) => {
+  //     // if (hasHole && item.id !== id) {
+  //     //   // if((contained&&contained.length>0)&&!acceptMany) return
+  //     //   // insertBrickToContainer(item.id, id); // insert brick into the brick with hole
+  //     // }
+  //   },
+  //   collect: (monitor) => ({
+  //     isOver: !!monitor.isOver(),
+  //   }),
+  // }));
 
-  drag(drop(ref));
+  // drag(drop(ref));
+
+  drag(ref);
 
   return (
     <div
@@ -111,77 +110,9 @@ const Brick: FC<BrickProps> = ({
       {
         
 
-        holes.map((item,i)=>{
-          
-          const [{ isOver: isHoleOver }, holeDrop] = useDrop(() => ({
-            accept: "BRICK",
-            drop: (item2: DragItem) => {
-              if (item.id !== item2.id) {
-                const holeIndex = holes.findIndex((h) => h.id === item.id);
-                if (holeIndex === -1) return alert("Erreur hole index");
-                insertBrickToContainer(item2.id, id, holeIndex);
-              }
-            },
-            collect: (monitor) => ({
-              isOver: !!monitor.isOver(),
-            }),
-          }));
-          
-          const holeRef = (el: HTMLDivElement) => {
-            if (el) {
-              holeRefs.current[i] = el;
-              holeDrop(el);
-            }
-          };
-          // drop(ref)
-          
-          return (
-            <div key={i} ref={holeRef}>
-              {hasHole && !(item.value) && (
-                <div
-                  style={{
-                    marginTop: "10px",
-                    height: "50px",
-                    width: "80px",
-                    border: isOver ? "2px dashed #00f" : "2px dashed #ccc",
-                    backgroundColor: isOver ? "#f0f8ff" : "transparent",
-                    borderRadius: "5px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  // key={i}
-                >
-                  Drop Brick here
-                </div>
-              )}
-              {(item.value!==null)?(
-                <div
-                style={{
-                  marginTop: "10px",
-                  // position:"absolute",
-                  // height: "50px",
-                  // width: "80px",
-                  border: isOver ? "2px dashed #00f" : "2px dashed #ccc",
-                  backgroundColor: isOver ? "#f0f8ff" : "transparent",
-                  borderRadius: "5px",
-                  display: "flex",
-                  flexDirection:"column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                // key={i}
-                >
-                  <Brick isPlaced={true} key={item.value.id} color={item.value.color} content={item.value.content} id={item.value.id} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick} x={item.value.x} y={item.value.y} holes={item.value.holes}></Brick>
-                    {
-                        // item.value.map((item,i)=>(
-                        // ))
-                    }
-                </div>
-              ):''}
-            </div>
-          )
-        })
+        holes.map((item,i)=>(
+          <Hole index={i} item={item} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick} id={id} key={i}></Hole>
+        ))
         
       }
       
