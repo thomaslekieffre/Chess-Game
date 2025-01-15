@@ -52,7 +52,7 @@ const generateBoardWaiting = () => {
   return newBoard;
 };
 
-const socket = "http://localhost:3000";
+const socket = "http://localhost:8081";
 console.log(process.env.NEXT_SERVER_URL);
 
 type PropsType = {
