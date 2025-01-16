@@ -21,7 +21,7 @@ import Compass from "@/components/ui/compass";
 import BrickContainer from "@/components/chess/create/events/brick-container";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import type {BrickData} from '@/types/create'
+import type {BrickData, fieldType} from '@/types/create'
 
 const isSelectedStyle = (isSelected:string[]) => {
   const includesJump = isSelected.includes('jump')
@@ -54,18 +54,19 @@ export default function CreatePiecePage() {
   const [selectedDistance, setSelectedDistance] = useState('8')
 
   const [bricks, setBricks] = useState<BrickData[]>([
-    { id: 1, x: 50, y: 50, color: "#ff6347", type:"b1", content: "Brick 1" },
+    { id: 1, x: 50, y: 50, color: "#ff6347", type:"b1", content: "Brick 1",parent:null,parenthole:null },
 
-    { id: 2, x: 50, y: 300, color: "#ff6367", type:"b2", content: "Brick 2" },
+    { id: 2, x: 50, y: 300, color: "#ff6367", type:"b2", content: "Brick 2",parent:null,parenthole:null },
 
-    { id: 3, x: 200, y: 50, color: "#4682b4", type:"b3", content: "Brick 3" },
+    { id: 3, x: 200, y: 50, color: "#4682b4", type:"b3", content: "Brick 3",parent:null,parenthole:null },
     
-    { id: 4, x: 350, y: 50, color: "#32cd32", type:"b4", content: "Brick 4" },
-    
+    { id: 4, x: 350, y: 50, color: "#32cd32", type:"b4", content: "Brick 4",parent:null,parenthole:null },
 
-    { id: 5, x: 500, y: 50, color: "#37ca13", content: "Brick 5", type:'bhole1', holes:[{type:'drop',value:null,accept:['b1','b2'],id:1},{type:'drop',value:null,accept:['b3'],id:2}]},
+    { id: 7, x: 350, y: 150, color: "#32cd32", type:"b7", content: "Brick 7",parent:6,parenthole:1 },
 
-    { id: 6, x: 500, y: 400, color: "#56db13", content: "Brick 6", type:'bhole2', holes:[{type:'drop',value:{ id: 5, x: 350, y: 50, color: "#32cd32", type:"b5", content: "Brick 5" },accept:['b5','b3','b4'],id:1}]},
+    { id: 5, x: 500, y: 50, color: "#37ca13", content: "Brick 5", type:'bhole1', holes:[{type:'drop',accept:['b1','b2'],id:1,child:[],acceptMany:false},{type:'drop',accept:['b3'],id:2,child:[],acceptMany:true}],parent:null,parenthole:null},
+
+    { id: 6, x: 500, y: 400, color: "#56db13", content: "Brick 6", type:'bhole2', holes:[{type:'drop',child:[7],accept:['b7','b3','b4'],id:1,acceptMany:false}],parent:null,parenthole:null},
   ]);
 
   // Mettre à jour la position d'une brique
@@ -100,24 +101,51 @@ export default function CreatePiecePage() {
     
     const updatedtmpBrick = tmpBrick.map((brick) => {
       if (brick.id === targetId) {
+
         if(!brick.holes) return
+        let holeChild = brick.holes[holeIndex].child
+        let newChild:number[] = [movedBrick.id]
+        if(holeChild.length>0&&holeData.acceptMany){
+          newChild = JSON.parse(JSON.stringify(holeChild))
+          newChild.push(movedBrick.id)
+        }
+
         brick.holes[holeIndex] = {
           id:brick.holes[holeIndex].id,
           type:'drop',
-          value:movedBrick,
-          accept:brick.holes[holeIndex].accept
+          // value:movedBrick,
+          child:newChild,
+          accept:brick.holes[holeIndex].accept,
+          acceptMany:holeData.acceptMany,
         }
+
         return {
           ...brick
         };
+
+
       }
       if (brick.id === brickId) {
-        return null;
+        return {
+          ...brick,
+          parent:targetId,
+          parenthole:holeIndex,
+        }
+        // return null;
+      }
+      if(holeData.child.includes(brick.id)){
+        // let lenght = holeData.child.length
+        if(!holeData.acceptMany){
+          let newBrick = {...brick}
+          newBrick.parent=null
+          newBrick.parenthole=null
+          return newBrick
+        }
       }
       return brick;
     }).filter((brick) => brick !== null);
-    return 
-    setBricks(updatedBricks);
+    // return 
+    setBricks(updatedtmpBrick);
   };
 
   const generateBoard = () => {
@@ -416,6 +444,9 @@ export default function CreatePiecePage() {
 
                     <div style={{ padding: "20px", textAlign: "center" }}>
                       <h1>Brick Builder</h1>
+                      <button onClick={()=>{
+                        console.log(bricks)
+                      }}>log</button>
                       <DndProvider backend={HTML5Backend}>
                         <BrickContainer bricks={bricks} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick}/>
                       </DndProvider>  

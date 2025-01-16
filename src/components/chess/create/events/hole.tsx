@@ -10,6 +10,7 @@ type props = {
   moveBrick: (id: number, x: number, y: number) => void;
   insertBrickToContainer: (brickId: number, targetId: number, holeIndex: number) => void;
   id:number;
+  bricks:BrickData[];
 } 
 
 const Hole: FC<props> = ({
@@ -18,6 +19,7 @@ const Hole: FC<props> = ({
   moveBrick,
   insertBrickToContainer,
   id,
+  bricks,
 }) => {
 
   const ref = useRef<HTMLDivElement>(null);
@@ -42,10 +44,19 @@ const Hole: FC<props> = ({
 
   holeDrop(ref)
 
+  let value = null
+
+  if(item.child!==null){
+    value = bricks.find(
+      // (b) => b.id===item.child
+      (b) => item.child?.includes(b.id)
+    );
+  }
+
   return (
     <div key={index} ref={ref}>
       id:{id}
-      {!(item.value) && (
+      {!(value) && (
         <div
           style={{
             marginTop: "10px",
@@ -63,7 +74,7 @@ const Hole: FC<props> = ({
           Drop Brick here
         </div>
       )}
-      {(item.value!==null)?(
+      {(value!==null&&value!==undefined)?(
         <div
         style={{
           marginTop: "10px",
@@ -80,7 +91,7 @@ const Hole: FC<props> = ({
         }}
         // key={i}
         >
-          <Brick isPlaced={true} key={item.value.id} color={item.value.color} content={item.value.content} id={item.value.id} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick} x={item.value.x} y={item.value.y} holes={item.value.holes}></Brick>
+          <Brick bricks={bricks} isPlaced={true} key={value.id} color={value.color} content={value.content} id={value.id} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick} x={value.x} y={value.y} holes={value.holes}></Brick>
             {
                 // item.value.map((item,i)=>(
                 // ))

@@ -1,8 +1,10 @@
 type dropFieldType = {
   type:'drop';
   accept:string[];
-  value:null|BrickData;
+  // value:null|BrickData;
+  child:number[];
   id:number;
+  acceptMany:boolean;
 } 
 
 type numberFieldType = {
@@ -34,6 +36,8 @@ export type BrickData = {
   content: string;
   type:string;
   holes?:fieldType[];
+  parent:number|null;
+  parenthole:number|null
 }
 
 export interface DragItem {

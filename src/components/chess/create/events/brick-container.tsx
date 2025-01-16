@@ -39,14 +39,20 @@ const BrickContainer: React.FC<BrickContainerProps> = ({
         overflow: "hidden",
       }}
     >
-      {bricks.map((brick,i) => (
-        <Brick
-          key={i}
-          {...brick}
-          moveBrick={moveBrickWithinBounds}
-          insertBrickToContainer={insertBrickToContainer} // Pass the insert function to handle drop
-        />
-      ))}
+      {bricks.map((brick,i) => {
+        if(brick.parent!==null){
+          return
+        }
+        return (
+          <Brick
+            bricks={bricks}
+            key={i}
+            {...brick}
+            moveBrick={moveBrickWithinBounds}
+            insertBrickToContainer={insertBrickToContainer} // Pass the insert function to handle drop
+          />
+        )
+      })}
     </div>
   );
 };

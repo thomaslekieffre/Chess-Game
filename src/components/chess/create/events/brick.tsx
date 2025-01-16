@@ -13,6 +13,7 @@ interface BrickProps {
   isPlaced?:boolean;
   moveBrick: (id: number, x: number, y: number) => void;
   insertBrickToContainer: (brickId: number, targetId: number, holeIndex: number) => void;
+  bricks:BrickData[];
 }
 
 const Brick: FC<BrickProps> = ({
@@ -25,6 +26,7 @@ const Brick: FC<BrickProps> = ({
   moveBrick,
   insertBrickToContainer,
   holes=[],
+  bricks,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -111,7 +113,7 @@ const Brick: FC<BrickProps> = ({
         
 
         holes.map((item,i)=>(
-          <Hole index={i} item={item} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick} id={id} key={i}></Hole>
+          <Hole bricks={bricks} index={i} item={item} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick} id={id} key={i}></Hole>
         ))
         
       }
