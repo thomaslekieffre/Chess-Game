@@ -4,35 +4,25 @@ import type { BrickData, DragItem, fieldType } from "@/types/create";
 import Hole from "./hole";
 
 interface BrickProps {
-  id: number;
-  x: number;
-  y: number;
-  color: string;
-  content: string;
-  holes?:fieldType[];
-  isPlaced?:boolean;
   moveBrick: (id: number, x: number, y: number) => void;
-  insertBrickToContainer: (brickId: number, targetId: number, holeIndex: number) => void;
+  insertBrickToContainer: (brickId: number, targetBrick: BrickData, holeIndex: number) => void;
   bricks:BrickData[];
+  brickItem:BrickData;
 }
 
 const Brick: FC<BrickProps> = ({
-  id,
-  x,
-  y,
-  color,
-  content,
-  isPlaced=false,
   moveBrick,
   insertBrickToContainer,
-  holes=[],
   bricks,
+  brickItem,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  const hasHole = holes.length>0
+  const {color,content,id,parent,parenthole,type,x,y} = brickItem
+  
+  const hasHole = content.length>0
 
-
+  const isPlaced = parent!==null
 
   // Drag logic
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -53,22 +43,6 @@ const Brick: FC<BrickProps> = ({
       }
     },
   }));
-
-  // Drop logic
-  // const [{ isOver }, drop] = useDrop(() => ({
-  //   accept: "BRICK",
-  //   drop: (item: DragItem) => {
-  //     // if (hasHole && item.id !== id) {
-  //     //   // if((contained&&contained.length>0)&&!acceptMany) return
-  //     //   // insertBrickToContainer(item.id, id); // insert brick into the brick with hole
-  //     // }
-  //   },
-  //   collect: (monitor) => ({
-  //     isOver: !!monitor.isOver(),
-  //   }),
-  // }));
-
-  // drag(drop(ref));
 
   drag(ref);
 
@@ -107,14 +81,26 @@ const Brick: FC<BrickProps> = ({
         zIndex: isDragging ? 1000 : "auto",
       }}
     >
-      <span>{content}</span>
-      <span>Accepted: TODO</span>
+      {/* <span>{content}</span> */}
+      {/* <span>Accepted: TODO</span> */}
       {
         
 
-        holes.map((item,i)=>(
-          <Hole bricks={bricks} index={i} item={item} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick} id={id} key={i}></Hole>
-        ))
+        content.map((item,i)=>{
+          switch (item.type) {
+            case "drop":
+              return (
+                <Hole currentBrick={brickItem} bricks={bricks} index={i} item={item} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick} id={id} key={i}></Hole>
+              )
+            case "text":
+              return (
+                <span key={i}>{item.value}</span>
+              )
+          
+            default:
+              break;
+          }
+        })
         
       }
       

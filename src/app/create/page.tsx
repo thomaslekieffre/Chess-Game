@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,7 @@ import Compass from "@/components/ui/compass";
 import BrickContainer from "@/components/chess/create/events/brick-container";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import type {BrickData, fieldType} from '@/types/create'
+import type {BrickData, dropFieldType, fieldType} from '@/types/create'
 
 const isSelectedStyle = (isSelected:string[]) => {
   const includesJump = isSelected.includes('jump')
@@ -54,21 +54,25 @@ export default function CreatePiecePage() {
   const [selectedDistance, setSelectedDistance] = useState('8')
 
   const [bricks, setBricks] = useState<BrickData[]>([
-    { id: 1, x: 50, y: 50, color: "#ff6347", type:"b1", content: "Brick 1",parent:null,parenthole:null },
+    { id: 1, x: 50, y: 50, color: "#ff6347", type:"b1", content: [{type:"text",value:"Brick 1",id:1}],parent:null,parenthole:null },
 
-    { id: 2, x: 50, y: 300, color: "#ff6367", type:"b2", content: "Brick 2",parent:null,parenthole:null },
+    { id: 2, x: 50, y: 300, color: "#ff6367", type:"b2", content: [{type:"text",value:"Brick 2",id:1}],parent:null,parenthole:null },
 
-    { id: 3, x: 200, y: 50, color: "#4682b4", type:"b3", content: "Brick 3",parent:null,parenthole:null },
+    { id: 3, x: 200, y: 50, color: "#4682b4", type:"b3", content: [{type:"text",value:"Brick 3",id:1}],parent:null,parenthole:null },
     
-    { id: 4, x: 350, y: 50, color: "#32cd32", type:"b4", content: "Brick 4",parent:null,parenthole:null },
+    { id: 4, x: 350, y: 50, color: "#32cd32", type:"b4", content: [{type:"text",value:"Brick 4",id:1}],parent:null,parenthole:null },
 
-    { id: 7, x: 350, y: 150, color: "#32cd32", type:"b7", content: "Brick 7",parent:6,parenthole:1 },
+    { id: 7, x: 350, y: 150, color: "#32cd32", type:"b7", content: [{type:"text",value:"Brick 7",id:1}],parent:null,parenthole:null },
 
-    { id: 5, x: 500, y: 50, color: "#37ca13", content: "Brick 5", type:'bhole1', holes:[{type:'drop',accept:['b1','b2'],id:1,child:[],acceptMany:false},{type:'drop',accept:['b3'],id:2,child:[],acceptMany:true}],parent:null,parenthole:null},
+    { id: 5, x: 500, y: 50, color: "#37ca13", content: [{type:"text",value:"Brick 5",id:1},{type:'drop',accept:['b1','b2'],id:2,child:[],acceptMany:false},{type:'drop',accept:['b3'],id:3,child:[],acceptMany:true}], type:'bhole1', parent:null,parenthole:null},
 
-    { id: 6, x: 500, y: 400, color: "#56db13", content: "Brick 6", type:'bhole2', holes:[{type:'drop',child:[7],accept:['b7','b3','b4'],id:1,acceptMany:false}],parent:null,parenthole:null},
+    { id: 6, x: 500, y: 400, color: "#56db13", content: [{type:"text",value:"Brick 6",id:1},{type:'drop',child:[],accept:['bhole1','bhole2'],id:2,acceptMany:false}], type:'bhole2',parent:null,parenthole:null},
   ]);
-
+  
+  useEffect(()=>{
+    console.log(bricks)
+  },[bricks])
+   
   // Mettre à jour la position d'une brique
   const moveBrick = (id: number, x: number, y: number) => {
     setBricks((prevBricks) =>
@@ -79,43 +83,44 @@ export default function CreatePiecePage() {
   };
 
 
-  const insertBrickToContainer = (brickId: number, targetId: number,holeIndex:number) => {
-
-    // console.log(brickId,targetId,holeIndex)
-
-    // return
+  const insertBrickToContainer = (brickId: number, targetBrick: BrickData,holeIndex:number) => {
 
     const tmpBrick:BrickData[] = JSON.parse(JSON.stringify(bricks))
 
     const movedBrick = tmpBrick.find((brick) => brick.id === brickId);
-    const targetBrick = tmpBrick.find((brick) => brick.id === targetId); 
-    const holes = targetBrick?.holes
+    const holes = targetBrick?.content
 
     if(!holes) return alert('mhmhmh')
     
     const holeData = holes[holeIndex]
 
+    if(holeData.type!=='drop') return
+
     if(!movedBrick||!targetBrick||!holeData) return alert('mhmh')
 
-    if(!holeData.accept.includes(movedBrick.type)) return alert ('Not accepted')
+    if(!holeData.accept.includes(movedBrick.type)) return
     
     const updatedtmpBrick = tmpBrick.map((brick) => {
-      if (brick.id === targetId) {
+      if (brick.id === targetBrick.id) {
 
-        if(!brick.holes) return
-        let holeChild = brick.holes[holeIndex].child
+        console.log(brick)
+
+        if(!brick.content) return
+        let hole = brick.content[holeIndex]
+        if(hole.type!=="drop") return
+        let holeChild = hole.child
         let newChild:number[] = [movedBrick.id]
         if(holeChild.length>0&&holeData.acceptMany){
           newChild = JSON.parse(JSON.stringify(holeChild))
           newChild.push(movedBrick.id)
         }
 
-        brick.holes[holeIndex] = {
-          id:brick.holes[holeIndex].id,
+        brick.content[holeIndex] = {
+          id:hole.id,
           type:'drop',
           // value:movedBrick,
           child:newChild,
-          accept:brick.holes[holeIndex].accept,
+          accept:hole.accept,
           acceptMany:holeData.acceptMany,
         }
 
@@ -128,7 +133,7 @@ export default function CreatePiecePage() {
       if (brick.id === brickId) {
         return {
           ...brick,
-          parent:targetId,
+          parent:targetBrick.id,
           parenthole:holeIndex,
         }
         // return null;
@@ -144,7 +149,7 @@ export default function CreatePiecePage() {
       }
       return brick;
     }).filter((brick) => brick !== null);
-    // return 
+
     setBricks(updatedtmpBrick);
   };
 

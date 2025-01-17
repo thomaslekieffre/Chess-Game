@@ -8,9 +8,10 @@ type props = {
   item:fieldType;
   index:number;
   moveBrick: (id: number, x: number, y: number) => void;
-  insertBrickToContainer: (brickId: number, targetId: number, holeIndex: number) => void;
+  insertBrickToContainer: (brickId: number, targetBrick: BrickData, holeIndex: number) => void;
   id:number;
   bricks:BrickData[];
+  currentBrick:BrickData;
 } 
 
 const Hole: FC<props> = ({
@@ -20,27 +21,29 @@ const Hole: FC<props> = ({
   insertBrickToContainer,
   id,
   bricks,
+  currentBrick,
 }) => {
 
   const ref = useRef<HTMLDivElement>(null);
 
 
+  useEffect(()=>{
+    console.log(bricks)
+  },[bricks])
+
   // Initialiser le Hook `useDrop`
   const [{ isOver }, holeDrop] = useDrop(() => ({
     accept: "BRICK",
     drop: (item2: DragItem) => {
-      // if (item.id !== item2.id) {
       const holeIndex = index
       if (holeIndex === -1) return alert("Erreur hole index");
-      // console.log(id)
-      // console.log(item,item2)
-      insertBrickToContainer(item2.id, id, holeIndex);
-      // }
+      // return console.log(bricks)
+      insertBrickToContainer(item2.id, currentBrick, holeIndex);
     },
     collect: (monitor) => ({
       isOver: !!monitor.isOver(),
     }),
-  }));
+  }),[bricks]);
 
   holeDrop(ref)
 
@@ -56,6 +59,11 @@ const Hole: FC<props> = ({
   return (
     <div key={index} ref={ref}>
       id:{id}
+      <button onClick={()=>{
+        console.log(bricks)
+      }}>
+        aa
+      </button>
       {!(value) && (
         <div
           style={{
@@ -78,9 +86,6 @@ const Hole: FC<props> = ({
         <div
         style={{
           marginTop: "10px",
-          // position:"absolute",
-          // height: "50px",
-          // width: "80px",
           border: isOver ? "2px dashed #00f" : "2px dashed #ccc",
           backgroundColor: isOver ? "#f0f8ff" : "transparent",
           borderRadius: "5px",
@@ -89,13 +94,8 @@ const Hole: FC<props> = ({
           alignItems: "center",
           justifyContent: "center",
         }}
-        // key={i}
         >
-          <Brick bricks={bricks} isPlaced={true} key={value.id} color={value.color} content={value.content} id={value.id} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick} x={value.x} y={value.y} holes={value.holes}></Brick>
-            {
-                // item.value.map((item,i)=>(
-                // ))
-            }
+          <Brick brickItem={currentBrick} bricks={bricks} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick}></Brick>
         </div>
       ):''}
     </div>

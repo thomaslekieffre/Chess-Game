@@ -1,4 +1,4 @@
-type dropFieldType = {
+export type dropFieldType = {
   type:'drop';
   accept:string[];
   // value:null|BrickData;
@@ -7,35 +7,40 @@ type dropFieldType = {
   acceptMany:boolean;
 } 
 
-type numberFieldType = {
+export type numberFieldType = {
   type:'number';
   value:number;
   id:number;
 }
 
-type inputFieldType = {
+export type inputFieldType = {
   type:'input';
   value:string;
   id:number;
 }
 
-type customSelectFieldType = {
+export type customSelectFieldType = {
   type:'select';
   value:any[];
   id:number;
 }
 
-// type fieldType = dropFieldType|numberFieldType|inputFieldType|customSelectFieldType 
-export type fieldType = dropFieldType 
+export type textFieldType = {
+  type:'text';
+  value:string;
+  id:number;
+}
+export type fieldType = dropFieldType|numberFieldType|inputFieldType|customSelectFieldType|textFieldType
+// export type fieldType = dropFieldType 
 
 export type BrickData = {
   id: number;
   x: number;
   y: number;
   color: string;
-  content: string;
+  // content: string;
   type:string;
-  holes?:fieldType[];
+  content:fieldType[];
   parent:number|null;
   parenthole:number|null
 }

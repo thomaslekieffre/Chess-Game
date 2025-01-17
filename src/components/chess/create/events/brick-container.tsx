@@ -5,7 +5,7 @@ import type { BrickData } from "@/types/create";
 interface BrickContainerProps {
   bricks:BrickData[];
   moveBrick: (id: number, x: number, y: number) => void;
-  insertBrickToContainer: (brickId: number, targetId: number, holeIndex: number) => void;
+  insertBrickToContainer: (brickId: number, targetBrick: BrickData, holeIndex: number) => void;
 }
 
 const BrickContainer: React.FC<BrickContainerProps> = ({
@@ -47,7 +47,7 @@ const BrickContainer: React.FC<BrickContainerProps> = ({
           <Brick
             bricks={bricks}
             key={i}
-            {...brick}
+            brickItem={brick}
             moveBrick={moveBrickWithinBounds}
             insertBrickToContainer={insertBrickToContainer} // Pass the insert function to handle drop
           />
