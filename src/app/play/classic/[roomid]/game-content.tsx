@@ -15,12 +15,19 @@ import {
   gameStatus,
   PieceColor,
   Position,
-  roomType
+  roomType,
 } from "@/lib/chess/types";
 import { getOppositeColor } from "@/lib/chess/utils";
 import { supabaseClient } from "@/lib/supabase";
 import { useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:3001", {
+  withCredentials: true,
+  autoConnect: true,
+  transports: ["websocket", "polling"],
+});
 
 const generateBoardWaiting = () => {
   const board: (ChessPiece | null)[][] = importFEN(
@@ -51,9 +58,6 @@ const generateBoardWaiting = () => {
   }
   return newBoard;
 };
-
-const socket = "http://localhost:8081";
-console.log(process.env.NEXT_SERVER_URL);
 
 type PropsType = {
   roomId: string;

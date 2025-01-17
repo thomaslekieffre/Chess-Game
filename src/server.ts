@@ -170,7 +170,7 @@ const supabase = supabaseClient();
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
     allowedHeaders: ["my-custom-header"],
     credentials: true,
@@ -215,7 +215,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = 3000;
+const PORT = 3001;
 server.listen(PORT, () => {
   console.log(`Serveur démarré sur : http://localhost:${PORT}`);
   console.log("Configuration CORS :", {
