@@ -5,11 +5,10 @@ dotenv.config({
   path: path.join(process.cwd(), ".env.local"),
 });
 
+import { supabaseClient } from "@/lib/supabase";
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
-import { convertToPGN } from "./lib/chess/pgn";
-import { supabaseClient } from "@/lib/supabase";
 import { roomType } from "./lib/chess/types";
 
 // import {PgnReader} from '@mliebelt/pgn-reader'
@@ -171,7 +170,7 @@ const supabase = supabaseClient();
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
     allowedHeaders: ["my-custom-header"],
     credentials: true,
@@ -216,7 +215,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.SOCKET_PORT || 3001;
+const PORT = 3001;
 server.listen(PORT, () => {
   console.log(`Serveur démarré sur : http://localhost:${PORT}`);
   console.log("Configuration CORS :", {
