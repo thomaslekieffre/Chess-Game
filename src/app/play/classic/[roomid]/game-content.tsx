@@ -23,7 +23,7 @@ import { useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:3001", {
+const socket = io("http://localhost:8080", {
   withCredentials: true,
   autoConnect: true,
   transports: ["websocket", "polling"],
