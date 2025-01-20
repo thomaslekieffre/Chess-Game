@@ -22,6 +22,7 @@ import BrickContainer from "@/components/chess/create/events/brick-container";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import type {BrickData, dropFieldType, fieldType} from '@/types/create'
+import { Bricks } from "@/lib/create/bricksHandle";
 
 const isSelectedStyle = (isSelected:string[]) => {
   const includesJump = isSelected.includes('jump')
@@ -53,105 +54,21 @@ export default function CreatePiecePage() {
   const [selectedDirection, setSelectedDirection] = useState<Position>({x:1,y:0});
   const [selectedDistance, setSelectedDistance] = useState('8')
 
-  const [bricks, setBricks] = useState<BrickData[]>([
+  const updateBricksState = () => {
+    setBricks(BricksEngine.getBricks())
+  }
+
+  const [BricksEngine] = useState(() => new Bricks(updateBricksState,[
     { id: 1, x: 50, y: 50, color: "#ff6347", type:"b1", content: [{type:"text",value:"Brick 1",id:1}],parent:null,parenthole:null },
-
     { id: 2, x: 50, y: 300, color: "#ff6367", type:"b2", content: [{type:"text",value:"Brick 2",id:1}],parent:null,parenthole:null },
-
     { id: 3, x: 200, y: 50, color: "#4682b4", type:"b3", content: [{type:"text",value:"Brick 3",id:1}],parent:null,parenthole:null },
-    
     { id: 4, x: 350, y: 50, color: "#32cd32", type:"b4", content: [{type:"text",value:"Brick 4",id:1}],parent:null,parenthole:null },
-
     { id: 7, x: 350, y: 150, color: "#32cd32", type:"b7", content: [{type:"text",value:"Brick 7",id:1}],parent:null,parenthole:null },
-
     { id: 5, x: 500, y: 50, color: "#37ca13", content: [{type:"text",value:"Brick 5",id:1},{type:'drop',accept:['b1','b2'],id:2,child:[],acceptMany:false},{type:'drop',accept:['b3'],id:3,child:[],acceptMany:true}], type:'bhole1', parent:null,parenthole:null},
+    { id: 6, x: 500, y: 400, color: "#56db13", content: [{type:"text",value:"Brick 6",id:1},{type:'drop',child:[],accept:['bhole1','bhole2'],id:2,acceptMany:false}], type:'bhole2',parent:null,parenthole:null}
+  ]));
 
-    { id: 6, x: 500, y: 400, color: "#56db13", content: [{type:"text",value:"Brick 6",id:1},{type:'drop',child:[],accept:['bhole1','bhole2'],id:2,acceptMany:false}], type:'bhole2',parent:null,parenthole:null},
-  ]);
-  
-  useEffect(()=>{
-    console.log(bricks)
-  },[bricks])
-   
-  // Mettre à jour la position d'une brique
-  const moveBrick = (id: number, x: number, y: number) => {
-    setBricks((prevBricks) =>
-      prevBricks.map((brick) =>
-        brick.id === id ? { ...brick, x, y } : brick
-      )
-    );
-  };
-
-
-  const insertBrickToContainer = (brickId: number, targetBrick: BrickData,holeIndex:number) => {
-
-    const tmpBrick:BrickData[] = JSON.parse(JSON.stringify(bricks))
-
-    const movedBrick = tmpBrick.find((brick) => brick.id === brickId);
-    const holes = targetBrick?.content
-
-    if(!holes) return alert('mhmhmh')
-    
-    const holeData = holes[holeIndex]
-
-    if(holeData.type!=='drop') return
-
-    if(!movedBrick||!targetBrick||!holeData) return alert('mhmh')
-
-    if(!holeData.accept.includes(movedBrick.type)) return
-    
-    const updatedtmpBrick = tmpBrick.map((brick) => {
-      if (brick.id === targetBrick.id) {
-
-        console.log(brick)
-
-        if(!brick.content) return
-        let hole = brick.content[holeIndex]
-        if(hole.type!=="drop") return
-        let holeChild = hole.child
-        let newChild:number[] = [movedBrick.id]
-        if(holeChild.length>0&&holeData.acceptMany){
-          newChild = JSON.parse(JSON.stringify(holeChild))
-          newChild.push(movedBrick.id)
-        }
-
-        brick.content[holeIndex] = {
-          id:hole.id,
-          type:'drop',
-          // value:movedBrick,
-          child:newChild,
-          accept:hole.accept,
-          acceptMany:holeData.acceptMany,
-        }
-
-        return {
-          ...brick
-        };
-
-
-      }
-      if (brick.id === brickId) {
-        return {
-          ...brick,
-          parent:targetBrick.id,
-          parenthole:holeIndex,
-        }
-        // return null;
-      }
-      if(holeData.child.includes(brick.id)){
-        // let lenght = holeData.child.length
-        if(!holeData.acceptMany){
-          let newBrick = {...brick}
-          newBrick.parent=null
-          newBrick.parenthole=null
-          return newBrick
-        }
-      }
-      return brick;
-    }).filter((brick) => brick !== null);
-
-    setBricks(updatedtmpBrick);
-  };
+  const [bricks,setBricks] = useState<BrickData[]>(BricksEngine.getBricks())
 
   const generateBoard = () => {
     let res:customBoardType = []
@@ -223,7 +140,7 @@ export default function CreatePiecePage() {
     setBoard(board => [...newBoard])
   }
 
-  const handleSquareClick = async (pos:Position) => {
+  const handleSquareClick = (pos:Position) => {
     console.log(board,handleData(board))
     let square = board[pos.y][pos.x]
     let res:customBoardSquare = JSON.parse(JSON.stringify(square))
@@ -251,23 +168,7 @@ export default function CreatePiecePage() {
       }
       res.style=[isSelectedStyle(res.data.isSelected)]
       editSquare(res,pos)
-      // if(square?.data?.isSelected&&square.data.isSelected.includes('jump')){
-      //   let res:customBoardSquare = {
-      //     style:[]
-      //   }
-      //   editSquare(res,pos)
-      // }
-      // if(!square?.data){
-      //   let res:customBoardSquare = {
-      //     style:[
-      //       'bg-blue-200 dark:bg-blue-900'
-      //     ],
-      //     data:{
-      //       isSelected:['jump']
-      //     }
-      //   }
-      //   editSquare(res,pos)
-      // }
+      
     }
   }
 
@@ -453,7 +354,7 @@ export default function CreatePiecePage() {
                         console.log(bricks)
                       }}>log</button>
                       <DndProvider backend={HTML5Backend}>
-                        <BrickContainer bricks={bricks} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick}/>
+                        <BrickContainer bricks={bricks} BricksEngine={BricksEngine}/>
                       </DndProvider>  
                     </div>
                     {/* <div className="bricks-container">

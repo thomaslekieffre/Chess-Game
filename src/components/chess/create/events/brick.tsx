@@ -2,19 +2,20 @@ import React, { FC, useEffect, useMemo, useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import type { BrickData, DragItem, fieldType } from "@/types/create";
 import Hole from "./hole";
+import { Bricks } from "@/lib/create/bricksHandle";
 
 interface BrickProps {
   moveBrick: (id: number, x: number, y: number) => void;
-  insertBrickToContainer: (brickId: number, targetBrick: BrickData, holeIndex: number) => void;
   bricks:BrickData[];
   brickItem:BrickData;
+  BricksEngine:Bricks;
 }
 
-const Brick: FC<BrickProps> = ({
+const Brick: FC<BrickProps> = React.memo(({
   moveBrick,
-  insertBrickToContainer,
   bricks,
   brickItem,
+  BricksEngine,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -90,7 +91,17 @@ const Brick: FC<BrickProps> = ({
           switch (item.type) {
             case "drop":
               return (
-                <Hole currentBrick={brickItem} bricks={bricks} index={i} item={item} insertBrickToContainer={insertBrickToContainer} moveBrick={moveBrick} id={id} key={i}></Hole>
+                <Hole 
+                  currentBrick={brickItem} 
+                  bricks={bricks} 
+                  index={i} 
+                  item={item}
+                  BricksEngine={BricksEngine}
+                  moveBrick={moveBrick}
+                  id={id} 
+                  key={i} 
+                  value={bricks.find((b) => item.child?.includes(b.id))}
+                ></Hole>
               )
             case "text":
               return (
@@ -106,6 +117,6 @@ const Brick: FC<BrickProps> = ({
       
     </div>
   );
-};
+});
 
 export default Brick;
