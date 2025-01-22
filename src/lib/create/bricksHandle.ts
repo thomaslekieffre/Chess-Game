@@ -1,7 +1,7 @@
 import { BrickData } from "@/types/create";
 
 interface BrickState {
-    bricks:BrickData[]
+  bricks:BrickData[]
 }
 
 export class Bricks {
@@ -89,7 +89,7 @@ export class Bricks {
             }
           }
           return brick;
-        }).filter((brick) => brick !== null);
+        }).filter((brick) => brick !== null && brick!==undefined);
     
         if (JSON.stringify(this.state.bricks) !== JSON.stringify(updatedtmpBrick)) {
           this.state.bricks = updatedtmpBrick

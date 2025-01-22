@@ -214,7 +214,21 @@ export interface GameState {
   castlingRights: FenCastlingRights;
   displayedMove: number;
   materialAdvantage: number;
+  eventsListened:Array<{
+    event:eventTypes,
+    f:(event:eventTypes,states:GameState)=>any,
+  }>
 }
+
+export type eventTypes = 
+  'caste'|
+  'move'|
+  'checkmate'|
+  'steelmate'|
+  'pat'|
+  '50_moves_rules'|
+  'check'|
+  'game_end'
 
 export type PlayerBanner = {
   bannerUrl: any;

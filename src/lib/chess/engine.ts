@@ -23,16 +23,36 @@ import {
   PieceTypeAbreg,
   Position,
   drawReason,
+  eventTypes,
   tabCastlingRights,
 } from "../../types/chess";
 
 export class ChessEngine {
   private state: GameState;
 
-  constructor(fen: FenString) {
+  constructor(fen: FenString,private onAnyEventPlay?:(event:eventTypes,states:GameState)=>void) {
     const initialState = this.getInitialState(fen);
     this.state = initialState;
     this.state.materialAdvantage = this.calculateMaterialAdvantage();
+  }
+
+  private playEvent(event:eventTypes) {
+    if(this.onAnyEventPlay){
+      this.onAnyEventPlay(event,this.state)
+    }
+    const eventList = this.state.eventsListened.map((e,i)=>{
+      if(e.event==event){
+        e.f(event,this.state)
+      }
+    })
+  }
+
+  public addEventListener(event:eventTypes,f:(event:eventTypes,states:GameState)=>any) {
+    console.log('event added :',event,f)
+    this.state.eventsListened.push({
+      event:event,
+      f:f,
+    })
   }
 
   public getBoard(): (ChessPiece | null)[][] {
@@ -165,6 +185,7 @@ export class ChessEngine {
       castlingRights: castlingRights,
       displayedMove: 0,
       materialAdvantage: 0,
+      eventsListened:[],
     };
   }
 
@@ -271,6 +292,7 @@ export class ChessEngine {
       console.log(this.state.strMove);
 
       this.state.displayedMove = this.state.strMove.length;
+      this.playEvent('move')
       this.updateGameState();
 
       // Ajouter le coup à l'historique

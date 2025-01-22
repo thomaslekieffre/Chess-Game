@@ -100,10 +100,7 @@ export function ChessBoard({
   isPlaying,
   list,
 }: ChessBoardProps) {
-  // const [engine] = useState(() => new ChessEngine());
-  // const [board, setBoard] = useState<(ChessPiece | null)[][]>(
-  //   engine.getBoard()
-  // );
+  
   const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
   const [kingInCheck, setKingInCheck] = useState<Position | null>(null);

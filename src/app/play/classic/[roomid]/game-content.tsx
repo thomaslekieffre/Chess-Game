@@ -12,6 +12,8 @@ import {
   ChessPiece,
   customBoardSquare,
   customBoardType,
+  eventTypes,
+  GameState,
   gameStatus,
   PieceColor,
   PlayerBanner,
@@ -359,6 +361,13 @@ export function GameContent(props: PropsType) {
       updatePlayersData(roomInfo);
     }
   }, [user, roomInfo?.id]);
+
+  useEffect(()=>{
+    engine.addEventListener('move',(event:eventTypes,states:GameState)=>{
+      // console.log('event move listen :',event,states)
+      console.log('listened "Move" from addEventListener')
+    })
+  },[])
 
   const joinGame = useCallback(
     async (roomJson: roomType) => {

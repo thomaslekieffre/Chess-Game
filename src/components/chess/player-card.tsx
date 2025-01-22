@@ -46,7 +46,7 @@ export function PlayerCard({
     );
   };
 
-  console.log("Banner URL:", selectedBanner);
+  // console.log("Banner URL:", selectedBanner);
 
   return (
     <Card
