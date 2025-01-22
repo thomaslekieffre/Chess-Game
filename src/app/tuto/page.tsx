@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { useState } from "react";
 import { importFEN } from "@/lib/chess/pgn/pgn2";
-import { Position } from "@/lib/chess/types";
+import { Position } from "@/types/chess";
 
 interface Tutorial {
   title: string;

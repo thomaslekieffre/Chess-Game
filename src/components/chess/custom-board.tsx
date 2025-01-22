@@ -5,10 +5,10 @@ import {
   PieceType,
   Position,
   customBoardType,
-} from "@/lib/chess/types";
+} from "@/types/chess";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { MouseEvent, useState } from "react";
 import Image from "next/image";
 
 interface CustomBoardProps {
@@ -39,7 +39,6 @@ export function CustomBoard({
   board,
   onSquareClick,
   size,
-  selectedPiece,
   onSquaresChange,
   readOnly=false,
   highlightSquares,
@@ -67,6 +66,10 @@ export function CustomBoard({
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+  };
+
+  const handleAuxClick = (e: MouseEvent) => {
+    e.preventDefault() //WARNING NOT WORKING
   };
 
   const handleDrop = (e: React.DragEvent, dropX: number, dropY: number) => {
@@ -199,6 +202,7 @@ export function CustomBoard({
                       }}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, x, y)}
+                      onAuxClick={(e)=>{handleAuxClick(e)}}
                     >
                       {item?.piece && (
                         <Image

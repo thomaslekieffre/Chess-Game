@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Card } from "../ui/card";
-import { Move, PgnMove } from "@/lib/chess/types";
+import { Move, PgnMove } from "@/types/chess";
 
 interface MovesHistoryProps {
   moves: PgnMove[];

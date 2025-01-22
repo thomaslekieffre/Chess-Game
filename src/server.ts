@@ -9,7 +9,7 @@ import { supabaseClient } from "@/lib/supabase";
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
-import { roomType } from "./lib/chess/types";
+import { roomType } from "./types/chess";
 
 // import {PgnReader} from '@mliebelt/pgn-reader'
 

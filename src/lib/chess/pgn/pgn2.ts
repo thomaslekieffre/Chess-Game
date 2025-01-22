@@ -1,6 +1,6 @@
 //@ts-nocheck
 
-import {CasesList, Field, File, PgnGame, PgnReaderMove, PgnWriterConfiguration, PieceType, PieceTypeAbreg, Position, Rank, files, ranks, ranksOpo, tabCastlingRights} from "../types";
+import {CasesList, Field, File, PgnGame, PgnReaderMove, PgnWriterConfiguration, PieceType, PieceTypeAbreg, Position, Rank, files, ranks, ranksOpo, tabCastlingRights} from "../../../types/chess";
 
 export const fromCoordToCase = (x:number,y:number) => {
     const xPos:File = fromXToRow(x)

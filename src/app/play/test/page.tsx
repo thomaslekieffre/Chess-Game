@@ -1,6 +1,6 @@
 "use client";
 
-import { PgnMove } from '@/lib/chess/types';
+import { PgnMove } from '@/types/chess';
 import {fromCoordToCase,writeGame} from '../../../lib/chess/pgn/pgn2'
 import { parse } from '@mliebelt/pgn-parser';
 

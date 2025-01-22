@@ -1,4 +1,4 @@
-import { Position } from "@/lib/chess/types";
+import { Position } from "@/types/chess";
 import React, { useState } from "react";
 
 

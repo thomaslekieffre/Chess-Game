@@ -1,4 +1,4 @@
-import { Position } from "@/lib/chess/types";
+import { Position } from "@/types/chess";
 import React from "react";
 
 interface ArrowProps {

@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Flag, RotateCcw } from "lucide-react";
-import { PieceColor } from "@/lib/chess/types";
+import { PieceColor } from "@/types/chess";
 
 interface GameStatusProps {
   whiteTime: number;

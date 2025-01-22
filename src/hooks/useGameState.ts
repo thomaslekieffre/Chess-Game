@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChessEngine } from "@/lib/chess/engine";
-import { ChessPiece, FenString, PgnMove } from "@/lib/chess/types";
+import { ChessPiece, FenString, PgnMove } from "@/types/chess";
 
 export function useGameState() {
   const [engine] = useState(() => new ChessEngine("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));

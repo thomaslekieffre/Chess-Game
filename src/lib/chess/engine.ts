@@ -24,7 +24,7 @@ import {
   Position,
   drawReason,
   tabCastlingRights,
-} from "./types";
+} from "../../types/chess";
 
 export class ChessEngine {
   private state: GameState;

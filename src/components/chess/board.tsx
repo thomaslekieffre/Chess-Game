@@ -10,7 +10,7 @@ import {
   PieceType,
   PieceColor,
   PgnMove,
-} from "@/lib/chess/types";
+} from "@/types/chess";
 import Arrow from "@/components/chess/arrow";
 
 interface ChessBoardProps {

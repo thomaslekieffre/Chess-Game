@@ -1,4 +1,4 @@
-import { PieceType } from "./types";
+import { PieceType } from "../../types/chess";
 
 export function convertToPGN(
   moves: {

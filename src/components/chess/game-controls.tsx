@@ -1,4 +1,4 @@
-import { PieceColor } from "@/lib/chess/types";
+import { PieceColor } from "@/types/chess";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Flag, RotateCcw } from "lucide-react";

@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CustomBoard } from "@/components/chess/custom-board";
-import { PieceType, Position, customBoardSquare, customBoardType } from "@/lib/chess/types";
+import { PieceType, Position, customBoardSquare, customBoardType } from "@/types/chess";
 import Compass from "@/components/ui/compass";
 import BrickContainer from "@/components/chess/create/events/brick-container";
 import { DndProvider } from "react-dnd";

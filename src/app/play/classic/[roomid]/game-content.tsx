@@ -14,9 +14,10 @@ import {
   customBoardType,
   gameStatus,
   PieceColor,
+  PlayerBanner,
   Position,
   roomType,
-} from "@/lib/chess/types";
+} from "@/types/chess";
 import { getOppositeColor } from "@/lib/chess/utils";
 import { supabaseClient } from "@/lib/supabase";
 import { useUser } from "@clerk/nextjs";
@@ -87,10 +88,10 @@ export function GameContent(props: PropsType) {
 
   const [whitePlayerTitle, setWhitePlayerTitle] = useState<string | null>(null);
   const [blackPlayerTitle, setBlackPlayerTitle] = useState<string | null>(null);
-  const [whitePlayerBanner, setWhitePlayerBanner] = useState<string | null>(
+  const [whitePlayerBanner, setWhitePlayerBanner] = useState<PlayerBanner | null>(
     null
   );
-  const [blackPlayerBanner, setBlackPlayerBanner] = useState<string | null>(
+  const [blackPlayerBanner, setBlackPlayerBanner] = useState<PlayerBanner | null>(
     null
   );
 
@@ -538,11 +539,12 @@ export function GameContent(props: PropsType) {
             {/* {JSON.stringify(generateBoardWaiting())} */}
 
             <CustomBoard
+              selectedPiece="white"
               size={8}
               board={generateBoardWaiting()}
               onSquareClick={() => {}}
               highlightSquares={[]}
-              readOnly={false}
+              readOnly={true}
               animatedPiece={null}
             />
           </div>
@@ -613,6 +615,8 @@ export function GameContent(props: PropsType) {
                   }
                 }
 
+                let p2Banner = user?.externalId?await fetchPlayerBanner(user.externalId):null
+
                 newPlayers.player2 = {
                   id: user.id,
                   color: couleur,
@@ -625,6 +629,7 @@ export function GameContent(props: PropsType) {
                       rapide: elo,
                     },
                   },
+                  banner:p2Banner,
                 };
 
                 await supabase
@@ -695,14 +700,22 @@ export function GameContent(props: PropsType) {
               isGameOver={isGameOver}
             />
             <PlayerCard
+              // name={blackPlayerInfo.username}
+              // rating={blackPlayerInfo.elo}
+              // time={formatTime(blackTime)}
+              // color="black"
+              // isCurrentTurn={currentTurn === "black"}
+              // materialAdvantage={engine.getGameState().materialAdvantage}
+              // selectedTitle={blackPlayerTitle || undefined}
+              // selectedBanner={blackPlayerBanner || undefined}
               name={blackPlayerInfo.username}
               rating={blackPlayerInfo.elo}
               time={formatTime(blackTime)}
               color="black"
               isCurrentTurn={currentTurn === "black"}
-              materialAdvantage={engine.getGameState().materialAdvantage}
+              selectedBanner={blackPlayerBanner?.bannerUrl}
+              textColors={blackPlayerBanner?.textColors}
               selectedTitle={blackPlayerTitle || undefined}
-              selectedBanner={blackPlayerBanner || undefined}
             />
           </div>
 
