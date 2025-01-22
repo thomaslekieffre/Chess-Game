@@ -10,6 +10,7 @@ import {
 import {
   CasesList,
   ChessPiece,
+  DrawResons,
   FenActiveColor,
   FenCastlingRights,
   FenEnPassant,
@@ -34,6 +35,7 @@ export class ChessEngine {
     const initialState = this.getInitialState(fen);
     this.state = initialState;
     this.state.materialAdvantage = this.calculateMaterialAdvantage();
+    this.playEvent('loaded')
   }
 
   private playEvent(event:eventTypes) {
@@ -163,6 +165,8 @@ export class ChessEngine {
 
     let isGameOver = false;
     if (isCheckmate || isDraw) isGameOver = true;
+
+    // this.playEvent('loaded')
 
     return {
       board,
@@ -793,7 +797,8 @@ export class ChessEngine {
 
     // Vérifier la défaite au temps
     if (this.state.timeLeft && this.state.timeLeft[currentColor] <= 0) {
-      this.state.isGameOver = true;
+      // this.state.isGameOver = true;
+      this.setIsGameOver(true)
       this.state.winner = currentColor === "white" ? "black" : "white";
       return;
     }
@@ -815,9 +820,11 @@ export class ChessEngine {
 
     // Si pas de mouvements légaux et pas en échec = pat
     if (!hasLegalMoves && !this.state.isCheck) {
-      this.state.isStalemate = true;
-      this.state.isDraw = true;
-      this.state.drawReason = "stalemate";
+      // this.state.isStalemate = true;
+      this.setIsStalemate(true)
+      // this.state.isDraw = true;
+      this.setIsDraw('stalemate')
+      // this.state.drawReason = "stalemate";
     }
 
     // Trouver le roi de l'adversaire
@@ -835,10 +842,14 @@ export class ChessEngine {
     }
 
     // Vérifier si le roi est en échec
-    this.state.isCheck = kingPos
-      ? this.isSquareAttacked(kingPos, opponentColor)
-      : false;
-    this.state.isCheckmate = false;
+    // this.state.isCheck = kingPos
+    //   ? this.isSquareAttacked(kingPos, opponentColor)
+    //   : false;
+    this.setIsCheck(kingPos ? this.isSquareAttacked(kingPos, opponentColor) : false)
+
+
+    // this.state.isCheckmate = false;
+    this.setIsCheckMate(false)
 
     // Vérifier l'échec et mat seulement si le roi est en échec
     if (this.state.isCheck && kingPos) {
@@ -863,27 +874,31 @@ export class ChessEngine {
         if (canEscapeCheck) break;
       }
 
-      this.state.isCheckmate = !canEscapeCheck;
+      // this.state.isCheckmate = !canEscapeCheck;
+      this.setIsCheckMate(!canEscapeCheck)
     }
 
     // Vérifier le matériel insuffisant
     if (this.hasInsufficientMaterial()) {
-      this.state.isDraw = true;
+      // this.state.isDraw = true;
+      this.setIsDraw("insufficient-material")
       this.state.drawReason = "insufficient-material";
       return;
     }
-
+    
     // Vérifier la règle des 50 coups
     if (this.state.lastPawnMoveOrCapture >= 100) {
       // 50 coups = 100 demi-coups
-      this.state.isDraw = true;
+      // this.state.isDraw = true;
+      this.setIsDraw("fifty-moves")
       this.state.drawReason = "fifty-moves";
       return;
     }
 
     // Vérifier la triple répétition
     if (this.checkThreefoldRepetition()) {
-      this.state.isDraw = true;
+      // this.state.isDraw = true;
+      this.setIsDraw("threefold-repetition")
       this.state.drawReason = "threefold-repetition";
       return;
     }
@@ -1184,6 +1199,7 @@ export class ChessEngine {
 
     // Gérer le roque
     if (move.isCastling) {
+      this.playEvent('caste')
       const rookFromX = move.isCastling === "kingside" ? 7 : 0;
       const rookToX = move.isCastling === "kingside" ? 5 : 3;
       const rook = this.state.board[from.y][rookFromX]!;
@@ -1388,8 +1404,9 @@ export class ChessEngine {
 
   public acceptDraw(): void {
     if (this.state.drawOffer) {
-      this.state.isDraw = true;
-      this.state.drawReason = "mutual-agreement";
+      // this.state.isDraw = true;
+      // this.state.drawReason = "mutual-agreement";
+      this.setIsDraw("mutual-agreement")
       this.state.drawOffer = undefined;
     }
   }
@@ -1413,6 +1430,47 @@ export class ChessEngine {
   public isKingInCheckmate(): boolean {
     return this.state.isCheckmate;
   }
+
+  private setIsGameOver(value:boolean) {
+    this.state.isGameOver = value
+    if(value===true){
+      this.playEvent('game_end')
+    }
+  }
+
+  private setIsCheckMate(value:boolean) {
+    this.state.isCheckmate = value
+    if(value===true){
+      this.playEvent('checkmate')
+    }
+  }
+
+  private setIsCheck(value:boolean) {
+    this.state.isCheck = value
+    if(value===true){
+      this.playEvent('check')
+    }
+  }
+
+  private setIsStalemate(value:boolean) {
+    this.state.isStalemate = value
+    if(value===true){
+      this.playEvent('steelmate')
+    }
+  }
+  
+  private setIsDraw(value:drawReason) {
+    this.state.isDraw = true
+    this.state.drawReason=value
+    this.playEvent('draw')
+  }
+
+
+  // private setIsDraw(value:DrawResons) {
+  //   this.playEvent('steelmate')
+  //   this.state.isDraw = value
+  // }
+
   public getWinner(): PieceColor | null {
     return this.state.winner;
   }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChessEngine } from "@/lib/chess/engine";
-import { ChessPiece, eventTypes, FenString, GameState, PgnMove } from "@/types/chess";
+import { ChessPiece, DrawResons, eventTypes, FenString, GameState, PgnMove } from "@/types/chess";
 
 export function useGameState() {
   const onAnyEventPlay = async (event:eventTypes,states:GameState) => {
@@ -17,13 +17,7 @@ export function useGameState() {
   );
   const [movesList,setMovesList] = useState<PgnMove[]>([])
   const [isDraw, setIsDraw] = useState(false);
-  const [drawReason, setDrawReason] = useState<
-    | "stalemate"
-    | "insufficient-material"
-    | "threefold-repetition"
-    | "fifty-moves"
-    | "mutual-agreement"
-  >();
+  const [drawReason, setDrawReason] = useState<DrawResons>();
   const [isStalemate, setIsStalemate] = useState(false);
   const [displayedMove2,setDisplayedMove2] = useState(0)
 

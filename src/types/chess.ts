@@ -221,14 +221,22 @@ export interface GameState {
 }
 
 export type eventTypes = 
-  'caste'|
-  'move'|
-  'checkmate'|
-  'steelmate'|
-  'pat'|
+  'caste'| // ✅
+  'move'| // ✅
+  'checkmate'| // ✅
+  'steelmate'| // ✅
   '50_moves_rules'|
-  'check'|
-  'game_end'
+  'check'| // ✅
+  'game_end'| // ✅
+  'loaded' | // ✅
+  'draw' // ✅
+
+export type DrawResons =     
+  "stalemate" |
+  "insufficient-material" |
+  "threefold-repetition" |
+  "fifty-moves" |
+  "mutual-agreement"
 
 export type PlayerBanner = {
   bannerUrl: any;
