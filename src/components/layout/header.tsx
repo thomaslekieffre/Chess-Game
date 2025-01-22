@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
-import { UserButton } from "@/components/auth/user-button";
+import { UserButton } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
 import { supabaseClient } from "@/lib/supabase";
 import CustomImage from "@/components/CustomImage";
@@ -81,9 +81,8 @@ interface FriendData {
 }
 
 export function Header() {
-  const { user } = useUser();
+  const { isSignedIn, user } = useUser();
   const supabase = supabaseClient();
-  const isSignedIn = !!user;
   const [isFriendPopupOpen, setFriendPopupOpen] = useState(false);
   const [friendUsername, setFriendUsername] = useState("");
   const [friendData, setFriendData] = useState<FriendData | null>(null);
@@ -304,7 +303,13 @@ export function Header() {
 
         <div className="flex items-center gap-4">
           <ModeToggle />
-          <UserButton />
+          {isSignedIn ? (
+            <UserButton afterSignOutUrl="/" />
+          ) : (
+            <Link href="/sign-in">
+              <Button variant="outline">Connexion</Button>
+            </Link>
+          )}
         </div>
       </div>
     </motion.header>
