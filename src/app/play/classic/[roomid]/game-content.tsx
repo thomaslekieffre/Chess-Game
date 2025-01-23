@@ -76,18 +76,9 @@ export function GameContent(props: PropsType) {
   const [isGameStarted, setIsGameStarted] = useState(false);
 
   const {
-    blackPlayerBanner,
-    blackPlayerElo,
-    blackPlayerTime,
-    blackPlayerTitle,
-    blackPlayerUsername,
     updateUserState,
-    whitePlayerBanner,
-    whitePlayerElo,
-    whitePlayerTime,
-    whitePlayerTitle,
-    whitePlayerUsername,
     players,
+    playersHandler,
   } = usePlayers()
 
   // const [whiteTime, setWhiteTime] = useState(10 * 60);
@@ -139,8 +130,8 @@ export function GameContent(props: PropsType) {
         //   username: player1.username,
         //   elo: elo?.toString() || "1200?",
         // });
-        players.setUsername('white',player1.username)
-        players.setElo('white',elo?.toString() || "1200?")
+        playersHandler.setUsername('white',player1.username)
+        playersHandler.setElo('white',elo?.toString() || "1200?")
         updateUserState()
       } catch (error) {
         console.error("Erreur lors du calcul de l'Elo:", error);
@@ -161,8 +152,8 @@ export function GameContent(props: PropsType) {
       //   username: player2.username,
       //   elo: elo?.toString() || "1200?",
       // });
-      players.setUsername('black',player2.username)
-      players.setElo('black',elo?.toString() || "1200?")
+      playersHandler.setUsername('black',player2.username)
+      playersHandler.setElo('black',elo?.toString() || "1200?")
       updateUserState()
     }
 
@@ -205,8 +196,8 @@ export function GameContent(props: PropsType) {
     // setWhitePlayerTitle(whiteTitle);
     // setBlackPlayerTitle(blackTitle);
 
-    players.setBanner('white',whiteTitle)
-    players.setBanner('black',blackTitle)
+    playersHandler.setBanner('white',whiteTitle)
+    playersHandler.setBanner('black',blackTitle)
 
     const whiteBanner = await fetchPlayerBanner(player1.id);
     const blackBanner = player2?.id
@@ -214,8 +205,8 @@ export function GameContent(props: PropsType) {
       : null;
 
 
-    players.setBanner('white',whiteBanner)
-    players.setBanner('black',blackBanner)
+    playersHandler.setBanner('white',whiteBanner)
+    playersHandler.setBanner('black',blackBanner)
 
     updateUserState()
     // setWhitePlayerBanner(whiteBanner);
@@ -269,8 +260,8 @@ export function GameContent(props: PropsType) {
 
   const setGameInfos = async (color: PieceColor, temp: number) => {
     setPlayerColor(color);
-    players.setTime('black',temp*60);
-    players.setTime('black',temp*60);
+    playersHandler.setTime('black',temp*60);
+    playersHandler.setTime('black',temp*60);
     updateUserState()
     // setBlackTime(temp * 60);
     // setWhiteTime(temp * 60);
@@ -352,7 +343,7 @@ export function GameContent(props: PropsType) {
 
     const interval = setInterval(() => {
       if (!isGameStarted) return;
-      const currentPlayer = players.getPlayer(currentTurn)
+      const currentPlayer = playersHandler.getPlayer(currentTurn)
       if(currentPlayer.time<=0){
         setIsGameOver(true);
         setIsTimeOut(true);
@@ -360,7 +351,7 @@ export function GameContent(props: PropsType) {
         clearInterval(interval);
         return 0;
       }else{
-        players.setTime(currentTurn,currentPlayer.time-1)
+        playersHandler.setTime(currentTurn,currentPlayer.time-1)
         updateUserState()
       }
       // if (currentTurn === "white") {
@@ -740,14 +731,14 @@ export function GameContent(props: PropsType) {
           {/* Panneau de contrôle (20%) */}
           <div className="w-[20%] flex flex-col gap-4 mt-64">
             <PlayerCard
-              name={whitePlayerUsername}
-              rating={whitePlayerElo}
-              time={formatTime(whitePlayerTime)}
+              name={players.white.username}
+              rating={players.white.elo}
+              time={formatTime(players.white.time)}
               color="white"
               isCurrentTurn={currentTurn === "white"}
-              selectedBanner={whitePlayerBanner?.bannerUrl}
-              textColors={whitePlayerBanner?.textColors}
-              selectedTitle={whitePlayerTitle || undefined}
+              selectedBanner={players.white.banner?.bannerUrl}
+              textColors={players.white.banner?.textColors}
+              selectedTitle={players.white.title || undefined}
             />
             <GameControls
               onResign={() => setIsGameOver(true)}
@@ -766,15 +757,16 @@ export function GameContent(props: PropsType) {
               // isCurrentTurn={currentTurn === "black"}
               // selectedTitle={blackPlayerTitle || undefined}
               // selectedBanner={blackPlayerBanner || undefined}
+
               materialAdvantage={engine.getGameState().materialAdvantage}
-              name={blackPlayerUsername}
-              rating={blackPlayerElo}
-              time={formatTime(blackPlayerTime)}
+              name={players.black.username}
+              rating={players.black.elo}
+              time={formatTime(players.black.time)}
               color="black"
               isCurrentTurn={currentTurn === "black"}
-              selectedBanner={blackPlayerBanner?.bannerUrl}
-              textColors={blackPlayerBanner?.textColors}
-              selectedTitle={blackPlayerTitle || undefined}
+              selectedBanner={players.black.banner?.bannerUrl}
+              textColors={players.black.banner?.textColors}
+              selectedTitle={players.black.title || undefined}
             />
           </div>
 
