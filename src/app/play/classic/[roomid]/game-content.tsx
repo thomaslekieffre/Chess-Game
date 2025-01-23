@@ -25,12 +25,14 @@ import { supabaseClient } from "@/lib/supabase";
 import { useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import { usePlayers } from "@/hooks/useGamePlayers";
 
 const socket = io("http://localhost:8080", {
   withCredentials: true,
   autoConnect: true,
   transports: ["websocket", "polling"],
 });
+
 
 const generateBoardWaiting = () => {
   const board: (ChessPiece | null)[][] = importFEN(
@@ -69,33 +71,54 @@ type PropsType = {
 export function GameContent(props: PropsType) {
   const supabase = supabaseClient();
   const { roomId } = props;
-  const { isSignedIn, user } = useUser();
-
-  const [whiteTime, setWhiteTime] = useState(10 * 60);
-  const [blackTime, setBlackTime] = useState(10 * 60);
+  const { user } = useUser();
 
   const [isGameStarted, setIsGameStarted] = useState(false);
 
-  const [whitePlayerInfo, setWhitePlayerInfo] = useState({
-    username: "White",
-    elo: "1200?",
-  });
+  const {
+    blackPlayerBanner,
+    blackPlayerElo,
+    blackPlayerTime,
+    blackPlayerTitle,
+    blackPlayerUsername,
+    updateUserState,
+    whitePlayerBanner,
+    whitePlayerElo,
+    whitePlayerTime,
+    whitePlayerTitle,
+    whitePlayerUsername,
+    players,
+  } = usePlayers()
 
-  const [blackPlayerInfo, setBlackPlayerInfo] = useState({
-    username: "Black",
-    elo: "1200?",
-  });
+  // const [whiteTime, setWhiteTime] = useState(10 * 60);
+  // const [blackTime, setBlackTime] = useState(10 * 60);
+
+
+  // const [whitePlayerInfo, setWhitePlayerInfo] = useState({
+  //   username: "White",
+  //   elo: "1200?",
+  // });
+
+  // const [blackPlayerInfo, setBlackPlayerInfo] = useState({
+  //   username: "Black",
+  //   elo: "1200?",
+  // });
+
+  // const [whitePlayerTitle, setWhitePlayerTitle] = useState<string | null>(null);
+  // const [blackPlayerTitle, setBlackPlayerTitle] = useState<string | null>(null);
+
+  // const [whitePlayerBanner, setWhitePlayerBanner] = useState<PlayerBanner | null>(
+  //   null
+  // );
+  // const [blackPlayerBanner, setBlackPlayerBanner] = useState<PlayerBanner | null>(
+  //   null
+  // );
+
 
   const [status, setStatus] = useState<gameStatus>("loading");
 
-  const [whitePlayerTitle, setWhitePlayerTitle] = useState<string | null>(null);
-  const [blackPlayerTitle, setBlackPlayerTitle] = useState<string | null>(null);
-  const [whitePlayerBanner, setWhitePlayerBanner] = useState<PlayerBanner | null>(
-    null
-  );
-  const [blackPlayerBanner, setBlackPlayerBanner] = useState<PlayerBanner | null>(
-    null
-  );
+
+
 
   const updatePlayersData = async (roomJson: roomType) => {
     const { player1, player2 } = roomJson.players;
@@ -112,10 +135,13 @@ export function GameContent(props: PropsType) {
           elo = player1.elo_stats.classique.rapide;
         }
 
-        setWhitePlayerInfo({
-          username: player1.username,
-          elo: elo?.toString() || "1200?",
-        });
+        // setWhitePlayerInfo({
+        //   username: player1.username,
+        //   elo: elo?.toString() || "1200?",
+        // });
+        players.setUsername('white',player1.username)
+        players.setElo('white',elo?.toString() || "1200?")
+        updateUserState()
       } catch (error) {
         console.error("Erreur lors du calcul de l'Elo:", error);
       }
@@ -131,10 +157,13 @@ export function GameContent(props: PropsType) {
         elo = player2.elo_stats.classique.rapide;
       }
 
-      setBlackPlayerInfo({
-        username: player2.username,
-        elo: elo?.toString() || "1200?",
-      });
+      // setBlackPlayerInfo({
+      //   username: player2.username,
+      //   elo: elo?.toString() || "1200?",
+      // });
+      players.setUsername('black',player2.username)
+      players.setElo('black',elo?.toString() || "1200?")
+      updateUserState()
     }
 
     const fetchPlayerTitle = async (clerkId: string) => {
@@ -173,16 +202,24 @@ export function GameContent(props: PropsType) {
     const whiteTitle = await fetchPlayerTitle(player1.id);
     const blackTitle = player2?.id ? await fetchPlayerTitle(player2.id) : null;
 
-    setWhitePlayerTitle(whiteTitle);
-    setBlackPlayerTitle(blackTitle);
+    // setWhitePlayerTitle(whiteTitle);
+    // setBlackPlayerTitle(blackTitle);
+
+    players.setBanner('white',whiteTitle)
+    players.setBanner('black',blackTitle)
 
     const whiteBanner = await fetchPlayerBanner(player1.id);
     const blackBanner = player2?.id
       ? await fetchPlayerBanner(player2.id)
       : null;
 
-    setWhitePlayerBanner(whiteBanner);
-    setBlackPlayerBanner(blackBanner);
+
+    players.setBanner('white',whiteBanner)
+    players.setBanner('black',blackBanner)
+
+    updateUserState()
+    // setWhitePlayerBanner(whiteBanner);
+    // setBlackPlayerBanner(blackBanner);
   };
 
   const fetchPlayerBanner = async (clerkId: string) => {
@@ -232,8 +269,11 @@ export function GameContent(props: PropsType) {
 
   const setGameInfos = async (color: PieceColor, temp: number) => {
     setPlayerColor(color);
-    setBlackTime(temp * 60);
-    setWhiteTime(temp * 60);
+    players.setTime('black',temp*60);
+    players.setTime('black',temp*60);
+    updateUserState()
+    // setBlackTime(temp * 60);
+    // setWhiteTime(temp * 60);
   };
 
   const fetchRoomInfo = useCallback(async () => {
@@ -312,29 +352,40 @@ export function GameContent(props: PropsType) {
 
     const interval = setInterval(() => {
       if (!isGameStarted) return;
-      if (currentTurn === "white") {
-        setWhiteTime((prev) => {
-          if (prev <= 0) {
-            setIsGameOver(true);
-            setIsTimeOut(true);
-            setWinner(getOppositeColor(currentTurn));
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      } else {
-        setBlackTime((prev) => {
-          if (prev <= 0) {
-            setIsGameOver(true);
-            setIsTimeOut(true);
-            setWinner(getOppositeColor(currentTurn));
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
+      const currentPlayer = players.getPlayer(currentTurn)
+      if(currentPlayer.time<=0){
+        setIsGameOver(true);
+        setIsTimeOut(true);
+        setWinner(getOppositeColor(currentTurn));
+        clearInterval(interval);
+        return 0;
+      }else{
+        players.setTime(currentTurn,currentPlayer.time-1)
+        updateUserState()
       }
+      // if (currentTurn === "white") {
+      //   setWhiteTime((prev) => {
+      //     if (prev <= 0) {
+      //       setIsGameOver(true);
+      //       setIsTimeOut(true);
+      //       setWinner(getOppositeColor(currentTurn));
+      //       clearInterval(interval);
+      //       return 0;
+      //     }
+      //     return prev - 1;
+      //   });
+      // } else {
+      //   setBlackTime((prev) => {
+      //     if (prev <= 0) {
+      //       setIsGameOver(true);
+      //       setIsTimeOut(true);
+      //       setWinner(getOppositeColor(currentTurn));
+      //       clearInterval(interval);
+      //       return 0;
+      //     }
+      //     return prev - 1;
+      //   });
+      // }
     }, 1000);
 
     timerRef.current = interval;
@@ -545,7 +596,6 @@ export function GameContent(props: PropsType) {
 
           {/* Échiquier (50%) */}
           <div className="w-[50%] flex items-center justify-center p-4">
-            {/* {JSON.stringify(generateBoardWaiting())} */}
 
             <CustomBoard
               selectedPiece="white"
@@ -690,9 +740,9 @@ export function GameContent(props: PropsType) {
           {/* Panneau de contrôle (20%) */}
           <div className="w-[20%] flex flex-col gap-4 mt-64">
             <PlayerCard
-              name={whitePlayerInfo.username}
-              rating={whitePlayerInfo.elo}
-              time={formatTime(whiteTime)}
+              name={whitePlayerUsername}
+              rating={whitePlayerElo}
+              time={formatTime(whitePlayerTime)}
               color="white"
               isCurrentTurn={currentTurn === "white"}
               selectedBanner={whitePlayerBanner?.bannerUrl}
@@ -714,12 +764,12 @@ export function GameContent(props: PropsType) {
               // time={formatTime(blackTime)}
               // color="black"
               // isCurrentTurn={currentTurn === "black"}
-              // materialAdvantage={engine.getGameState().materialAdvantage}
               // selectedTitle={blackPlayerTitle || undefined}
               // selectedBanner={blackPlayerBanner || undefined}
-              name={blackPlayerInfo.username}
-              rating={blackPlayerInfo.elo}
-              time={formatTime(blackTime)}
+              materialAdvantage={engine.getGameState().materialAdvantage}
+              name={blackPlayerUsername}
+              rating={blackPlayerElo}
+              time={formatTime(blackPlayerTime)}
               color="black"
               isCurrentTurn={currentTurn === "black"}
               selectedBanner={blackPlayerBanner?.bannerUrl}

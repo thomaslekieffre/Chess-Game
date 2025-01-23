@@ -61,6 +61,7 @@ export const tabCastlingRights = [
   "Kkq",
   "Kk",
   "Kq",
+  "kq",
   "Qkq",
   "Qk",
   "Qq",
@@ -78,6 +79,7 @@ export type FenCastlingRights =
   | "Kkq"
   | "Kk"
   | "Kq"
+  |  "kq"
   | "Qkq"
   | "Qk"
   | "Qq"
