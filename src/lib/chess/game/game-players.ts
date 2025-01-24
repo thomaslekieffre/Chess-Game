@@ -65,6 +65,7 @@ export class HandlePlayers {
     public getPlayer (color:PieceColor):returnPlayer {
         let myPlayer = this.state[color]
 
+        
         let newPlayer:returnPlayer = {
             banner:myPlayer.banner===null?defaultValues[color].banner:myPlayer.banner,
             elo:myPlayer.elo===null?defaultValues[color].elo:myPlayer.elo,
@@ -72,28 +73,43 @@ export class HandlePlayers {
             title:myPlayer.title===null?defaultValues[color].title:myPlayer.title,
             username:myPlayer.username===null?defaultValues[color].username:myPlayer.username,
         }
-
+        
         return newPlayer
     }
     
     public setUsername (color:PieceColor,value:string) {
-        return this.state[color].username = value
+        console.log(this.state)
+        this.state[color].username = value
+        console.log(this.state)
+        return
     }
 
     public setElo (color:PieceColor,value:string) {
-        return this.state[color].elo = value
+        console.log(this.state)
+        this.state[color].elo = value
+        console.log(this.state)
+        return
     }
 
     public setBanner (color:PieceColor,value:PlayerBanner) {
-        return this.state[color].banner = value
+        console.log(this.state)
+        this.state[color].banner = value
+        console.log(this.state)
+        return
     }
 
     public setTitle (color:PieceColor,value:string) {
-        return this.state[color].title = value
+        console.log(this.state)
+        this.state[color].title = value
+        console.log(this.state)
+        return
     }
 
     public setTime (color:PieceColor,value:number) {
-        return this.state[color].time = value
+        console.log(this.state)
+        this.state[color].time = value
+        console.log(this.state)
+        return
     }
 
 }

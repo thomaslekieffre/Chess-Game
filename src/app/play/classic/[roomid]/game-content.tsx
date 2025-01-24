@@ -26,6 +26,7 @@ import { useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { usePlayers } from "@/hooks/useGamePlayers";
+import { fetchPlayerBanner, fetchPlayerTitle } from "@/lib/chess/game/utils";
 
 const socket = io("http://localhost:8080", {
   withCredentials: true,
@@ -74,224 +75,20 @@ export function GameContent(props: PropsType) {
   const { user } = useUser();
 
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [status, setStatus] = useState<gameStatus>("loading");
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isResigned, setIsResigned] = useState(false);
+  const [drawOffer, setDrawOffer] = useState<PieceColor>();
+  const [playerColor, setPlayerColor] = useState<PieceColor>("white");
+  const [isTimeOut, setIsTimeOut] = useState(false);
+  const [isRoomLoaded, setIsRoomLoaded] = useState(false);
 
   const {
     updateUserState,
     players,
     playersHandler,
   } = usePlayers()
-
-  // const [whiteTime, setWhiteTime] = useState(10 * 60);
-  // const [blackTime, setBlackTime] = useState(10 * 60);
-
-
-  // const [whitePlayerInfo, setWhitePlayerInfo] = useState({
-  //   username: "White",
-  //   elo: "1200?",
-  // });
-
-  // const [blackPlayerInfo, setBlackPlayerInfo] = useState({
-  //   username: "Black",
-  //   elo: "1200?",
-  // });
-
-  // const [whitePlayerTitle, setWhitePlayerTitle] = useState<string | null>(null);
-  // const [blackPlayerTitle, setBlackPlayerTitle] = useState<string | null>(null);
-
-  // const [whitePlayerBanner, setWhitePlayerBanner] = useState<PlayerBanner | null>(
-  //   null
-  // );
-  // const [blackPlayerBanner, setBlackPlayerBanner] = useState<PlayerBanner | null>(
-  //   null
-  // );
-
-
-  const [status, setStatus] = useState<gameStatus>("loading");
-
-
-
-
-  const updatePlayersData = async (roomJson: roomType) => {
-    const { player1, player2 } = roomJson.players;
-    const cadence = roomJson.cadence.split("|")[0];
-
-    if (player1.elo_stats && typeof player1.elo_stats === "object") {
-      try {
-        let elo;
-        if (cadence === "1" || cadence === "0.5") {
-          elo = player1.elo_stats.classique.bullet;
-        } else if (cadence === "3" || cadence === "5") {
-          elo = player1.elo_stats.classique.blitz;
-        } else {
-          elo = player1.elo_stats.classique.rapide;
-        }
-
-        // setWhitePlayerInfo({
-        //   username: player1.username,
-        //   elo: elo?.toString() || "1200?",
-        // });
-        playersHandler.setUsername('white',player1.username)
-        playersHandler.setElo('white',elo?.toString() || "1200?")
-        updateUserState()
-      } catch (error) {
-        console.error("Erreur lors du calcul de l'Elo:", error);
-      }
-    }
-
-    if (player2?.elo_stats) {
-      let elo;
-      if (cadence === "1" || cadence === "0.5") {
-        elo = player2.elo_stats.classique.bullet;
-      } else if (cadence === "3" || cadence === "5") {
-        elo = player2.elo_stats.classique.blitz;
-      } else {
-        elo = player2.elo_stats.classique.rapide;
-      }
-
-      // setBlackPlayerInfo({
-      //   username: player2.username,
-      //   elo: elo?.toString() || "1200?",
-      // });
-      playersHandler.setUsername('black',player2.username)
-      playersHandler.setElo('black',elo?.toString() || "1200?")
-      updateUserState()
-    }
-
-    const fetchPlayerTitle = async (clerkId: string) => {
-      try {
-        const { data: titleData, error: titleError } = await supabase
-          .from("user_achievements")
-          .select(
-            `
-            *,
-            achievements!inner (
-              title
-            )
-          `
-          )
-          .eq("clerk_id", clerkId)
-          .eq("is_selected", true)
-          .maybeSingle();
-
-        if (titleError) {
-          console.error("Erreur lors de la récupération du titre:", titleError);
-          return null;
-        }
-
-        if (!titleData) {
-          console.log("Aucun titre trouvé pour le joueur:", clerkId);
-          return null;
-        }
-
-        return titleData.achievements?.title || null;
-      } catch (error) {
-        console.error("Erreur lors de la récupération du titre:", error);
-        return null;
-      }
-    };
-
-    const whiteTitle = await fetchPlayerTitle(player1.id);
-    const blackTitle = player2?.id ? await fetchPlayerTitle(player2.id) : null;
-
-    // setWhitePlayerTitle(whiteTitle);
-    // setBlackPlayerTitle(blackTitle);
-
-    playersHandler.setBanner('white',whiteTitle)
-    playersHandler.setBanner('black',blackTitle)
-
-    const whiteBanner = await fetchPlayerBanner(player1.id);
-    const blackBanner = player2?.id
-      ? await fetchPlayerBanner(player2.id)
-      : null;
-
-
-    playersHandler.setBanner('white',whiteBanner)
-    playersHandler.setBanner('black',blackBanner)
-
-    updateUserState()
-    // setWhitePlayerBanner(whiteBanner);
-    // setBlackPlayerBanner(blackBanner);
-  };
-
-  const fetchPlayerBanner = async (clerkId: string) => {
-    try {
-      const { data: bannerData, error: bannerError } = await supabase
-        .from("user_banners")
-        .select(
-          `
-          *,
-          banners!inner (
-            link
-          )
-        `
-        )
-        .eq("clerk_id", clerkId)
-        .eq("is_selected", true)
-        .maybeSingle();
-
-      if (bannerError) {
-        console.error(
-          "Erreur lors de la récupération de la bannière:",
-          bannerError
-        );
-        return null;
-      }
-
-      if (!bannerData) {
-        console.log("Aucune bannière trouvée pour le joueur:", clerkId);
-        return null;
-      }
-
-      return {
-        bannerUrl: bannerData.banners?.link || null,
-        textColors: {
-          text: bannerData.text_color || "#FFFFFF",
-          title: bannerData.title_color || "#FFFFFF",
-          rating: bannerData.rating_color || "#9CA3AF",
-        },
-      };
-    } catch (error) {
-      console.error("Erreur lors de la récupération de la bannière:", error);
-      return null;
-    }
-  };
-
-  const [roomInfo, setRoomInfo] = useState<roomType>();
-
-  const setGameInfos = async (color: PieceColor, temp: number) => {
-    setPlayerColor(color);
-    playersHandler.setTime('black',temp*60);
-    playersHandler.setTime('black',temp*60);
-    updateUserState()
-    // setBlackTime(temp * 60);
-    // setWhiteTime(temp * 60);
-  };
-
-  const fetchRoomInfo = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("room")
-      .select("*")
-      .eq("id", roomId);
-
-    if (error) {
-      alert(error.message);
-      return false;
-    } else {
-      const dataJson: roomType = data[0];
-
-      setRoomInfo(dataJson);
-      updatePlayersData(dataJson);
-
-      if (dataJson?.game && dataJson.game[0]) {
-        setGameByMovesArray(dataJson.game);
-      } else {
-        setGameByFen(dataJson.default_pos);
-      }
-
-      socket.emit("room_log", dataJson);
-      return dataJson;
-    }
-  }, [roomId]);
 
   const {
     currentTurn,
@@ -321,12 +118,98 @@ export function GameContent(props: PropsType) {
     setDisplayedMove,
   } = useGameState();
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const [isResigned, setIsResigned] = useState(false);
-  const [drawOffer, setDrawOffer] = useState<PieceColor>();
-  const [playerColor, setPlayerColor] = useState<PieceColor>("white");
-  const [isTimeOut, setIsTimeOut] = useState(false);
-  const [isRoomLoaded, setIsRoomLoaded] = useState(false);
+
+  const updatePlayersData = async (roomJson: roomType) => {
+    const { player1, player2 } = roomJson.players;
+    const cadence = roomJson.cadence.split("|")[0];
+
+    if (player1.elo_stats && typeof player1.elo_stats === "object") {
+      try {
+        let elo;
+        if (cadence === "1" || cadence === "0.5") {
+          elo = player1.elo_stats.classique.bullet;
+        } else if (cadence === "3" || cadence === "5") {
+          elo = player1.elo_stats.classique.blitz;
+        } else {
+          elo = player1.elo_stats.classique.rapide;
+        }
+
+        playersHandler.setUsername('white',player1.username)
+        playersHandler.setElo('white',elo?.toString() || "1200?")
+        updateUserState()
+      } catch (error) {
+        console.error("Erreur lors du calcul de l'Elo:", error);
+      }
+    }
+
+    if (player2?.elo_stats) {
+      let elo;
+      if (cadence === "1" || cadence === "0.5") {
+        elo = player2.elo_stats.classique.bullet;
+      } else if (cadence === "3" || cadence === "5") {
+        elo = player2.elo_stats.classique.blitz;
+      } else {
+        elo = player2.elo_stats.classique.rapide;
+      }
+
+      playersHandler.setUsername('black',player2.username)
+      playersHandler.setElo('black',elo?.toString() || "1200?")
+      updateUserState()
+    }
+
+    const whiteTitle = await fetchPlayerTitle(player1.id);
+    const blackTitle = player2?.id ? await fetchPlayerTitle(player2.id) : null;
+
+    playersHandler.setBanner('white',whiteTitle)
+    playersHandler.setBanner('black',blackTitle)
+
+    const whiteBanner = await fetchPlayerBanner(player1.id);
+    const blackBanner = player2?.id
+      ? await fetchPlayerBanner(player2.id)
+      : null;
+
+    playersHandler.setBanner('white',whiteBanner)
+    playersHandler.setBanner('black',blackBanner)
+
+    updateUserState()
+  };
+
+  const [roomInfo, setRoomInfo] = useState<roomType>();
+
+  const setGameInfos = async (color: PieceColor, temp: number) => {
+    setPlayerColor(color);
+    playersHandler.setTime('black',temp*60);
+    playersHandler.setTime('black',temp*60);
+    updateUserState()
+  };
+
+  const fetchRoomInfo = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("room")
+      .select("*")
+      .eq("id", roomId);
+
+    if (error) {
+      alert(error.message);
+      return false;
+    } else {
+      const dataJson: roomType = data[0];
+
+      setRoomInfo(dataJson);
+      updatePlayersData(dataJson);
+
+      if (dataJson?.game && dataJson.game[0]) {
+        setGameByMovesArray(dataJson.game);
+      } else {
+        setGameByFen(dataJson.default_pos);
+      }
+
+      socket.emit("room_log", dataJson);
+      return dataJson;
+    }
+  }, [roomId]);
+
+  
 
   useEffect(() => {
     if (!roomInfo) {
@@ -354,30 +237,7 @@ export function GameContent(props: PropsType) {
         playersHandler.setTime(currentTurn,currentPlayer.time-1)
         updateUserState()
       }
-      // if (currentTurn === "white") {
-      //   setWhiteTime((prev) => {
-      //     if (prev <= 0) {
-      //       setIsGameOver(true);
-      //       setIsTimeOut(true);
-      //       setWinner(getOppositeColor(currentTurn));
-      //       clearInterval(interval);
-      //       return 0;
-      //     }
-      //     return prev - 1;
-      //   });
-      // } else {
-      //   setBlackTime((prev) => {
-      //     if (prev <= 0) {
-      //       setIsGameOver(true);
-      //       setIsTimeOut(true);
-      //       setWinner(getOppositeColor(currentTurn));
-      //       clearInterval(interval);
-      //       return 0;
-      //     }
-      //     return prev - 1;
-      //   });
-      // }
-    }, 1000);
+    }, 10000);
 
     timerRef.current = interval;
 
@@ -432,12 +292,14 @@ export function GameContent(props: PropsType) {
               parseInt(roomJson.cadence.split("|")[0])
             );
             setStatus("playing");
+            setIsGameStarted(true)
           } else if (user.id == roomJson.players.player2.id) {
             setGameInfos(
               roomJson.players.player2.color,
               parseInt(roomJson.cadence.split("|")[0])
             );
             setStatus("playing");
+            setIsGameStarted(true)
           }
         }
       }
@@ -460,6 +322,7 @@ export function GameContent(props: PropsType) {
           parseInt(data.cadence.split("|")[0])
         );
         setStatus("playing");
+        setIsGameStarted(true)
       }
     });
 
