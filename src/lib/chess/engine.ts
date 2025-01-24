@@ -296,7 +296,6 @@ export class ChessEngine {
       console.log(this.state.strMove);
 
       this.state.displayedMove = this.state.strMove.length;
-      this.playEvent('move')
       this.updateGameState();
 
       // Ajouter le coup à l'historique
@@ -350,6 +349,8 @@ export class ChessEngine {
         nag: [],
         variations: [],
       });
+
+      this.playEvent('move')
 
       return true;
     }

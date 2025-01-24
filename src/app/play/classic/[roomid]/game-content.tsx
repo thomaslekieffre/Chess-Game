@@ -40,11 +40,9 @@ const generateBoardWaiting = () => {
     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
   ).board;
   const newBoard: customBoardType = [];
-  console.log(board, newBoard);
   for (let i = 0; i < board.length; i++) {
     const row = board[i];
     const newRow: customBoardSquare[] = [];
-    // console.log(row)
     for (let j = 0; j < board.length; j++) {
       const square = row[j];
       let newSquare: customBoardSquare = { style: [] };
@@ -266,7 +264,6 @@ export function GameContent(props: PropsType) {
 
   useEffect(()=>{
     engine.addEventListener('move',(event:eventTypes,states:GameState)=>{
-      // console.log('event move listen :',event,states)
       console.log('listened "Move" from addEventListener')
     })
   },[])

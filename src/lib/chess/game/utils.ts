@@ -77,3 +77,46 @@ export const fetchPlayerBanner = async (clerkId: string) => {
       return null;
     }
 };
+
+export interface Quest {
+    id:string;
+    type:string;
+    xp_reward:number;
+    condition:Record<string,string>;
+    data:Record<string,string>;
+    completion:number;
+}
+
+export const findQuest = async (type:string,condition:Record<string,string>,quest_data:Record<string,string>) => {
+    const { data, error } = await supabase.rpc(`
+SELECT quest.*, users.*
+FROM quest
+WHERE quest.type = ${type} AND quest.conditions = ${condition} AND data = ${quest_data};`);
+    if (error) {
+        console.error({});
+        return null;
+    }
+
+    return data;
+}
+
+async function fetchQuestWithUser(quest_id: string,clerk_id:string) {
+    const { data, error } = await supabase.rpc(`
+SELECT quest.*, users.*
+FROM user_quests
+JOIN users AS u
+    ON user_quests.user_id = users.clerk_id
+WHERE user_quests.id = ${quest_id} AND u.clerk_id = ${clerk_id};`);
+    if (error) {
+        console.error({});
+        return null;
+    }
+
+    return data;
+}
+
+export const findQuestForUser = async (type:string,condition:Record<string,string>,data:Record<string,string>,clerkId:string) => {
+    const quest = await findQuest(type,condition,data)
+    if(!quest?.id) return {code:404,message:"Quest not found"}
+    const res = fetchQuestWithUser(clerkId,quest.id)
+}

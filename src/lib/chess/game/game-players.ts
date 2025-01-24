@@ -78,37 +78,27 @@ export class HandlePlayers {
     }
     
     public setUsername (color:PieceColor,value:string) {
-        console.log(this.state)
         this.state[color].username = value
-        console.log(this.state)
         return
     }
 
     public setElo (color:PieceColor,value:string) {
-        console.log(this.state)
         this.state[color].elo = value
-        console.log(this.state)
         return
     }
 
     public setBanner (color:PieceColor,value:PlayerBanner) {
-        console.log(this.state)
         this.state[color].banner = value
-        console.log(this.state)
         return
     }
 
     public setTitle (color:PieceColor,value:string) {
-        console.log(this.state)
         this.state[color].title = value
-        console.log(this.state)
         return
     }
 
     public setTime (color:PieceColor,value:number) {
-        console.log(this.state)
         this.state[color].time = value
-        console.log(this.state)
         return
     }
 

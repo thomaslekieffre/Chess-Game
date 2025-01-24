@@ -100,7 +100,7 @@ export type PgnMove = {
   drawOffer?: boolean;
   // moveNumber?: number,
   notation: {
-    fig?: string | null;
+    fig: PieceTypeAbreg;
     strike?: "x" | null;
     col?: string;
     row?: string;
@@ -310,3 +310,20 @@ export type ColoredSquare = {
   y: number;
   color: string;
 };
+
+
+
+export type questEventsNames = 
+  "play_game"|
+  "make_any_move"|
+  "make_piece_move"|
+  "make_special_move"|
+  "make_precis_result"
+
+export const questEvents:Record<questEventsNames,string> = {
+  make_any_move:"Faire n'importe quelle coup {nombre} fois",
+  make_piece_move:"Faire nimporte quelle coup avec {piece} {nombre} fois",
+  make_precis_result:"{maj({result})} une partie",
+  make_special_move:"Faire {move} {nombre} fois",
+  play_game:"Jouer {nombre} parties",
+}
