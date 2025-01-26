@@ -1,4 +1,5 @@
 import { supabaseClient } from "@/lib/supabase";
+import { QueryData } from "@supabase/supabase-js";
 
 const supabase = supabaseClient();
 
@@ -78,45 +79,96 @@ export const fetchPlayerBanner = async (clerkId: string) => {
     }
 };
 
-export interface Quest {
-    id:string;
-    type:string;
-    xp_reward:number;
-    condition:Record<string,string>;
-    data:Record<string,string>;
-    completion:number;
+// export interface Quest {
+//     id:string;
+//     type:string;
+//     xp_reward:number;
+//     condition:Record<string,string>;
+//     data:Record<string,string>;
+//     completion:number;
+// }
+
+// export const findQuest = async (type:string,condition:Record<string,string>|null,quest_data:Record<string,string>|null,clerk_id:string|null) => {
+//   let where = `\nWHERE quest.type = '${type}'`
+//   if(condition!==null) where+= ` AND quest.conditions = ${JSON.stringify(condition)}`
+//   if(quest_data!==null) where+= ` AND quest.data = ${JSON.stringify(quest_data)}`
+//   let request = `
+// SELECT quest.*, users.*
+// FROM quest
+// ${where};`
+
+//   if(clerk_id!==null) request =`
+// SELECT quest.*, user_quests.*
+// FROM quest
+// JOIN user_quests ON quest.id = user_quests.quest_id ${where};`
+
+//   console.log(request)
+
+
+//   const { data, error } = await supabase.rpc(request);
+//     if (error) {
+//       console.log(request)
+//       console.error({error,data});
+//       return null;
+//     }
+
+//     return data;
+// }
+
+export interface Quest { 
+  id: any; 
+  quest_id: any; 
+  user_id: any; 
+  completion: any; 
+  quest: { 
+    type: any; 
+    xp_reward: any; 
+    conditions: any; 
+    data: any; 
+    completion_max: any; 
+  }; // Notez que `quest` est un objet unique
 }
 
-export const findQuest = async (type:string,condition:Record<string,string>,quest_data:Record<string,string>) => {
-    const { data, error } = await supabase.rpc(`
-SELECT quest.*, users.*
-FROM quest
-WHERE quest.type = ${type} AND quest.conditions = ${condition} AND data = ${quest_data};`);
-    if (error) {
-        console.error({});
-        return null;
-    }
+export const findQuest = async (
+  type: string,
+  condition: Record<string, string> | null,
+  quest_data: Record<string, string> | null,
+  clerk_id: string | null
+): Promise<Quest[]> => {
 
-    return data;
-}
+  const { data, error } = await supabase
+    .from('user_quests')
+    .select(`
+      id,
+      quest_id,
+      user_id,
+      completion,
+      quest:quest_id (
+        type,
+        xp_reward,
+        conditions,
+        data,
+        completion_max
+      )
+    `);
 
-async function fetchQuestWithUser(quest_id: string,clerk_id:string) {
-    const { data, error } = await supabase.rpc(`
-SELECT quest.*, users.*
-FROM user_quests
-JOIN users AS u
-    ON user_quests.user_id = users.clerk_id
-WHERE user_quests.id = ${quest_id} AND u.clerk_id = ${clerk_id};`);
-    if (error) {
-        console.error({});
-        return null;
-    }
+  if (error) {
+    console.error('Supabase error:', error.message);
+    throw error;
+  }
 
-    return data;
-}
+  // Valider la structure pour s'assurer que `quest` est un objet
+  const questWithUser: Quest[] = data?.map(item => ({
+    ...item,
+    quest: Array.isArray(item.quest) ? item.quest[0] : item.quest // S'assurer que `quest` est un objet unique
+  })) as Quest[];
 
-export const findQuestForUser = async (type:string,condition:Record<string,string>,data:Record<string,string>,clerkId:string) => {
-    const quest = await findQuest(type,condition,data)
-    if(!quest?.id) return {code:404,message:"Quest not found"}
-    const res = fetchQuestWithUser(clerkId,quest.id)
+  return questWithUser;
+};
+
+export const findQuestForUser = async (type:string,condition:Record<string,string>|null,data:Record<string,string>|null,clerkId:string) => {
+    // const quest = await findQuest(type,condition,data,clerkId)
+    // return quest
+    // if(!quest?.id) return {code:404,message:"Quest not found"}
+    // const res = fetchQuestWithUser(clerkId,quest.id)
 }
