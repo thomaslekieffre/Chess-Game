@@ -186,6 +186,86 @@ export const findQuest = async (
   return filteredData;
 };
 
+const completQuest = async (
+  id:string,
+) => {
+
+}
+
+// export const incrementQuestes = async (
+//   type: string,
+//   condition: Record<string, string> | null,
+//   quest_data: Record<string, string> | null,
+//   clerk_id: string | null,
+//   value:number,
+// ) => {
+//   const questArray = await findQuest(type,condition,quest_data,clerk_id)
+
+//   let incrementList:string[] = []
+
+//   let completedList = []
+
+//   for(let quest of questArray){
+//     const completion = quest.completion
+//     const newCompletion = completion+value
+//     const maxCompletion = quest.quest.completion_max
+//     if(newCompletion>=maxCompletion){
+//       completQuest(quest.id)
+//       completedList.push(quest)
+//     }else {
+//       incrementList.push(quest.id)
+//     }
+//   }
+
+//   console.log(incrementList)
+
+//   const { data, error } = await supabase
+//     .rpc('increment_user_quests', { value, quest_ids:incrementList })
+
+//   console.log(data,error)
+
+//   if (error) {
+//     console.error('Supabase error:', error.message);
+//     throw error;
+//   }
+  
+//   return completedList
+// }
+
+export const incrementQuestes = async (
+  type: string,
+  condition: Record<string, string> | null,
+  quest_data: Record<string, string> | null,
+  clerk_id: string | null,
+  value:number,
+) => {
+  const questArray = await findQuest(type,condition,quest_data,clerk_id)
+
+  let incrementList:string[] = []
+
+  let completedList = []
+
+  for(let quest of questArray){
+    const completion = quest.completion
+    const newCompletion = completion+value
+    const maxCompletion = quest.quest.completion_max
+    if(newCompletion>=maxCompletion){
+      completQuest(quest.id)
+      completedList.push(quest)
+    }else {
+      incrementList.push(quest.id)
+      console.log(newCompletion,quest.id)
+      const { data, error } = await supabase
+        .from('user_quests')
+        .update({ completion: newCompletion })
+        .eq('id', quest.id);
+      console.log(data)
+    }
+  }
+  
+  return completedList
+}
+
 export const findQuestForUser = async (type:string,condition:Record<string,string>|null,data:Record<string,string>|null,clerkId:string) => {
     // const quest = await findQuest(type,condition,data,clerkId)
     // return quest
