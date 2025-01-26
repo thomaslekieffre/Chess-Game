@@ -136,7 +136,7 @@ export const findQuest = async (
   clerk_id: string | null
 ): Promise<Quest[]> => {
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('user_quests')
     .select(`
       id,
@@ -152,6 +152,24 @@ export const findQuest = async (
       )
     `);
 
+
+  // Appliquer des filtres conditionnels
+  query = query.eq('quest.type', type); // Filtrer par type
+
+  if (condition) {
+    query = query.contains('quest.conditions', condition); // Filtrer par condition
+  }
+
+  if (quest_data) {
+    query = query.contains('quest.data', quest_data); // Filtrer par données
+  }
+
+  if (clerk_id) {
+    query = query.eq('user_id', clerk_id); // Filtrer par user_id
+  }
+
+  const { data, error } = await query 
+
   if (error) {
     console.error('Supabase error:', error.message);
     throw error;
@@ -163,7 +181,9 @@ export const findQuest = async (
     quest: Array.isArray(item.quest) ? item.quest[0] : item.quest // S'assurer que `quest` est un objet unique
   })) as Quest[];
 
-  return questWithUser;
+  const filteredData = questWithUser?.filter(item => item.quest !== null) as Quest[];
+
+  return filteredData;
 };
 
 export const findQuestForUser = async (type:string,condition:Record<string,string>|null,data:Record<string,string>|null,clerkId:string) => {
