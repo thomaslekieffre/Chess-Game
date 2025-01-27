@@ -115,7 +115,7 @@ export const fetchPlayerBanner = async (clerkId: string) => {
 //     return data;
 // }
 
-export interface Quest { 
+export interface UserquestsWithQuest { 
   id: string; 
   quest_id: string; 
   user_id: string; 
@@ -130,12 +130,39 @@ export interface Quest {
   }; // Notez que `quest` est un objet unique
 }
 
-export const findQuest = async (
+export interface Userquests { 
+  id: string; 
+  quest_id: string; 
+  user_id: string; 
+  completion: number;
+  is_complet:boolean
+  quest: { 
+    type: string; 
+    xp_reward: number; 
+    conditions: any; 
+    data: any; 
+    completion_max: number; 
+  }; // Notez que `quest` est un objet unique
+}
+
+export interface Quest { 
+  id:string;
+  type: string; 
+  xp_reward: number; 
+  conditions: any; 
+  data: any; 
+  completion_max: number; 
+  is_available:boolean;
+}
+
+export const findUserQuest = async (props:{
   type: string,
-  condition: Record<string, string> | null,
-  quest_data: Record<string, string> | null,
-  clerk_id: string | null
-): Promise<Quest[]> => {
+  condition?: Record<string, string>,
+  quest_data?: Record<string, string>,
+  clerk_id?: string
+}): Promise<UserquestsWithQuest[]> => {
+
+  const {type,clerk_id,condition,quest_data} = props
 
   let query = supabase
     .from('user_quests')
@@ -178,15 +205,17 @@ export const findQuest = async (
   }
 
   // Valider la structure pour s'assurer que `quest` est un objet
-  const questWithUser: Quest[] = data?.map(item => ({
+  const questWithUser: UserquestsWithQuest[] = data?.map(item => ({
     ...item,
     quest: Array.isArray(item.quest) ? item.quest[0] : item.quest // S'assurer que `quest` est un objet unique
-  })) as Quest[];
+  })) as UserquestsWithQuest[];
 
-  const filteredData = questWithUser?.filter(item => item.quest !== null) as Quest[];
+  const filteredData = questWithUser?.filter(item => item.quest !== null) as UserquestsWithQuest[];
 
   return filteredData;
 };
+
+
 
 const completQuest = async (
   id:string,
@@ -201,80 +230,126 @@ const completQuest = async (
   }else {
     return true
   }
-  // console.log('aaaaa',id)
 }
 
-// export const incrementQuestes = async (
-//   type: string,
-//   condition: Record<string, string> | null,
-//   quest_data: Record<string, string> | null,
-//   clerk_id: string | null,
-//   value:number,
-// ) => {
-//   const questArray = await findQuest(type,condition,quest_data,clerk_id)
 
-//   let incrementList:string[] = []
+export const findQuest = async (props:{
+  type?: string,
+  condition?: Record<string, string>,
+  quest_data?: Record<string, string>,
+  completion_max?: number,
+  xp_reward?: number,
+  is_available?: boolean,
+  excludedIds?:string[],
+}): Promise<Quest[]> => {
 
-//   let completedList = []
+  const {completion_max,condition,is_available,quest_data,type,xp_reward,excludedIds} = props
 
-//   for(let quest of questArray){
-//     const completion = quest.completion
-//     const newCompletion = completion+value
-//     const maxCompletion = quest.quest.completion_max
-//     if(newCompletion>=maxCompletion){
-//       completQuest(quest.id)
-//       completedList.push(quest)
-//     }else {
-//       incrementList.push(quest.id)
-//     }
-//   }
+  let query = supabase
+    .from('quest')
+    .select(`*`);
 
-//   console.log(incrementList)
+  // Appliquer des filtres conditionnels
 
-//   const { data, error } = await supabase
-//     .rpc('increment_user_quests', { value, quest_ids:incrementList })
+  if(type){
+    query = query.eq('type',type)
+  }
+  if(condition){
+    query = query.contains('conditions',condition)
+  }
+  if(quest_data){
+    query = query.contains('data',quest_data)
+  }
+  if(completion_max){
+    query = query.eq('completion_max',completion_max)
+  }
+  if(xp_reward){
+    query = query.eq('xp_reward',xp_reward)
+  }
+  if(is_available){
+    query = query.eq('is_available',is_available)
+  }
+  if(excludedIds){
+    query = query.not('id', 'in', `(${excludedIds.join(',')})`); // Exclut les IDs spécifiés
+  }
 
-//   console.log(data,error)
+  const { data, error } = await query 
 
-//   if (error) {
-//     console.error('Supabase error:', error.message);
-//     throw error;
-//   }
-  
-//   return completedList
-// }
+  if (error) {
+    console.error('Supabase error:', error.message);
+    throw error;
+  }
 
-export const incrementQuestes = async (
+  return data;
+};
+
+const createUserQuest = async (props:{
+  quest_id: string, 
+  user_id: string,  
+  completion: number 
+}[]) => {
+  const { data, error } = await supabase
+    .from('user_quests') 
+    .insert(props);
+
+  if (error) {
+    console.error('Erreur lors de la création de user_quests:', error.message);
+    return null;
+  }
+
+  console.log('Nouvel enregistrement ajouté:', data);
+  return data;
+};
+
+export const incrementQuestes = async (props:{
   type: string,
-  condition: Record<string, string> | null,
-  quest_data: Record<string, string> | null,
-  clerk_id: string | null,
   value:number,
-) => {
-  const questArray = await findQuest(type,condition,quest_data,clerk_id)
+  condition?: Record<string, string>,
+  quest_data?: Record<string, string>,
+  clerk_id: string,
+}) => {
+  const {type,value,clerk_id,condition,quest_data} = props
 
+  // Quête en cour pour la personne
+  const questArray = await findUserQuest({type,condition,quest_data,clerk_id})
+
+  // Quête disponible pour la personne
+  const possibleQuest = await findQuest({type,condition,quest_data,is_available:true,excludedIds:questArray.map(item=>item.quest_id)})
+
+  // Quête non complétée
   const notCompletedQuestArray = questArray.filter(item=>item.is_complet!==true)
 
   let incrementList:string[] = []
 
   let completedList = []
 
+  // Démarée toutes les quête possible pour le joueur
+  for(let quest of possibleQuest){
+    createUserQuest([{user_id:clerk_id,completion:0,quest_id:quest.id}])
+  }
+
   for(let quest of notCompletedQuestArray){
     const completion = quest.completion
     const newCompletion = completion+value
     const maxCompletion = quest.quest.completion_max
-    if(newCompletion>maxCompletion){
+    if(newCompletion>=maxCompletion){ // Quête venant d'être terminer
       const res = await completQuest(quest.id)
       if(res){
         completedList.push(quest)
       }
-    }else {
+    }else { // Quête a avancer
       incrementList.push(quest.id)
     }
   }
 
+  // Ajout de point dans toute les quêtes non terminer
   const { data, error } = await supabase
     .rpc('increment_user_quests', { value, quest_ids:incrementList })
+
+  if (error) {
+    console.error('Supabase error:', error.message);
+    throw error
+  }
   
   return completedList
 }
