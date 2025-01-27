@@ -116,16 +116,17 @@ export const fetchPlayerBanner = async (clerkId: string) => {
 // }
 
 export interface Quest { 
-  id: any; 
-  quest_id: any; 
-  user_id: any; 
-  completion: any; 
+  id: string; 
+  quest_id: string; 
+  user_id: string; 
+  completion: number;
+  is_complet:boolean
   quest: { 
-    type: any; 
-    xp_reward: any; 
+    type: string; 
+    xp_reward: number; 
     conditions: any; 
     data: any; 
-    completion_max: any; 
+    completion_max: number; 
   }; // Notez que `quest` est un objet unique
 }
 
@@ -143,6 +144,7 @@ export const findQuest = async (
       quest_id,
       user_id,
       completion,
+      is_complet,
       quest:quest_id (
         type,
         xp_reward,
@@ -189,7 +191,17 @@ export const findQuest = async (
 const completQuest = async (
   id:string,
 ) => {
-
+  const {data,error} = await supabase
+    .from('user_quests')
+    .update({is_complet:true})
+    .eq("id",id)
+  if (error) {
+    console.error('Supabase error:', error.message);
+    return false
+  }else {
+    return true
+  }
+  // console.log('aaaaa',id)
 }
 
 // export const incrementQuestes = async (
@@ -241,27 +253,28 @@ export const incrementQuestes = async (
 ) => {
   const questArray = await findQuest(type,condition,quest_data,clerk_id)
 
+  const notCompletedQuestArray = questArray.filter(item=>item.is_complet!==true)
+
   let incrementList:string[] = []
 
   let completedList = []
 
-  for(let quest of questArray){
+  for(let quest of notCompletedQuestArray){
     const completion = quest.completion
     const newCompletion = completion+value
     const maxCompletion = quest.quest.completion_max
-    if(newCompletion>=maxCompletion){
-      completQuest(quest.id)
-      completedList.push(quest)
+    if(newCompletion>maxCompletion){
+      const res = await completQuest(quest.id)
+      if(res){
+        completedList.push(quest)
+      }
     }else {
       incrementList.push(quest.id)
-      console.log(newCompletion,quest.id)
-      const { data, error } = await supabase
-        .from('user_quests')
-        .update({ completion: newCompletion })
-        .eq('id', quest.id);
-      console.log(data)
     }
   }
+
+  const { data, error } = await supabase
+    .rpc('increment_user_quests', { value, quest_ids:incrementList })
   
   return completedList
 }

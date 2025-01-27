@@ -12,7 +12,7 @@ export default function test() {
     }
 
     const increment = async () => {
-      const finished = await incrementQuestes("make_piece_move",{piece:"rook"},null,"user_2qtahPOGbIYf9zi5sgOsRvJkzV6",1)
+      const finished = await incrementQuestes("make_piece_move",{piece:"pawn"},null,"user_2qtahPOGbIYf9zi5sgOsRvJkzV6",1)
       console.log(finished)
     }
     useEffect(()=>{
