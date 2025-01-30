@@ -1,31 +1,32 @@
-import { eventTypes, GameState, questEventsNames } from "@/types/chess";
+import { eventObjType, eventTypes, GameState, questEventsNames } from "@/types/chess";
 import { getNameByFig } from "../pgn/pgn2";
-
-interface eventObjType {
-    event:string,
-    condition:((event:eventTypes,states:GameState)=>boolean)[],
-    value:number,
-    name:questEventsNames,
-    more_value?:Record<string,string>,
-} 
+import { incrementQuestes } from "./utils";
 
 const anyMove = (event:eventTypes,states:GameState):eventObjType => {
-    return {event:"move",condition:[],value:1,name:"make_any_move"} // Make any move
+    return {value:1,type:"make_any_move"} // Make any move
 }
 
 const pieceMove = (event:eventTypes,states:GameState):eventObjType => {
-    return {event:"move",condition:[],value:1,name:"make_any_move",more_value:{piece:getNameByFig(states.strMove[states.strMove.length-1].notation.fig)}} // Make piece move
+    return {value:1,type:"make_any_move",condition:{piece:getNameByFig(states.strMove[states.strMove.length-1].notation.fig)}} // Make piece move
+    // {type:"make_piece_move",value:1,clerk_id:"user_2qtahPOGbIYf9zi5sgOsRvJkzV6",condition:{piece:"pawn"}}
 }
 
-const events:((event:eventTypes,states:GameState)=>eventObjType)[] = [
-    anyMove,
-    pieceMove,
-]
+const events:Record<string,((event:eventTypes,states:GameState)=>eventObjType)[]> = {
+    move:[anyMove,pieceMove],
+}
 
-export const onAnyEventIsPlayed = (event:eventTypes,states:GameState) => {
-    
-    // // console.log(event,states)
-    // if(event==="move"){
-    //     // console.log(states.strMove,states.strMove[states.strMove.length-1],states.strMove[states.strMove.length-1].notation.fig)
-    // }
+export const onAnyEventIsPlayed = async (event:eventTypes,states:GameState,clerk_id:string) => {
+    console.log("aaaa")
+    let finishedQuest = []
+    for(let key of Object.keys(events)){
+        console.log(key)
+        let functions = events[key]
+        for(let func of functions){
+            const funcData = func(event,states)
+            const res = await incrementQuestes({...funcData,clerk_id})
+            console.log(res)
+            finishedQuest.push(...res)
+        }
+    }
+    return finishedQuest
 }

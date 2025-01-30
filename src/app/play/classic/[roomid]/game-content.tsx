@@ -23,10 +23,11 @@ import {
 import { getOppositeColor } from "@/lib/chess/utils";
 import { supabaseClient } from "@/lib/supabase";
 import { useUser } from "@clerk/nextjs";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { usePlayers } from "@/hooks/useGamePlayers";
 import { fetchPlayerBanner, fetchPlayerTitle } from "@/lib/chess/game/utils";
+import { onAnyEventIsPlayed } from "@/lib/chess/game/handle_quest";
 
 const socket = io("http://localhost:8080", {
   withCredentials: true,
@@ -82,6 +83,15 @@ export function GameContent(props: PropsType) {
   const [isTimeOut, setIsTimeOut] = useState(false);
   const [isRoomLoaded, setIsRoomLoaded] = useState(false);
 
+  
+  const onAnyEventPlay = useCallback(async (event:eventTypes,states:GameState)=>{
+    console.log(event,states)
+    console.log(user)
+    if(user){
+      onAnyEventIsPlayed(event,states,user.id)
+    }
+  },[user])
+
   const {
     updateUserState,
     players,
@@ -114,7 +124,7 @@ export function GameContent(props: PropsType) {
     drawReason,
     displayedMove2,
     setDisplayedMove,
-  } = useGameState();
+  } = useGameState(onAnyEventPlay);
 
 
   const updatePlayersData = async (roomJson: roomType) => {

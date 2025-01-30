@@ -1,4 +1,5 @@
 import { supabaseClient } from "@/lib/supabase";
+import { incrementQuestProps } from "@/types/chess";
 import { QueryData } from "@supabase/supabase-js";
 
 const supabase = supabaseClient();
@@ -301,13 +302,7 @@ const createUserQuest = async (props:{
   return data;
 };
 
-export const incrementQuestes = async (props:{
-  type: string,
-  value:number,
-  condition?: Record<string, string>,
-  quest_data?: Record<string, string>,
-  clerk_id: string,
-}) => {
+export const incrementQuestes = async (props:incrementQuestProps) => {
   const {type,value,clerk_id,condition,quest_data} = props
 
   // Quête en cour pour la personne
@@ -325,7 +320,14 @@ export const incrementQuestes = async (props:{
 
   // Démarée toutes les quête possible pour le joueur
   for(let quest of possibleQuest){
-    createUserQuest([{user_id:clerk_id,completion:0,quest_id:quest.id}])
+    const newQuest = createUserQuest([{user_id:clerk_id,completion:value,quest_id:quest.id}])
+    // TODO AUTO FINISH SI VALUE >= max
+    // if(value>=quest.completion_max){
+    //   const res = await completQuest(newQuest.id)
+    //   if(res){
+    //     completedList.push(quest)
+    //   }
+    // }
   }
 
   for(let quest of notCompletedQuestArray){

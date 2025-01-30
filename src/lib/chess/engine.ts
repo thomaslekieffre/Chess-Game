@@ -27,6 +27,7 @@ import {
   eventTypes,
   tabCastlingRights,
 } from "../../types/chess";
+import { UserquestsWithQuest } from "./game/utils";
 
 export class ChessEngine {
   private state: GameState;
@@ -50,7 +51,7 @@ export class ChessEngine {
   }
 
   public addEventListener(event:eventTypes,f:(event:eventTypes,states:GameState)=>any) {
-    console.log('event added :',event,f)
+    // console.log('event added :',event,f)
     this.state.eventsListened.push({
       event:event,
       f:f,
@@ -215,7 +216,7 @@ export class ChessEngine {
     turn = this.state.currentTurn
   ): Position[] {
     const piece = board[from.y][from.x];
-    console.log(piece);
+    // console.log(piece);
     if (!piece || piece.color !== turn) return [];
 
     const potentialMoves = this.getPotentialMoves(
@@ -224,7 +225,7 @@ export class ChessEngine {
       board,
       enPassant
     );
-    console.log(potentialMoves);
+    // console.log(potentialMoves);
     return potentialMoves.filter(
       (to) => !this.moveResultsInCheck(from, to, board, enPassant)
     );
@@ -292,8 +293,6 @@ export class ChessEngine {
       const lastMoveCap = parseInt(`${this.state.lastPawnMoveOrCapture}`);
 
       this.applyMove(move);
-      console.log("move apply");
-      console.log(this.state.strMove);
 
       this.state.displayedMove = this.state.strMove.length;
       this.updateGameState();
@@ -697,7 +696,6 @@ export class ChessEngine {
       );
       return isKingAttacked;
     } else {
-      console.log("paspos");
       return false;
     }
   }
@@ -1051,8 +1049,6 @@ export class ChessEngine {
   public setGameUsingMoves(moves: PgnMove[]) {
     const displayed = moves.length - 1;
 
-    console.log(moves);
-
     const lastMove = moves[moves.length - 1];
 
     if (!lastMove) throw new Error("ERREUR AUCUN COUPS DANS MOVES");
@@ -1068,8 +1064,6 @@ export class ChessEngine {
       fullmoveNumber,
     } = this.importFEN(fen);
 
-    // console.log(activeColor)
-
     this.state.board = board;
     this.state.currentTurn = activeColor == "b" ? "black" : "white";
     this.state.castlingRights = castlingRights;
@@ -1081,15 +1075,7 @@ export class ChessEngine {
     this.state.displayedMove = moves.length;
     this.state.displayedMove = displayed;
 
-    // console.log(moves,lastMove)
-
     this.updateGameState(false);
-
-    // console.log(fromCaseToCoord(lastMove.from),fromCaseToCoord(lastMove.to))
-
-    // this.makeMove(fromCaseToCoord(lastMove.from),fromCaseToCoord(lastMove.to))
-
-    // this.state.currentTurn=lastMove.turn
   }
 
   private generateChessNotation(
@@ -1266,20 +1252,19 @@ export class ChessEngine {
     // Utiliser makeMove qui contient toute la logique de validation
     const success = this.makeMove(from, to);
 
-    console.log(success);
 
     // Si le mouvement n'est pas valide, ne rien faire
     if (!success) return;
   }
 
   public setDisplayedMove(index: number, moves = this.state.strMove) {
-    console.log(
-      index,
-      moves,
-      moves.length,
-      moves.length - 1,
-      index > moves.length - 1
-    );
+    // console.log(
+    //   index,
+    //   moves,
+    //   moves.length,
+    //   moves.length - 1,
+    //   index > moves.length - 1
+    // );
 
     if (index > moves.length - 1) return console.log("INDEX NON DISPONIBLE");
 

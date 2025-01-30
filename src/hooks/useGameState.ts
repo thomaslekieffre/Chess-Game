@@ -2,12 +2,11 @@ import { useState } from "react";
 import { ChessEngine } from "@/lib/chess/engine";
 import { ChessPiece, DrawResons, eventTypes, FenString, GameState, PgnMove } from "@/types/chess";
 import { onAnyEventIsPlayed } from "@/lib/chess/game/handle_quest";
+import { UserResponse } from "@supabase/supabase-js";
+import { User } from "@clerk/nextjs/server";
 
-export function useGameState() {
-  // const onAnyEventPlay = async (event:eventTypes,states:GameState) => {
-  //   console.log(`Listened "${event}" from onAnyEventPlay in useGameState`)
-  // }
-  const [engine] = useState(() => new ChessEngine("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",onAnyEventIsPlayed));
+export function useGameState(onAnyEventPlay:(event:eventTypes,states:GameState) => void) {
+  const [engine] = useState(() => new ChessEngine("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",onAnyEventPlay));
   const [currentTurn, setCurrentTurn] = useState<"white" | "black">(engine.getCurrentTurn());
   const [isCheck, setIsCheck] = useState(engine.isKingInCheck());
   const [isCheckmate, setIsCheckmate] = useState(engine.isKingInCheckmate());

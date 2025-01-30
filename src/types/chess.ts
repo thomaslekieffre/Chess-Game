@@ -312,6 +312,32 @@ export type ColoredSquare = {
 };
 
 
+export interface eventObjType {
+  // event:string,
+  // condition_fund:((event:eventTypes,states:GameState)=>boolean)[],
+  // value:number,
+  // type:questEventsNames,
+  // condition?:Record<string,string>,
+  // clerk_id?:string,
+  type: string,
+  value:number,
+  condition?: Record<string, string>,
+  quest_data?: Record<string, string>,
+} 
+
+export interface incrementQuestProps {
+  // event:string,
+  // condition_fund:((event:eventTypes,states:GameState)=>boolean)[],
+  // value:number,
+  // type:questEventsNames,
+  // condition?:Record<string,string>,
+  // clerk_id?:string,
+  type: string,
+  value:number,
+  condition?: Record<string, string>,
+  quest_data?: Record<string, string>,
+  clerk_id: string,
+} 
 
 export type questEventsNames = 
   "play_game"|
